@@ -2,9 +2,10 @@
 
 import React, { useMemo } from 'react';
 import { MapContainer, TileLayer, Polygon, Marker, Popup } from 'react-leaflet';
-import { MarkerClusterGroup } from '@react-leaflet/cluster';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import 'leaflet/dist/leaflet.css';
-import '@react-leaflet/cluster/dist/styles.min.css';
+import 'react-leaflet-cluster/dist/assets/MarkerCluster.css';
+import 'react-leaflet-cluster/dist/assets/MarkerCluster.Default.css';
 import './zone-map.css';
 
 import { createRiderDivIcon } from './mapIcons';
