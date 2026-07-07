@@ -1,37 +1,51 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { MapContainer, TileLayer, Polygon, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
+import MarkerClusterGroup from 'react-leaflet-markercluster';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+import './zone-map.css';
 
-// Fix default icon paths for Leaflet when bundled
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: new URL('leaflet/dist/images/marker-icon-2x.png', import.meta.url).toString(),
-  iconUrl: new URL('leaflet/dist/images/marker-icon.png', import.meta.url).toString(),
-  shadowUrl: new URL('leaflet/dist/images/marker-shadow.png', import.meta.url).toString(),
-});
+import { createRiderDivIcon } from './mapIcons';
+import RiderPopup from './RiderPopup';
 
 export default function ZoneMap({ zones = [], riders = [] }: any) {
-  // Determine a sensible default center
-  const defaultCenter: [number, number] = [6.2146, 6.7898]; // approximate center for Anambra / Awka area
-
+  const defaultCenter: [number, number] = [6.2146, 6.7898];
   const center: [number, number] =
     (zones && zones.length > 0 && zones[0].center && Array.isArray(zones[0].center)) ? zones[0].center : defaultCenter;
 
+  const riderMarkers = useMemo(() => {
+    return (riders || []).map((r: any) => {
+      const lat = r.lat ?? r.latitude ?? r.location?.lat;
+      const lng = r.lng ?? r.longitude ?? r.location?.lng;
+      if (typeof lat !== 'number' || typeof lng !== 'number') return null;
+      const icon = createRiderDivIcon(r.status ?? 'offline', r.initials ?? null);
+      return { id: r.id ?? `${lat}-${lng}-${r.name}`, position: [lat, lng] as [number, number], r, icon };
+    }).filter(Boolean);
+  }, [riders]);
+
+  function handleAssign(rider: any) {
+    // placeholder action — wire-up as needed
+    console.log('Assign rider', rider?.id);
+    alert(`Assign rider ${rider?.name ?? rider?.id}`);
+  }
+  function handleCall(rider: any) {
+    console.log('Call rider', rider?.id);
+    alert(`Call rider ${rider?.name ?? rider?.id}`);
+  }
+
   return (
-    <div className="w-full" style={{ height: 460 }}>
+    <div className="w-full admin-zone-map" style={{ height: 460 }}>
       <MapContainer center={center} zoom={11} scrollWheelZoom style={{ height: '100%', width: '100%' }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* Render zone polygons if available. Expect each zone to have `polygon: [[lat,lng], ...]` or `geojson` */}
         {(zones || []).map((z: any, i: number) => {
           const coords = z.polygon ?? (z.geojson && z.geojson.coordinates ? z.geojson.coordinates[0].map((c: any) => [c[1], c[0]]) : null);
-          // If polygon is provided as [[lat,lng],...], use it directly. If it's GeoJSON [lng,lat] pairs, convert.
           const polygonCoords = Array.isArray(coords) ? coords : null;
           return polygonCoords ? (
             <Polygon
@@ -42,22 +56,15 @@ export default function ZoneMap({ zones = [], riders = [] }: any) {
           ) : null;
         })}
 
-        {/* Render live riders as markers if lat/lng are provided */}
-        {(riders || []).map((r: any, i: number) => {
-          const lat = r.lat ?? r.latitude ?? r.location?.lat;
-          const lng = r.lng ?? r.longitude ?? r.location?.lng;
-          if (typeof lat !== 'number' || typeof lng !== 'number') return null;
-          return (
-            <Marker key={r.id ?? i} position={[lat, lng]}>
+        <MarkerClusterGroup chunkedLoading showCoverageOnHover>
+          {riderMarkers.map((m: any) => (
+            <Marker key={m.id} position={m.position} icon={m.icon}>
               <Popup>
-                <div>
-                  <div style={{ fontWeight: 600 }}>{r.name ?? 'Rider'}</div>
-                  <div style={{ fontSize: 12, color: '#666' }}>{r.status ?? ''}</div>
-                </div>
+                <RiderPopup rider={m.r} onAssign={handleAssign} onCall={handleCall} />
               </Popup>
             </Marker>
-          );
-        })}
+          ))}
+        </MarkerClusterGroup>
       </MapContainer>
     </div>
   );
