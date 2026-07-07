@@ -6,6 +6,7 @@ import MarkerClusterGroup from 'react-leaflet-markercluster';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+import './zone-map.css';
 
 import { createRiderDivIcon } from './mapIcons';
 import RiderPopup from './RiderPopup';
@@ -36,7 +37,7 @@ export default function ZoneMap({ zones = [], riders = [] }: any) {
   }
 
   return (
-    <div className="w-full" style={{ height: 460 }}>
+    <div className="w-full admin-zone-map" style={{ height: 460 }}>
       <MapContainer center={center} zoom={11} scrollWheelZoom style={{ height: '100%', width: '100%' }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
