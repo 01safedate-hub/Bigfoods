@@ -4,6 +4,8 @@ import React from 'react';
 import { MapContainer, TileLayer, Polygon, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
 // Fix default icon paths for Leaflet when bundled
 delete (L.Icon.Default.prototype as any)._getIconUrl;
