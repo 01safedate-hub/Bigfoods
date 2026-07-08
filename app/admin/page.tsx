@@ -1,13 +1,15 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import {useState} from 'react';
-import dynamic from 'next/dynamic';
+import nextDynamic from 'next/dynamic';
 import Link from 'next/link';
 import {LayoutGrid, MapPin, Utensils, Bike, Settings, ArrowLeft} from 'lucide-react';
 import {OrdersChart, RevenueChart, ZoneChart, CancelChart} from '@/components/admin/AdminCharts';
 
 // Leaflet must be dynamically imported (browser-only)
-const ZoneMap = dynamic(() => import('@/components/admin/ZoneMap'), {
+const ZoneMap = nextDynamic(() => import('@/components/admin/ZoneMap'), {
   ssr: false,
   loading: () => (
     <div

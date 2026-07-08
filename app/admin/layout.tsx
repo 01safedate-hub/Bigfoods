@@ -1,6 +1,8 @@
 import React from 'react';
 import Sidebar from '@/components/admin/layout/Sidebar';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Admin',
 };

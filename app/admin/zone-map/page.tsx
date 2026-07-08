@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import useAdminDashboard from '@/hooks/useAdminDashboard';
 import ZoneMapView from '@/components/admin/zone-map/ZoneMapView';
 

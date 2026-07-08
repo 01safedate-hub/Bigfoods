@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import RestaurantsView from '@/components/admin/restaurants/RestaurantsView';
 import useAdminQuery from '@/hooks/useAdminQuery';
 
