@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabase } from './lib/supabase/server';
+import {NextRequest, NextResponse} from 'next/server';
+import {createServerSupabase} from './lib/supabase/server';
+import type {CookieOptions} from '@supabase/ssr';
 
 const ADMIN_LOGIN_PATH = '/admin/login';
 const ADMIN_BASE = '/admin';
@@ -22,7 +23,7 @@ export async function middleware(req: NextRequest) {
       // NextRequest.cookies.getAll() returns an array of cookies with shape { name, value, ... }
       return req.cookies.getAll().map((c) => ({ name: c.name, value: c.value }));
     },
-    setAll: (cookiesToSet: Array<{ name: string; value: string; options?: any }>) => {
+    setAll: (cookiesToSet: Array<{name: string; value: string; options?: CookieOptions}>) => {
       // Ensure we set cookies on the response that will be returned to the client
       // (NextResponse.cookies.set supports (name, value, options))
       cookiesToSet.forEach(({ name, value, options }) => {
@@ -34,7 +35,6 @@ export async function middleware(req: NextRequest) {
   // Create server supabase client using the shared helper
   const supabase = createServerSupabase({
     cookies: cookieAccessors,
-    headers: req.headers as any,
   });
 
   try {

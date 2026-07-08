@@ -1,11 +1,11 @@
 'use client';
 
 import useSWR from 'swr';
-import {createClient} from '@/lib/supabase/client';
+import getBrowserSupabase from '@/lib/supabase/client';
 import type {MenuItem} from '@/types/database';
 
 export function useMenuItems(restaurantId: string) {
-  const supabase = createClient();
+  const supabase = getBrowserSupabase();
 
   const {data, isLoading, error} = useSWR(
     ['menu-items', restaurantId],

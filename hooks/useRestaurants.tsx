@@ -1,7 +1,7 @@
 'use client';
 
 import useSWR from 'swr';
-import {createClient} from '@/lib/supabase/client';
+import getBrowserSupabase from '@/lib/supabase/client';
 import type {Restaurant} from '@/types/database';
 
 export function useRestaurants(options?: {
@@ -9,7 +9,7 @@ export function useRestaurants(options?: {
   zone?: string;
   promotedOnly?: boolean;
 }) {
-  const supabase = createClient();
+  const supabase = getBrowserSupabase();
 
   const {data, isLoading, error} = useSWR(
     ['restaurants', options?.category, options?.zone, options?.promotedOnly],
@@ -46,7 +46,7 @@ export function useRestaurants(options?: {
 }
 
 export function useRestaurant(slug: string) {
-  const supabase = createClient();
+  const supabase = getBrowserSupabase();
 
   const {data, isLoading, error} = useSWR(
     ['restaurant', slug],
