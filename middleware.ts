@@ -20,12 +20,9 @@ export async function middleware(req: NextRequest) {
   // Build the cookie accessors expected by @supabase/ssr (getAll / setAll)
   const cookieAccessors = {
     getAll: () => {
-      // NextRequest.cookies.getAll() returns an array of cookies with shape { name, value, ... }
       return req.cookies.getAll().map((c) => ({ name: c.name, value: c.value }));
     },
     setAll: (cookiesToSet: Array<{name: string; value: string; options?: CookieOptions}>) => {
-      // Ensure we set cookies on the response that will be returned to the client
-      // (NextResponse.cookies.set supports (name, value, options))
       cookiesToSet.forEach(({ name, value, options }) => {
         response.cookies.set(name, value, options);
       });
@@ -38,14 +35,24 @@ export async function middleware(req: NextRequest) {
   });
 
   try {
-    // Call the RPC that returns whether the current authenticated user is an admin
+    // Validate the session first — getUser() refreshes tokens and sets
+    // refreshed cookies on the response via the cookie accessors above.
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !userData.user) {
+      const redirectUrl = new URL(ADMIN_LOGIN_PATH, req.url);
+      redirectUrl.searchParams.set('error', 'session');
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    // Now check the admin role via the RPC
     const { data, error } = await supabase.rpc('is_admin');
 
     const isAdmin = !!(data as any);
 
     if (!isAdmin || error) {
-      // Redirect non-admins to login
       const redirectUrl = new URL(ADMIN_LOGIN_PATH, req.url);
+      redirectUrl.searchParams.set('error', 'unauthorized');
       return NextResponse.redirect(redirectUrl);
     }
 
@@ -53,7 +60,9 @@ export async function middleware(req: NextRequest) {
     return response;
   } catch (err) {
     // On unexpected errors, redirect to login as a safe default
-    return NextResponse.redirect(new URL(ADMIN_LOGIN_PATH, req.url));
+    const redirectUrl = new URL(ADMIN_LOGIN_PATH, req.url);
+    redirectUrl.searchParams.set('error', 'session');
+    return NextResponse.redirect(redirectUrl);
   }
 }
 
