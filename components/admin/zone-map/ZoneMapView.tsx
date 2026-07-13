@@ -15,17 +15,9 @@ const ZoneMap = dynamic(() => import('./ZoneMap'), {
 });
 
 export default function ZoneMapView({ zones = [], loading = false, error }: any) {
-  // useRiderFeed gives real-time riders (name/status) — used for the side panel list only.
-  // It can't drive map pins yet since riders have no lat/lng in the schema.
-  const liveRiders = useRiderFeed();
-
-  if (error) {
-    return (
-      <div className="rounded-xl p-4 text-[13px]" style={{ background: '#FBEAEA', color: '#C1453A', border: '1px solid #F0C6C6' }}>
-        Couldn't load zone data — {error.message ?? 'please try refreshing.'}
-      </div>
-    );
-  }
+  // Use rider feed for realtime updates; fallback to zones.liveRiders
+  const ridersRealtime = useRiderFeed();
+  const riders = ridersRealtime ?? zones?.liveRiders ?? [];
 
   return (
     <div>
@@ -38,19 +30,13 @@ export default function ZoneMapView({ zones = [], loading = false, error }: any)
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-3.5">
+      <div className="grid gap-3.5" style={{ gridTemplateColumns: '1fr 300px' }}>
         <div className="rounded-xl p-3.5" style={{ background: 'white', border: '1px solid var(--line)' }}>
-          {loading ? (
-            <div className="flex items-center justify-center rounded-[9px] text-[12px]" style={{ height: 460, background: 'var(--peach)', color: 'var(--gray)' }}>
-              Loading zones…
-            </div>
-          ) : (
-            <ZoneMap zones={zones} riders={liveRiders ?? []} />
-          )}
+          <ZoneMap zones={zones} riders={riders} />
         </div>
         <div className="flex flex-col gap-3.5">
           <TopZonesPanel zones={zones} />
-          <LiveRidersPanel riders={liveRiders ?? []} />
+          <LiveRidersPanel riders={riders} />
         </div>
       </div>
     </div>

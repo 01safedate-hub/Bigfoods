@@ -19,7 +19,7 @@ export function PromotedRow({restaurants, onSelect}: PromotedRowProps) {
         {restaurants.map((r) => (
           <button
             key={r.id}
-            onClick={() => onSelect(r.slug ?? '')}
+            onClick={() => onSelect(r.slug)}
             className="flex-shrink-0 w-[150px] text-left"
           >
             <div className="w-[150px] h-[100px] rounded-xl bg-gradient-to-br from-peach to-[#FFD9B3] relative overflow-hidden mb-2">

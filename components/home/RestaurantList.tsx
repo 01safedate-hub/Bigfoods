@@ -31,7 +31,7 @@ export function RestaurantList({
         {restaurants.map((r) => (
           <button
             key={r.id}
-            onClick={() => onSelect(r.slug ?? '')}
+            onClick={() => onSelect(r.slug)}
             className="flex gap-3 items-center py-3 w-full text-left"
           >
             <div className="w-14 h-14 rounded-[10px] bg-gradient-to-br from-[#FFE3C7] to-peach flex-shrink-0" />

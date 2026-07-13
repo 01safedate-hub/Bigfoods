@@ -1,16 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { mutate as globalMutate } from 'swr';
 import getBrowserSupabase from '@/lib/supabase/client';
-
-type EntityType = 'restaurant' | 'rider';
-type Decision = 'approved' | 'rejected';
-
-const QUERY_KEYS: Record<EntityType, string> = {
-  restaurant: 'admin-query:restaurants',
-  rider: 'admin-query:riders',
-};
+import { mutate } from 'swr';
 
 export default function useAdminAction() {
   const supabase = getBrowserSupabase();
@@ -23,67 +15,47 @@ export default function useAdminAction() {
     setLoadingIds((s) => s.filter((x) => x !== id));
   }
 
-  // Generic approval decision — used by both restaurant and rider queues via
-  // the same admin-review-application Edge Function (role check + audit log built in).
-  async function reviewApplication(entityType: EntityType, id: string, decision: Decision) {
+  async function approveRestaurant(id: string) {
     start(id);
-    const key = QUERY_KEYS[entityType];
+    const key = 'admin-query:restaurants';
 
-    globalMutate(
-      key,
-      (current: any) => current?.map((r: any) => (r.id === id ? { ...r, approval_status: decision } : r)),
-      false
-    );
+    // optimistic update
+    mutate(key, (current: any) => {
+      if (!current) return current;
+      return current.map((r: any) => (r.id === id ? { ...r, status: 'active' } : r));
+    }, false);
 
-    const { error } = await supabase.functions.invoke('admin-review-application', {
-      body: { entity_type: entityType, id, decision },
-    });
-
+    const { error } = await supabase.from('restaurants').update({ status: 'active' }).eq('id', id);
     if (error) {
-      await globalMutate(key);
+      // rollback by revalidating
+      await mutate(key);
       done(id);
       throw error;
     }
 
-    await globalMutate(key);
+    await mutate(key);
     done(id);
   }
 
-  const approveRestaurant = (id: string) => reviewApplication('restaurant', id, 'approved');
-  const rejectRestaurant = (id: string) => reviewApplication('restaurant', id, 'rejected');
-  const approveRider = (id: string) => reviewApplication('rider', id, 'approved');
-  const rejectRider = (id: string) => reviewApplication('rider', id, 'rejected');
-
-  // Direct table write — RLS already allows admin, no Edge Function needed here.
-  async function setAcceptingOrders(id: string, isAccepting: boolean) {
+  async function rejectRestaurant(id: string) {
     start(id);
-    const key = QUERY_KEYS.restaurant;
+    const key = 'admin-query:restaurants';
 
-    globalMutate(
-      key,
-      (current: any) => current?.map((r: any) => (r.id === id ? { ...r, is_accepting_orders: isAccepting } : r)),
-      false
-    );
+    mutate(key, (current: any) => {
+      if (!current) return current;
+      return current.map((r: any) => (r.id === id ? { ...r, status: 'rejected' } : r));
+    }, false);
 
-    const { error } = await supabase.from('restaurants').update({ is_accepting_orders: isAccepting }).eq('id', id);
-
+    const { error } = await supabase.from('restaurants').update({ status: 'rejected' }).eq('id', id);
     if (error) {
-      await globalMutate(key);
+      await mutate(key);
       done(id);
       throw error;
     }
 
-    await globalMutate(key);
+    await mutate(key);
     done(id);
   }
 
-  return {
-    reviewApplication,
-    approveRestaurant,
-    rejectRestaurant,
-    approveRider,
-    rejectRider,
-    setAcceptingOrders,
-    loadingIds,
-  };
+  return { approveRestaurant, rejectRestaurant, loadingIds };
 }

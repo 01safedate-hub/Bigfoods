@@ -9,12 +9,9 @@ export const metadata = {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className="flex flex-col md:flex-row min-h-screen"
-      style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: 'var(--ink)', background: '#F7F4F0' }}
-    >
+    <div className="flex min-h-screen" style={{fontFamily: "'Inter', sans-serif", fontSize: 13, color: 'var(--ink)', background: '#F7F4F0'}}>
       <Sidebar />
-      <main className="flex-1 px-4 py-4 sm:px-7 sm:py-6 max-w-[1180px] overflow-auto w-full">{children}</main>
+      <main className="flex-1 px-7 py-6 max-w-[1180px] overflow-auto">{children}</main>
     </div>
   );
 }
