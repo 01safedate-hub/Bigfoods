@@ -29,13 +29,10 @@ function LoginInner() {
     setLoading(true);
     setError(null);
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError) throw signInError;
-
-      // Confirm the session is actually live before navigating
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError || !userData.user) {
-        throw new Error('Sign-in succeeded but no session was established.');
+      if (!signInData.user) {
+        throw new Error('Sign-in succeeded but no user was returned.');
       }
 
       // Verify admin role before attempting to enter the protected area
