@@ -36,13 +36,9 @@ export interface Database {
           // scope for this session per the handoff doc) reference these.
           // Kept optional here only so that unrelated code still compiles;
           // whoever owns the customer homepage should reconcile this.
-          // is_promoted maps conceptually to is_featured; is_open maps to
-          // is_accepting_orders on the real schema.
           slug?: string;
           delivery_time_min?: number;
           delivery_time_max?: number;
-          is_promoted?: boolean;
-          is_open?: boolean;
         };
         Insert: Partial<Database['public']['Tables']['restaurants']['Row']> & { name: string };
         Update: Partial<Database['public']['Tables']['restaurants']['Row']>;
