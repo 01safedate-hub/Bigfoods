@@ -108,7 +108,9 @@ export interface LineRequest {
 }
 
 /** Server-only: selling prices + costs for a cart, used to enforce the promotion guardrails. */
-export async function getQuoteLines(items: LineRequest[]): Promise<(QuoteLine & LineRequest)[]> {
+export type ServerLine = QuoteLine & LineRequest & { title?: string; variantLabel?: string; shipMode?: "air" | "sea" };
+
+export async function getQuoteLines(items: LineRequest[]): Promise<ServerLine[]> {
   if (!hasSupabase) {
     return items.flatMap((it) => {
       const s = sampleBySlug(it.slug);
@@ -118,12 +120,13 @@ export async function getQuoteLines(items: LineRequest[]): Promise<(QuoteLine & 
   const ids = items.map((i) => i.variantId);
   const { data, error } = await secretDb()
     .from("product_skus")
-    .select("id, active, promo_paused, price_list, price_midnight, price_event, price_flash, price_retailer, cost_ngn, planned_profit_ngn, products!inner(slug, status, categories(is_gadget))")
+    .select("id, active, promo_paused, props_text, price_list, price_midnight, price_event, price_flash, price_retailer, cost_ngn, planned_profit_ngn, products!inner(slug, title, status, categories(is_gadget, ship_mode))")
     .in("id", ids);
   if (error) throw new Error(`Quote: ${error.message}`);
   type SkuRow = {
     id: string; active: boolean; promo_paused: boolean; price_list: number; price_midnight: number; price_event: number; price_flash: number; price_retailer: number;
-    cost_ngn: number; planned_profit_ngn: number; products: { slug: string; status: string; categories: { is_gadget: boolean } | null };
+    cost_ngn: number; planned_profit_ngn: number; props_text: string | null;
+    products: { slug: string; title: string; status: string; categories: { is_gadget: boolean; ship_mode: "air" | "sea" } | null };
   };
   const byId = new Map(((data ?? []) as unknown as SkuRow[]).map((r) => [r.id, r]));
   return items.flatMap((it) => {
@@ -136,6 +139,9 @@ export async function getQuoteLines(items: LineRequest[]): Promise<(QuoteLine & 
       plannedProfit: Number(r.planned_profit_ngn),
       gadget: r.products.categories?.is_gadget ?? false,
       noDiscounts: r.promo_paused,
+      title: r.products.title,
+      variantLabel: (r.props_text ?? "").split(";").map((kv) => kv.split(":")[1] ?? kv).filter(Boolean).join(" / "),
+      shipMode: r.products.categories?.ship_mode ?? "air",
     }];
   });
 }

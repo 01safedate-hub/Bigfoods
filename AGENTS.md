@@ -14,3 +14,13 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - All prices come from `src/lib/pricing/engine.ts`. Never hard-code a naira price; change `config.ts` instead. Run `npm test` after touching pricing: the guardrail tests must stay green.
 - Anything time-based uses Lagos time helpers in `src/lib/time.ts` and the `useNow` hook (renders a placeholder until mounted, so prerendered HTML never depends on the clock).
 - Every promotion section has an `<InfoButton topic=…>`; explainer copy lives in `src/lib/content/info.ts`.
+
+### Backend map (Supabase, migrations in `supabase/migrations/`)
+- 001–006: roles/profiles, pricing + catalogue (prices computed by triggers), TMAPI plumbing, display fields.
+- 007: `pickup_stations`, `sale_events`, `coupons`, `product_questions`, `search_products()`.
+- 008: `orders` (status machine trigger), Pay small small plans, Group pay links, Cart Clear-Out draws, profit guard; pg_cron jobs `fc-*`.
+- 009: `place_order`, `track_order`, `record_purchase`, `dispatch_state`, `purchase_list` / `dispatch_by_state` views.
+- Money-moving functions are service-role only; the site calls them from server actions with `SUPABASE_SECRET_KEY`.
+- The same rules live in TypeScript with tests: `src/lib/{orders,payments,draw,pricing/audit}.ts`. Keep both in step.
+- Auth: passwordless OTP (`/sign-in`), session refreshed in `src/proxy.ts`, `/admin` gated by `StaffGate` (staff role).
+- Without the Supabase env vars the site runs on sample data ("demo mode"); nothing is saved.

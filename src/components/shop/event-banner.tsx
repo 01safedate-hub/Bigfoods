@@ -5,14 +5,14 @@ import { useNow } from "@/hooks/use-now";
 import { bannerFor, THEMES } from "@/lib/events";
 import { useSiteData } from "./site-data";
 
-export function EventBanner() {
+export function EventBanner({ className = "" }: { className?: string }) {
   const now = useNow(60_000);
   const { events } = useSiteData();
   const t = now === null ? THEMES.everyday : bannerFor(now, events);
   return (
     <Link
       href="/deals"
-      className="relative flex h-44 flex-col justify-between overflow-hidden rounded-md p-[18px] md:h-full md:min-h-[300px] md:p-8"
+      className={`relative flex h-full flex-col justify-between overflow-hidden rounded-md p-[18px] md:p-8 ${className}`}
       style={{ background: "var(--banner-bg)", color: "var(--banner-fg)" }}
     >
       <svg aria-hidden width="220" height="220" viewBox="0 0 100 100" className="absolute -bottom-16 -right-12 md:-bottom-24 md:size-[380px]">

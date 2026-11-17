@@ -31,7 +31,7 @@ export function ShopFooter() {
       <div className="mx-auto grid max-w-[1360px] grid-cols-2 gap-6 px-4 py-8 text-[13px] md:grid-cols-4 md:px-6">
         <div className="flex flex-col gap-1.5">
           <strong>Help</strong>
-          <Link href="/account" className="text-[#444]">Track an order</Link>
+          <Link href="/track" className="text-[#444]">Track an order</Link>
           <Link href="/account" className="text-[#444]">Returns &amp; refunds</Link>
           <Link href="/checkout" className="text-[#444]">Pickup stations</Link>
         </div>

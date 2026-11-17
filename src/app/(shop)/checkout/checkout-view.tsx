@@ -2,8 +2,8 @@
 
 import { ChevronDown, ChevronLeft, ChevronUp, Copy, Lock, MapPin, Plane } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 import { useCart } from "@/components/shop/cart-provider";
 import { useLivePromo } from "@/components/shop/live-price";
 import { ProductTile } from "@/components/shop/product-card";
@@ -16,7 +16,7 @@ import { useSiteData } from "@/components/shop/site-data";
 import { cn, naira } from "@/lib/format";
 import { unitFromPrices } from "@/lib/pricing/prices";
 import { buildSchedule, planOptions, SMALL_SMALL } from "@/lib/payments/instalments";
-import { type CheckoutQuote, quoteCheckout } from "../actions";
+import { type CheckoutQuote, placeOrder, quoteCheckout } from "../actions";
 import { addDaysLabel } from "@/lib/time";
 
 type Mode = "full" | "small" | "group";
@@ -26,7 +26,11 @@ export function CheckoutView() {
   const params = useSearchParams();
   const initial = params.get("pay");
   const [mode, setMode] = useState<Mode>(initial === "small" || initial === "group" ? initial : "full");
-  const { items } = useCart();
+  const { items, remove } = useCart();
+  const router = useRouter();
+  const [phone, setPhone] = useState("");
+  const [placing, startPlacing] = useTransition();
+  const [placeMsg, setPlaceMsg] = useState<string | null>(null);
   const promo = useLivePromo();
   const now = useNow(60_000);
   const [claimed] = useClaimed();
@@ -151,7 +155,7 @@ export function CheckoutView() {
             </label>
             <label className="flex flex-col gap-1 text-xs font-bold">
               Phone for SMS
-              <input type="tel" defaultValue="0803 000 4412" className="min-h-11 border border-black/15 px-2 text-sm font-normal" />
+              <input type="tel" inputMode="tel" autoComplete="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0803 000 0000" className="min-h-11 border border-black/15 px-2 text-sm font-normal" />
             </label>
           </div>
           <div className="flex flex-col gap-1.5" role="radiogroup" aria-label="Pickup station">
@@ -325,7 +329,29 @@ export function CheckoutView() {
         {quote.points > 0 && <div className="flex justify-between"><span className="text-muted">Points</span><span className="text-sale">−{naira(quote.points)}</span></div>}
         <div className="flex justify-between border-t border-line pt-1.5 text-base"><strong>Total</strong><strong>{naira(due)}</strong></div>
         <div className="fixed inset-x-0 bottom-0 z-30 flex flex-col gap-1 border-t border-line bg-white px-3 pt-2 pb-[max(14px,env(safe-area-inset-bottom))] md:static md:border-0 md:p-0 md:pt-2">
-          <button type="button" className="min-h-[50px] bg-sale text-[15px] font-extrabold text-white">{cta}</button>
+          {placeMsg && <p role="alert" className="text-center text-xs font-semibold text-sale">{placeMsg}</p>}
+          <button
+            type="button"
+            disabled={placing || selected.length === 0}
+            onClick={() =>
+              startPlacing(async () => {
+                setPlaceMsg(null);
+                const r = await placeOrder({
+                  items: selected.map((i) => ({ slug: i.slug, variantId: i.variantId, qty: i.qty })),
+                  stationId: station, phone, mode, weeks, claimedCouponIds: claimed,
+                });
+                if (!r.ok) return setPlaceMsg(r.message);
+                try {
+                  sessionStorage.setItem(`fc-track-${r.code}`, phone.replace(/\D/g, "").slice(-4));
+                } catch {}
+                for (const i of selected) remove(i.key);
+                router.push(`/track?code=${r.code}`);
+              })
+            }
+            className="min-h-[50px] bg-sale text-[15px] font-extrabold text-white disabled:opacity-60"
+          >
+            {placing ? "PLACING ORDER…" : cta}
+          </button>
           <span className="text-center text-[11px] text-muted">Paid via licensed processors · refund if it never reaches the station</span>
         </div>
       </aside>

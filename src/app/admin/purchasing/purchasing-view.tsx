@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import type { LivePurchasing } from "@/lib/data/admin";
+import { dispatchState, recordPurchase } from "../actions";
 import { Progress } from "@/components/ui/progress";
 import { useNow } from "@/hooks/use-now";
 import { cn } from "@/lib/format";
@@ -11,7 +13,7 @@ const TABS: Tab[] = ["To buy", "In transit", "Sort & dispatch by state", "Shippe
 const DAY = 86_400_000;
 
 /** Sample purchase list (built nightly from paid orders by the `build-purchase-list` edge function). */
-const ROWS = [
+const SAMPLE_ROWS = [
   { id: "r1", name: "Android phone 6.7\" 5G", variant: "Black / 256GB", orders: 12, supplier: "Shenzhen Haoyu Tech", cny: 620, need: 14, ship: "Air" },
   { id: "r2", name: "Android phone 6.7\" 5G", variant: "Blue / 128GB", orders: 6, supplier: "Shenzhen Haoyu Tech", cny: 540, need: 6, ship: "Air" },
   { id: "r3", name: "Body wave lace wig 22\"", variant: "Natural black", orders: 21, supplier: "Xuchang Meisi Hair", cny: 145, need: 23, ship: "Air" },
@@ -22,7 +24,7 @@ const ROWS = [
   { id: "r8", name: "Ergonomic office chair", variant: "Black mesh", orders: 8, supplier: "Foshan Linyi Furniture", cny: 260, need: 8, ship: "Sea" },
 ];
 
-const STATES = [
+const SAMPLE_STATES = [
   { name: "Lagos", orders: 142, units: 388, ready: 100, stations: 31 },
   { name: "FCT Abuja", orders: 61, units: 170, ready: 92, stations: 14 },
   { name: "Rivers", orders: 38, units: 96, ready: 100, stations: 9 },
@@ -40,17 +42,30 @@ const SHIPMENTS = [
 const fmtDate = (ms: number) => new Date(ms).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Africa/Lagos" });
 const shipBadge = (mode: string) => cn("rounded px-1.5 py-0.5 text-[11px] font-bold", mode === "Sea" ? "bg-[#E8EEF9] text-sea" : "bg-[#ECFDF3] text-success");
 
-export function PurchasingView() {
+export function PurchasingView({ live }: { live?: LivePurchasing | null }) {
   const now = useNow(60_000) ?? 0;
+  const ROWS = live?.rows ?? SAMPLE_ROWS;
+  const STATES = live?.states ?? SAMPLE_STATES;
   const [tab, setTab] = useState<Tab>("To buy");
-  const [bought, setBought] = useState<Record<string, number>>({ r1: 14, r2: 6, r3: 10, r4: 41, r5: 0, r6: 96, r7: 30, r8: 0 });
+  const [bought, setBought] = useState<Record<string, number>>(
+    live ? Object.fromEntries(live.rows.map((r) => [r.id, r.bought])) : { r1: 14, r2: 6, r3: 10, r4: 41, r5: 0, r6: 96, r7: 30, r8: 0 },
+  );
   const [shipped, setShipped] = useState<Record<string, number>>({});
+  const [saving, startSaving] = useTransition();
+  const [note, setNote] = useState<string | null>(null);
+  const save = (id: string, qty: number) => {
+    if (!live) return;
+    startSaving(async () => {
+      const r = await recordPurchase(id, qty);
+      setNote(r.ok ? null : r.message);
+    });
+  };
 
   const need = ROWS.reduce((n, r) => n + r.need, 0);
   const got = ROWS.reduce((n, r) => n + Math.min(r.need, bought[r.id] ?? 0), 0);
   const spend = ROWS.reduce((n, r) => n + (bought[r.id] ?? 0) * r.cny, 0);
-  // Demo: Rivers went out 4 days ago.
-  const shippedAt = { Rivers: now - 4 * DAY, ...shipped };
+  // Demo data: Rivers went out 4 days ago.
+  const shippedAt: Record<string, number> = live ? shipped : { Rivers: now - 4 * DAY, ...shipped };
 
   return (
     <>
@@ -67,7 +82,7 @@ export function PurchasingView() {
 
       <section className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-6">
         {[
-          ["Orders awaiting purchase", "214", "incl. funded group-pay items"], ["Units to buy", need.toLocaleString(), `${got} bought so far`],
+          ["Orders awaiting purchase", live ? String(ROWS.reduce((n, r) => n + r.orders, 0)) : "214", "incl. funded group-pay items"], ["Units to buy", need.toLocaleString(), `${got} bought so far`],
           ["Spend today", `¥${spend.toLocaleString()}`, `≈ ₦${(spend * NAIRA_PER_CNY).toLocaleString()}`], ["In transit", "3", "2 air · 1 sea"],
           ["Arrived, sorting", "827", "units across 6 states"], ["Auto-delivered this week", "302", "closed by the 10-day rule"],
         ].map(([l, v, s]) => (
@@ -93,7 +108,10 @@ export function PurchasingView() {
             <span className="text-[#5B6170]">Built at 6:00 from paid orders, completed Pay-small-small plans and fully funded Group-pay items. The same item across orders is combined.</span>
             <span className="flex gap-2">
               <button type="button" className="min-h-[38px] rounded-md border border-[#D0D4DB] bg-white px-3 font-semibold">Export for agent</button>
-              <button type="button" onClick={() => setBought(Object.fromEntries(ROWS.map((r) => [r.id, r.need])))} className="min-h-[38px] rounded-md bg-ink px-3 font-bold text-white">Mark all as bought</button>
+              <button type="button" onClick={() => {
+                  setBought(Object.fromEntries(ROWS.map((r) => [r.id, r.need])));
+                  for (const r of ROWS) save(r.id, r.need);
+                }} className="min-h-[38px] rounded-md bg-ink px-3 font-bold text-white">Mark all as bought</button>
             </span>
           </div>
           <div className="relative overflow-x-auto">
@@ -117,7 +135,7 @@ export function PurchasingView() {
                       <td className="px-3 py-2.5 font-bold tabular-nums">{r.need}</td>
                       <td className="relative px-3 py-2.5">
                         <label className="sr-only" htmlFor={r.id}>Quantity bought of {r.name} {r.variant}</label>
-                        <input id={r.id} type="number" min={0} value={b} onChange={(e) => setBought({ ...bought, [r.id]: Math.max(0, Number(e.target.value) || 0) })} className="w-[72px] rounded-md border border-[#D0D4DB] p-2" />
+                        <input id={r.id} type="number" min={0} value={b} onChange={(e) => setBought({ ...bought, [r.id]: Math.max(0, Math.floor(Number(e.target.value)) || 0) })} onBlur={() => save(r.id, bought[r.id] ?? 0)} className="w-[72px] rounded-md border border-[#D0D4DB] p-2" />
                       </td>
                       <td className="px-3 py-2.5 tabular-nums">¥{(b * r.cny).toLocaleString()}</td>
                       <td className="px-3 py-2.5">
@@ -132,6 +150,7 @@ export function PurchasingView() {
             </table>
           </div>
           <div className="flex flex-wrap justify-end gap-4 border-t border-[#EEF0F3] p-3.5 tabular-nums">
+            {(saving || note) && <span role="status" className={note ? "text-sale" : "text-[#5B6170]"}>{saving ? "Saving…" : note}</span>}
             <span>Bought: <strong>{got} / {need}</strong> units</span>
             <span>Spend: <strong>¥{spend.toLocaleString()}</strong> ≈ <strong>₦{(spend * NAIRA_PER_CNY).toLocaleString()}</strong></span>
           </div>
@@ -157,7 +176,7 @@ export function PurchasingView() {
           <p className="text-[#5B6170]">Arrived items are sorted into state bins. Dispatch one state at a time. Partly-arrived orders wait unless the customer chose “ship what’s ready”.</p>
           <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
             {STATES.map((s) => {
-              const at = shippedAt[s.name as keyof typeof shippedAt];
+              const at = shippedAt[s.name];
               const full = s.ready >= 100;
               return (
                 <div key={s.name} className="flex flex-col gap-2 rounded-lg border border-[#E3E5EA] bg-white p-3.5">
@@ -170,7 +189,10 @@ export function PurchasingView() {
                   <button
                     type="button"
                     disabled={!!at}
-                    onClick={() => setShipped({ ...shipped, [s.name]: Date.now() })}
+                    onClick={() => {
+                      setShipped({ ...shipped, [s.name]: Date.now() });
+                      if (live) startSaving(async () => setNote((await dispatchState(s.name)).message));
+                    }}
                     className={cn("min-h-10 rounded-md font-bold", at ? "bg-[#EEF0F3] text-[#5B6170]" : full ? "bg-ink text-white" : "border border-[#D0D4DB] bg-white")}
                   >
                     {at ? "Dispatched ✓" : full ? `Dispatch ${s.name} batch` : "Dispatch ready orders only"}

@@ -1,6 +1,6 @@
 import { Moon } from "lucide-react";
 import Link from "next/link";
-import { EventBanner } from "@/components/shop/event-banner";
+import { HeroCarousel } from "@/components/shop/hero-carousel";
 import { TrustGrid } from "@/components/shop/footer";
 import { ProductFeed } from "@/components/shop/product-feed";
 import { ClearOutTile, CouponRow, FlashSale, MidnightStrip, RetailerTile } from "@/components/shop/promos";
@@ -26,8 +26,8 @@ export default async function HomePage() {
       </div>
 
       <section aria-label="Featured" className="grid gap-2.5 px-3 md:grid-cols-3 md:px-0">
-        <div className="md:col-span-2">
-          <EventBanner />
+        <div className="min-w-0 md:col-span-2">
+          <HeroCarousel />
         </div>
         <div className="hidden grid-rows-2 gap-2.5 md:grid">
           <div className="flex flex-col justify-between gap-2 rounded-md bg-night p-5 text-white">

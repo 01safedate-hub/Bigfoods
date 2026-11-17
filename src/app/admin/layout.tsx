@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { AdminNav } from "./admin-nav";
+import { StaffGate } from "./staff-gate";
 
 export const metadata: Metadata = { title: { default: "Admin", template: "%s · FastChina admin" }, robots: { index: false, follow: false } };
 
-/** Admin shell. Access will be enforced with Supabase Auth + role checks (RLS) when the backend is connected. */
+/** Admin shell. Every page goes through StaffGate (Supabase Auth + staff role); the database enforces the same with RLS. */
 export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   return (
     <div className="flex min-h-dvh flex-col bg-[#F4F5F7] text-[13px] lg:flex-row">
@@ -13,13 +15,12 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
           <span className="text-[11px] font-bold text-gold">admin</span>
         </div>
         <AdminNav />
-        <div className="mt-auto hidden flex-col gap-1.5 rounded-lg bg-[#1A1D24] p-3 lg:flex">
-          <strong className="text-white">Ada Okafor</strong>
-          <span className="text-xs">Role: <strong className="text-gold">Purchasing officer</strong></span>
-          <span className="text-xs leading-relaxed text-[#A0A6B1]">Can view orders, purchasing, arrivals and dispatch. Pricing rules need Super admin or Finance.</span>
-        </div>
       </aside>
-      <main className="flex min-w-0 flex-1 flex-col gap-4 p-4 md:p-6">{children}</main>
+      <main className="flex min-w-0 flex-1 flex-col gap-4 p-4 md:p-6">
+        <Suspense fallback={<p className="text-[#5B6170]">Checking access…</p>}>
+          <StaffGate>{children}</StaffGate>
+        </Suspense>
+      </main>
     </div>
   );
 }

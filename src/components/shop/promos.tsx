@@ -40,15 +40,15 @@ export function CouponRow({ compact = false }: { compact?: boolean }) {
         const got = claimed.includes(c.id);
         const copy = c;
         return compact ? (
-          <div key={c.id} className="flex w-[148px] shrink-0 flex-col overflow-hidden rounded-lg border border-line bg-white md:w-auto md:flex-1">
-            <span className="flex flex-col gap-0.5 p-3 pb-2">
-              <strong className="text-lg leading-tight">{c.label.replace(" gadgets", "")}</strong>
-              <span className="text-[11px] text-subtle">{copy.rule}</span>
+          <div key={c.id} className="flex w-[150px] shrink-0 flex-col overflow-hidden rounded-md border border-[#F6C9CF] bg-sale-soft md:w-auto md:flex-1">
+            <span className="flex flex-col gap-0.5 p-2.5 pb-1.5">
+              <strong className="text-lg text-sale">{c.label.replace(" gadgets", "")}</strong>
+              <span className="text-[11px] text-[#5A1520]">{copy.rule}</span>
             </span>
             <button
               type="button"
               onClick={() => !got && setClaimed([...claimed, c.id])}
-              className={cn("min-h-9 border-t border-dashed border-line text-xs font-extrabold tracking-wide", got ? "text-success" : "text-sale")}
+              className={cn("min-h-9 border-t border-dashed border-[#F0A9B3] text-xs font-extrabold", got ? "text-sale" : "bg-sale text-white")}
             >
               {got ? "CLAIMED ✓" : "CLAIM"}
             </button>
