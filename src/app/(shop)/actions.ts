@@ -215,7 +215,8 @@ export async function trackOrder(code: unknown, last4: unknown): Promise<{ ok: t
   if (typeof last4 !== "string" || !/^\d{4}$/.test(last4)) return { ok: false, message: "Enter the last 4 digits of your phone number." };
   if (!(await allow("track", 20, 600))) return { ok: false, message: TOO_MANY };
   if (!hasSupabase) return { ok: false, message: "Tracking turns on when the database is connected." };
-  const { data, error } = await publicDb().rpc("track_order", { p_code: code.trim(), p_last4: last4 });
+  // Server-only in the database, so the rate limit above can't be skipped by calling Supabase directly.
+  const { data, error } = await secretDb().rpc("track_order", { p_code: code.trim(), p_last4: last4 });
   if (error) return { ok: false, message: "Something went wrong. Try again." };
   return data ? { ok: true, order: data as TrackedOrder } : { ok: false, message: "We couldn’t find that order. Check the code and phone number." };
 }
