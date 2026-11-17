@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import type { PendingQuestion } from "@/lib/data/admin";
 import { answerQuestion } from "../actions";
+import { call } from "@/lib/net";
 
 const QUICK = [
   "Yes. ",
@@ -25,7 +26,7 @@ export function QuestionsView({ questions }: { questions: PendingQuestion[] }) {
 
   const act = (q: PendingQuestion, hide: boolean) =>
     start(async () => {
-      const r = await answerQuestion(q.id, drafts[q.id] ?? "", hide);
+      const r = await call(() => answerQuestion(q.id, drafts[q.id] ?? "", hide));
       if (r.ok) setList((l) => l.filter((x) => x.id !== q.id));
       else setErrors((e) => ({ ...e, [q.id]: r.message }));
     });

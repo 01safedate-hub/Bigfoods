@@ -18,6 +18,8 @@ import { unitFromPrices } from "@/lib/pricing/prices";
 import { buildSchedule, planOptions, SMALL_SMALL } from "@/lib/payments/instalments";
 import { type CheckoutQuote, placeOrder, quoteCheckout } from "../actions";
 import { addDaysLabel } from "@/lib/time";
+import { useOnline } from "@/hooks/use-online";
+import { attempt } from "@/lib/net";
 
 type Mode = "full" | "small" | "group";
 
@@ -50,18 +52,29 @@ export function CheckoutView() {
 
   // The total, coupon and points are worked out on the server with the guardrails; the browser never sees costs.
   const [serverQuote, setServerQuote] = useState<CheckoutQuote | null>(null);
+  const [quoteFailed, setQuoteFailed] = useState(false);
+  const online = useOnline();
   const requestKey = JSON.stringify([selected.map((i) => [i.slug, i.variantId, i.qty]), claimed, usePoints]);
   useEffect(() => {
     let live = true;
     quoteCheckout(selected.map((i) => ({ slug: i.slug, variantId: i.variantId, qty: i.qty })), { claimedCouponIds: claimed, usePoints })
-      .then((q) => live && setServerQuote(q))
-      .catch(() => live && setServerQuote(null));
+      .then((q) => {
+        if (!live) return;
+        setServerQuote(q);
+        setQuoteFailed(false);
+      })
+      .catch(() => {
+        if (!live) return;
+        setServerQuote(null);
+        setQuoteFailed(true);
+      });
     return () => {
       live = false;
     };
     // requestKey captures every input that changes the quote.
+    // Re-quote when connection comes back.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [requestKey]);
+  }, [requestKey, online]);
 
   const estimateList = selected.reduce((s, i) => s + i.snap.prices.list * i.qty, 0);
   const estimate = selected.reduce((s, i) => s + unitOf(i) * i.qty, 0);
@@ -329,16 +342,20 @@ export function CheckoutView() {
         <div className="flex justify-between border-t border-line pt-1.5 text-base"><strong>Total</strong><strong>{naira(due)}</strong></div>
         <div className="fixed inset-x-0 bottom-0 z-30 flex flex-col gap-1 border-t border-line bg-white px-3 pt-2 pb-[max(14px,env(safe-area-inset-bottom))] md:static md:border-0 md:p-0 md:pt-2">
           {placeMsg && <p role="alert" className="text-center text-xs font-semibold text-sale">{placeMsg}</p>}
+          {!placeMsg && !online && <p role="status" className="text-center text-xs font-semibold text-muted">You’re offline. We’ll confirm your total when you reconnect.</p>}
+          {!placeMsg && online && quoteFailed && <p role="status" className="text-center text-xs font-semibold text-muted">Showing an estimate. We couldn’t confirm the final total yet; it updates when your connection settles.</p>}
           <button
             type="button"
-            disabled={placing || selected.length === 0}
+            disabled={placing || selected.length === 0 || !online || !serverQuote}
             onClick={() =>
               startPlacing(async () => {
                 setPlaceMsg(null);
-                const r = await placeOrder({
+                const call = await attempt(() => placeOrder({
                   items: selected.map((i) => ({ slug: i.slug, variantId: i.variantId, qty: i.qty })),
                   stationId: station, phone, mode, weeks, claimedCouponIds: claimed, usePoints,
-                });
+                }));
+                if (!call.ok) return setPlaceMsg(call.message);
+                const r = call.value;
                 if (!r.ok) return setPlaceMsg(r.message);
                 try {
                   sessionStorage.setItem(`fc-track-${r.code}`, phone.replace(/\D/g, "").slice(-4));
@@ -349,7 +366,7 @@ export function CheckoutView() {
             }
             className="min-h-[50px] bg-sale text-[15px] font-extrabold text-white disabled:opacity-60"
           >
-            {placing ? "PLACING ORDER…" : cta}
+            {placing ? "PLACING ORDER…" : !online ? "OFFLINE" : !serverQuote ? "CHECKING TOTAL…" : cta}
           </button>
           <span className="text-center text-[11px] text-muted">Paid via licensed processors · refund if it never reaches the station</span>
         </div>

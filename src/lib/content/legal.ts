@@ -33,8 +33,24 @@ export const LEGAL: Record<string, LegalDoc> = {
       { h: "Why", p: ["To fulfil your orders (contract), to prevent fraud and keep promotions fair (legitimate interest), and to send marketing only if you agree (consent, which you can withdraw any time)."] },
       { h: "Who sees it", p: ["Our staff, only as their role needs; Jumia, to deliver to your station; payment processors; and our hosting and SMS providers. Group pay contributors see item names and totals, never your phone number or address. We never sell your data."] },
       { h: "Where it’s stored", p: ["Our database is hosted by Supabase in the European Union, with safeguards for transfers out of Nigeria as the Act requires."] },
-      { h: "How long", p: ["Order and payment records: as long as tax and accounting law requires. Everything else: until you delete your account."] },
-      { h: "Your rights", p: ["Ask to see, correct, move or delete your data, or object to how we use it, by writing to [DPO EMAIL]. You can also complain to the Nigeria Data Protection Commission."] },
+      { h: "Cookies and storage on your device", p: [
+        "We use one essential cookie to keep you signed in. We don’t use advertising or tracking cookies, so there’s no cookie banner.",
+        "Your cart, saved items and a few display settings are kept in your browser’s storage so they work without signing in and when you’re offline. Clearing your browser data removes them.",
+        "If you add FastChina to your home screen, your phone keeps copies of public pages (like product pages) so they open without a connection. Account and checkout pages are never stored.",
+      ] },
+      { h: "Emails and notifications", p: [
+        "Order, payment and refund emails are part of the service. Offer emails (like Midnight Drop alerts) are only sent if you switch them on, and every one has an unsubscribe link.",
+        "If an email bounces or is reported as spam, we stop emailing that address. To protect against abuse we count requests per connection using a one-way scrambled (hashed) form of your IP address, kept for 2 days.",
+      ] },
+      { h: "How long", p: [
+        "Order and payment records: as long as tax and accounting law requires, then deleted.",
+        "Notifications: read ones after 90 days, all after a year. Email contents and addresses in our send log: after 180 days.",
+        "Everything else: until you delete your account.",
+      ] },
+      { h: "Your rights", p: [
+        "Download everything we hold about you, or delete your account, any time from My account → Your data and privacy.",
+        "You can also ask us to correct your data or object to how we use it by writing to [DPO EMAIL]. We reply within 30 days. You can complain to the Nigeria Data Protection Commission at any time.",
+      ] },
     ],
   },
   refunds: {

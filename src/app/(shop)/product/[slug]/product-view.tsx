@@ -16,6 +16,7 @@ import { PRICING } from "@/lib/pricing/config";
 import { unitFromPrices, weekly as weeklyOf } from "@/lib/pricing/prices";
 import { addDaysLabel } from "@/lib/time";
 import { askQuestion } from "../../actions";
+import { attempt } from "@/lib/net";
 
 type Pay = "full" | "small" | "group";
 
@@ -252,8 +253,9 @@ export function ProductView({ product }: { product: Product }) {
               const v = draft.trim();
               if (!v || asking) return;
               setAsking(true);
-              const res = await askQuestion(product.slug, v);
+              const call = await attempt(() => askQuestion(product.slug, v));
               setAsking(false);
+              const res = call.ok ? call.value : { ok: false, message: call.message };
               setAskNote(res);
               if (res.ok) {
                 setQa([{ q: v, who: "You · just now" }, ...qa]);

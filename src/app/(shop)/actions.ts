@@ -5,6 +5,7 @@ import { getSiteData } from "@/lib/data/site";
 import type { OrderStatus } from "@/lib/orders/lifecycle";
 import { planOptions } from "@/lib/payments/instalments";
 import { redirect } from "next/navigation";
+import { allow, TOO_MANY } from "@/lib/rate-limit";
 import { getSessionUser, userDb } from "@/lib/supabase/auth";
 import { hasSupabase } from "@/lib/supabase/env";
 import { publicDb, secretDb } from "@/lib/supabase/server";
@@ -126,6 +127,7 @@ export async function searchCatalog(q: unknown): Promise<string[] | null> {
   if (typeof q !== "string") return [];
   const term = q.trim().slice(0, 120);
   if (term.length < 2) return [];
+  if (!(await allow("search", 120, 60))) return [];
   return searchSlugs(term);
 }
 
@@ -136,6 +138,7 @@ export async function askQuestion(slug: unknown, question: unknown, name?: unkno
   if (q.length < 5) return { ok: false, message: "Write a little more so our team can help." };
   if (q.length > 300) return { ok: false, message: "Keep it under 300 characters." };
   if (/https?:\/\/|www\./i.test(q)) return { ok: false, message: "Links aren’t allowed in questions." };
+  if (!(await allow("ask", 5, 600))) return { ok: false, message: TOO_MANY };
   const who = typeof name === "string" && name.trim() ? name.trim().slice(0, 40) : "Customer";
   const res = await insertQuestion(slug.slice(0, 120), q, who);
   if (res === "unknown-product") return { ok: false, message: "This product isn’t available any more." };
@@ -165,6 +168,7 @@ export async function placeOrder(input: {
   if (!["full", "small", "group"].includes(input.mode)) return { ok: false, message: "Choose how to pay." };
   if (typeof input.stationId !== "string" || !input.stationId) return { ok: false, message: "Choose a pickup station." };
   if (!hasSupabase) return { ok: false, demo: true, message: "Demo mode: orders turn on when the database is connected." };
+  if (!(await allow("order", 10, 600))) return { ok: false, message: TOO_MANY };
 
   const { requested, lines, best, q, promo, user } = await computeQuote(input.items, input.claimedCouponIds, Boolean(input.usePoints));
   if (!lines.length) return { ok: false, message: "Your cart is empty." };
@@ -209,6 +213,7 @@ export interface TrackedOrder {
 export async function trackOrder(code: unknown, last4: unknown): Promise<{ ok: true; order: TrackedOrder } | { ok: false; message: string }> {
   if (typeof code !== "string" || !/^[A-Za-z0-9]{8}$/.test(code.trim())) return { ok: false, message: "Order codes are 8 letters and numbers." };
   if (typeof last4 !== "string" || !/^\d{4}$/.test(last4)) return { ok: false, message: "Enter the last 4 digits of your phone number." };
+  if (!(await allow("track", 20, 600))) return { ok: false, message: TOO_MANY };
   if (!hasSupabase) return { ok: false, message: "Tracking turns on when the database is connected." };
   const { data, error } = await publicDb().rpc("track_order", { p_code: code.trim(), p_last4: last4 });
   if (error) return { ok: false, message: "Something went wrong. Try again." };
@@ -307,4 +312,48 @@ export async function savePrefs(p: unknown): Promise<{ ok: boolean; message: str
   const row = { customer_id: user.id, order_email: v.order_email !== false, marketing_email: v.marketing_email === true, in_app_marketing: v.in_app_marketing !== false, updated_at: new Date().toISOString() };
   const { error } = await (await userDb()).from("notification_prefs").upsert(row);
   return error ? { ok: false, message: "Couldn’t save. Try again." } : { ok: true, message: "Saved" };
+}
+
+/** NDPA right of access: everything we hold about the signed-in customer, as JSON. */
+export async function exportMyData(): Promise<{ ok: true; json: string } | { ok: false; message: string }> {
+  const user = hasSupabase ? await getSessionUser() : null;
+  if (!user) return { ok: false, message: "Sign in to download your data." };
+  if (!(await allow("export", 5, 3600, user.id))) return { ok: false, message: TOO_MANY };
+  const db = await userDb();
+  const [profile, orders, wallet, points, notifications, wishlist, prefs] = await Promise.all([
+    db.from("profiles").select("full_name, phone, created_at").maybeSingle(),
+    db.from("orders").select("code, status, pay_mode, total_ngn, paid_ngn, state, phone, created_at, order_items(title, variant_label, qty, unit_ngn)").order("created_at"),
+    db.from("wallet_ledger").select("amount_ngn, reason, created_at").order("created_at"),
+    db.from("points_ledger").select("points, reason, created_at").order("created_at"),
+    db.from("notifications").select("title, body, created_at, read_at").order("created_at"),
+    db.from("wishlists").select("created_at, products(title, slug)"),
+    db.from("notification_prefs").select("order_email, marketing_email, in_app_marketing, updated_at").maybeSingle(),
+  ]);
+  const json = JSON.stringify({
+    exported_at: new Date().toISOString(),
+    account: { id: user.id, email: user.email, phone: user.phone, ...profile.data },
+    orders: orders.data ?? [], wallet: wallet.data ?? [], points: points.data ?? [],
+    notifications: notifications.data ?? [], wishlist: wishlist.data ?? [], notification_settings: prefs.data ?? null,
+  }, null, 2);
+  return { ok: true, json };
+}
+
+/**
+ * NDPA right to erasure. Personal data is removed and the sign-in deleted. Orders stay, anonymised,
+ * because tax law requires sales records. Not possible while an order is still being bought or shipped.
+ */
+export async function deleteMyAccount(confirm: unknown): Promise<{ ok: boolean; message: string }> {
+  if (confirm !== "DELETE") return { ok: false, message: "Type DELETE to confirm." };
+  const user = hasSupabase ? await getSessionUser() : null;
+  if (!user) return { ok: false, message: "Sign in first." };
+  if (!(await allow("delete", 3, 3600, user.id))) return { ok: false, message: TOO_MANY };
+  const db = secretDb();
+  const { count } = await db.from("orders").select("id", { count: "exact", head: true }).eq("customer_id", user.id).in("status", ["part_paid", "paid", "purchasing", "purchased", "at_warehouse", "shipped"]);
+  if (count) return { ok: false, message: "You have orders being bought or delivered. You can delete your account once they’ve arrived." };
+  const a = await db.rpc("anonymise_customer", { p_customer: user.id });
+  if (a.error) return { ok: false, message: "We couldn’t delete your account right now. Please try again later or email help@fastchina.shop." };
+  const d = await db.auth.admin.deleteUser(user.id);
+  if (d.error) return { ok: false, message: "We couldn’t delete your account right now. Please try again later or email help@fastchina.shop." };
+  await (await userDb()).auth.signOut().catch(() => {});
+  return { ok: true, message: "Your account has been deleted." };
 }

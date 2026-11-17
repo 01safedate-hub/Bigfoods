@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { naira } from "@/lib/format";
 import { cancelOrder } from "../actions";
+import { call } from "@/lib/net";
 
 export function CancelButton({ id, refund, paid }: { id: string; refund: boolean; paid: number }) {
   const router = useRouter();
@@ -19,7 +20,7 @@ export function CancelButton({ id, refund, paid }: { id: string; refund: boolean
         type="button"
         disabled={busy}
         onClick={() => start(async () => {
-          const r = await cancelOrder(id, note);
+          const r = await call(() => cancelOrder(id, note));
           setMsg(r.message);
           if (r.ok) router.refresh();
         })}

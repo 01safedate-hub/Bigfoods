@@ -12,6 +12,8 @@ export function Layout({ preview, children, marketing, unsubscribeUrl }: { previ
     <Html lang="en">
       <Head>
         <meta name="color-scheme" content="light only" />
+        <meta name="supported-color-schemes" content="light only" />
+        <meta name="x-apple-disable-message-reformatting" />
       </Head>
       <Preview>{preview}</Preview>
       <Body style={{ backgroundColor: "#F2F2F2", margin: 0, padding: "24px 0", fontFamily: font, color: C.ink }}>

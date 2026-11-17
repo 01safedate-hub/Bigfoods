@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ProductIcon } from "@/components/ui/product-icon";
+import { SafeImage } from "@/components/ui/safe-image";
 import type { IconKey, Product } from "@/lib/catalog/types";
 import { compact } from "@/lib/format";
 import { AddToCartIcon, WishlistButton } from "./card-actions";
@@ -34,7 +34,11 @@ export function ProductTile({ tint, icon, name, image, badge, className = "", ic
   const badgeClass = !badge ? "" : badge === "Gadget" ? "bg-ink text-white" : badge.startsWith("TOP") ? "bg-[#F5DE9A] text-gold-ink" : badge === "Business" ? "bg-[#7A5C17] text-white" : "bg-sale text-white";
   return (
     <span className={`relative flex items-center justify-center overflow-hidden rounded ${className}`} style={{ background: tint }}>
-      {image ? <Image src={image} alt={name} fill sizes={sizes} priority={priority} className="object-cover" /> : <ProductIcon icon={icon} size={iconSize} />}
+      {image ? (
+        <SafeImage src={image} alt={name} fill sizes={sizes} priority={priority} className="object-cover" fallback={<ProductIcon icon={icon} size={iconSize} />} />
+      ) : (
+        <ProductIcon icon={icon} size={iconSize} />
+      )}
       {badge && <span className={`absolute left-0 top-0 z-[1] px-1.5 py-1 text-[10px] font-extrabold ${badgeClass}`}>{badge}</span>}
     </span>
   );

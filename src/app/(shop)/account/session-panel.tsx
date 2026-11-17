@@ -6,6 +6,7 @@ import { getSessionUser, userDb } from "@/lib/supabase/auth";
 import { hasSupabase } from "@/lib/supabase/env";
 import { signOut } from "../actions";
 import { CheckInButton } from "./check-in-button";
+import { DataRights } from "./data-rights";
 
 const REASON: Record<string, string> = {
   plan_cancelled: "Plan cancelled, refunded", group_refund: "Group pay refund", order_refund: "Order refund",
@@ -73,6 +74,8 @@ export async function SessionPanel() {
           ))}
         </details>
       )}
+      <Link href="/notifications" className="text-xs font-bold underline">Notifications and email settings</Link>
+      <DataRights />
       <h2 className="pt-1 text-sm font-extrabold">My orders</h2>
       {!orders?.length && <p className="text-muted">No orders yet.</p>}
       {orders?.map((o) => (

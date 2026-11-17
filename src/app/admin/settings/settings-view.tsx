@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import type { EditorData } from "@/lib/data/admin";
 import { cn } from "@/lib/format";
 import { saveRow } from "../actions";
+import { call } from "@/lib/net";
 
 type Kind = "text" | "number" | "date" | "bool" | "color" | "theme" | "textarea";
 interface Field { key: string; label: string; kind: Kind; wide?: boolean }
@@ -57,7 +58,7 @@ function RowEditor({ row: initial, tab, isNew }: { row: Row; tab: TabKey; isNew?
       onSubmit={(e) => {
         e.preventDefault();
         start(async () => {
-          const r = await saveRow(t.table, row);
+          const r = await call(() => saveRow(t.table, row));
           setMsg({ ok: r.ok, text: r.message });
         });
       }}

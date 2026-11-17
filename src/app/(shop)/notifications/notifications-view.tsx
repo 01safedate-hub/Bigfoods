@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { cn } from "@/lib/format";
 import { getPrefs, type InAppNotice, markNotificationsRead, myNotifications, type Prefs, savePrefs } from "../actions";
+import { call } from "@/lib/net";
 
 const ICON: Record<string, typeof Bell> = { order: Package, payment: CreditCard, group: Users, qa: MessageCircle, wallet: Wallet, promo: Sparkles, welcome: Gift };
 
@@ -41,7 +42,7 @@ export function NotificationsView() {
     if (!prefs) return;
     const next = { ...prefs, [k]: !prefs[k] };
     setPrefs(next);
-    start(async () => setMsg((await savePrefs(next)).message));
+    start(async () => setMsg((await call(() => savePrefs(next))).message));
   };
 
   if (data === undefined) return <div className="h-80" />;

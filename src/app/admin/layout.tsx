@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { OfflineBanner } from "@/components/ui/offline-banner";
 import { AdminNav } from "./admin-nav";
 import { StaffGate } from "./staff-gate";
 
@@ -16,7 +17,8 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
         </div>
         <AdminNav />
       </aside>
-      <main className="flex min-w-0 flex-1 flex-col gap-4 p-4 md:p-6">
+      <OfflineBanner />
+      <main id="main" className="flex min-w-0 flex-1 flex-col gap-4 p-4 md:p-6">
         <Suspense fallback={<p className="text-[#5B6170]">Checking access…</p>}>
           <StaffGate>{children}</StaffGate>
         </Suspense>

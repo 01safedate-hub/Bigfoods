@@ -3,6 +3,7 @@
 import { CalendarCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { attempt } from "@/lib/net";
 import { checkIn } from "../actions";
 
 export function CheckInButton() {
@@ -14,9 +15,10 @@ export function CheckInButton() {
       type="button"
       disabled={busy}
       onClick={() => start(async () => {
-        const r = await checkIn();
-        setMsg(r.message);
-        if (r.ok) router.refresh();
+        const call = await attempt(checkIn);
+        if (!call.ok) return setMsg(call.message);
+        setMsg(call.value.message);
+        if (call.value.ok) router.refresh();
       })}
       className="flex min-h-10 items-center justify-center gap-1.5 rounded-md bg-gold px-3 text-xs font-extrabold text-ink"
     >

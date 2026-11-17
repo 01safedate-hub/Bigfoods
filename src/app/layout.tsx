@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { ServiceWorker } from "@/components/ui/service-worker";
 import "./globals.css";
 
 /** Self-hosted (OFL) so pages never call Google Fonts. */
@@ -17,10 +18,15 @@ export const metadata: Metadata = {
   title: { default: "FastChina — China’s factories, delivered", template: "%s · FastChina" },
   description: "Shop 1688 factory prices in Naira with free shipping to your Jumia pickup station. Pay small small, group pay and Midnight Drop prices every night.",
   metadataBase: new URL("https://fastchina.shop"),
+  applicationName: "FastChina",
+  appleWebApp: { capable: true, title: "FastChina", statusBarStyle: "black-translucent" },
+  icons: { apple: "/apple-touch-icon.png" },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
   themeColor: "#111111",
+  colorScheme: "light",
   width: "device-width",
   initialScale: 1,
 };
@@ -28,7 +34,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" data-theme="everyday" className={`${inter.variable} ${instrument.variable} h-full antialiased`}>
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        {children}
+        <ServiceWorker />
+      </body>
     </html>
   );
 }

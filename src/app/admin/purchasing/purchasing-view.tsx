@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { useNow } from "@/hooks/use-now";
 import { cn } from "@/lib/format";
 import { NAIRA_PER_CNY } from "@/lib/pricing/config";
+import { call } from "@/lib/net";
 
 type Tab = "To buy" | "In transit" | "Sort & dispatch by state" | "Shipped";
 const TABS: Tab[] = ["To buy", "In transit", "Sort & dispatch by state", "Shipped"];
@@ -56,7 +57,7 @@ export function PurchasingView({ live }: { live?: LivePurchasing | null }) {
   const save = (id: string, qty: number) => {
     if (!live) return;
     startSaving(async () => {
-      const r = await recordPurchase(id, qty);
+      const r = await call(() => recordPurchase(id, qty));
       setNote(r.ok ? null : r.message);
     });
   };
@@ -191,7 +192,7 @@ export function PurchasingView({ live }: { live?: LivePurchasing | null }) {
                     disabled={!!at}
                     onClick={() => {
                       setShipped({ ...shipped, [s.name]: Date.now() });
-                      if (live) startSaving(async () => setNote((await dispatchState(s.name)).message));
+                      if (live) startSaving(async () => setNote((await call(() => dispatchState(s.name))).message));
                     }}
                     className={cn("min-h-10 rounded-md font-bold", at ? "bg-[#EEF0F3] text-[#5B6170]" : full ? "bg-ink text-white" : "border border-[#D0D4DB] bg-white")}
                   >

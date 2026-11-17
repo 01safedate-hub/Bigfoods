@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { setRole } from "../actions";
+import { call } from "@/lib/net";
 
 export function RoleSelect({ id, role, help }: { id: string; role: string; help: Record<string, string> }) {
   const [value, setValue] = useState(role);
@@ -18,7 +19,7 @@ export function RoleSelect({ id, role, help }: { id: string; role: string; help:
           const before = value;
           setValue(next);
           start(async () => {
-            const r = await setRole(id, next);
+            const r = await call(() => setRole(id, next));
             setMsg({ ok: r.ok, text: r.message });
             if (!r.ok) setValue(before);
           });

@@ -9,6 +9,7 @@ import { cn, naira } from "@/lib/format";
 import { AUTO_DELIVER_DAYS, trackingStep } from "@/lib/orders/lifecycle";
 import { planStatus } from "@/lib/payments/instalments";
 import { type TrackedOrder, trackOrder } from "../actions";
+import { attempt } from "@/lib/net";
 
 const STEPS = ["Payment", "Ordering", "China warehouse", "On the way", "At your station"];
 const day = (iso: string | number) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Africa/Lagos" });
@@ -24,7 +25,8 @@ export function TrackView() {
 
   const look = (c: string, l: string) =>
     start(async () => {
-      const r = await trackOrder(c, l);
+      const call = await attempt(() => trackOrder(c, l));
+      const r = call.ok ? call.value : { ok: false as const, message: call.message };
       if (r.ok) {
         setOrder(r.order);
         setMsg(null);
