@@ -88,3 +88,12 @@ export async function saveRow(table: unknown, row: unknown): Promise<Result> {
   updateTag("site");
   return { ok: true, message: "Saved" };
 }
+
+/** Puts a failed email back in the queue (the sender picks it up within a minute). */
+export async function retryEmail(id: unknown): Promise<Result> {
+  await requireStaff();
+  if (typeof id !== "string") return { ok: false, message: "Unknown email." };
+  if (!hasSupabase) return { ok: true, message: "Demo: not saved." };
+  const { error } = await secretDb().from("email_outbox").update({ status: "pending", attempts: 0, last_error: null, send_after: new Date().toISOString() }).eq("id", id).in("status", ["failed", "skipped"]);
+  return error ? { ok: false, message: error.message } : { ok: true, message: "Queued again" };
+}

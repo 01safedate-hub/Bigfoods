@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { DEPARTMENTS } from "@/lib/catalog/categories";
 import { cn } from "@/lib/format";
 import { useCart } from "./cart-provider";
+import { NotificationBell } from "./notification-bell";
 
 /** The bolt: FastChina's mark. Used alone on phones and as the favicon. */
 export function BoltMark({ size = 32, className }: { size?: number; className?: string }) {
@@ -66,6 +67,7 @@ export function ShopHeader() {
           </span>
           <span className="sr-only">Search</span>
         </Link>
+        <NotificationBell className="h-11 w-9" />
         <Link href="/wishlist" aria-label="Wishlist" className="flex h-11 w-9 items-center justify-center">
           <Heart aria-hidden size={24} strokeWidth={1.6} />
         </Link>
@@ -109,6 +111,7 @@ export function ShopHeader() {
           <Link href="/account" aria-label="Account" className="flex size-11 items-center justify-center">
             <User aria-hidden size={22} strokeWidth={1.6} />
           </Link>
+          <NotificationBell className="size-11" />
           <Link href="/wishlist" aria-label="Wishlist" className="flex size-11 items-center justify-center">
             <Heart aria-hidden size={22} strokeWidth={1.6} />
           </Link>

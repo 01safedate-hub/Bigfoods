@@ -53,6 +53,7 @@ export interface CheckoutQuote {
   coupon: number;
   couponNote?: string;
   points: number;
+  pointsBalance: number;
   total: number;
 }
 
@@ -60,15 +61,37 @@ export interface CheckoutQuote {
  * The checkout total. Runs on the server with costs the browser never sees, applies the best valid
  * coupon and enforces every guardrail. Returns selling amounts only (no costs or profit).
  */
-/** Prices a cart on the server with costs the browser never sees and picks the best valid coupon. */
-async function computeQuote(items: LineRequest[], claimedIds: unknown, pointsNaira: number) {
+/** Points the customer can spend now (100 points = ₦100). Demo mode shows sample points. */
+async function pointsBalance(userId: string | null): Promise<number> {
+  if (!hasSupabase) return DEMO_POINTS;
+  if (!userId) return 0;
+  const { data } = await (await userDb()).from("my_balances").select("points").maybeSingle();
+  return Math.max(0, data?.points ?? 0);
+}
+
+/**
+ * Prices a cart on the server with costs the browser never sees, then picks the best coupon this
+ * customer may actually use right now (live check: ended, used, first-order-only, run out).
+ */
+async function computeQuote(items: LineRequest[], claimedIds: unknown, usePoints: boolean) {
   const promo = activePromo();
   const requested = clean(items);
-  const lines = await getQuoteLines(requested);
+  const user = hasSupabase ? await getSessionUser() : null;
+  const [lines, { coupons }, balance] = await Promise.all([getQuoteLines(requested), getSiteData(), pointsBalance(user?.id ?? null)]);
   const claimed = Array.isArray(claimedIds) ? claimedIds.filter((x): x is string => typeof x === "string") : [];
-  // Coupon rules come from the database (only live coupons are readable), never from the browser.
-  const { coupons } = await getSiteData();
-  const pool = coupons.filter((c) => claimed.length === 0 || claimed.includes(c.id));
+  let pool = coupons.filter((c) => claimed.length === 0 || claimed.includes(c.id));
+
+  let couponHint: string | undefined;
+  if (hasSupabase) {
+    if (!user) {
+      if (pool.length) couponHint = "Sign in to use coupons";
+      pool = [];
+    } else {
+      const db = secretDb();
+      const reasons = await Promise.all(pool.map((c) => db.rpc("coupon_block_reason", { p_coupon: c.id, p_customer: user.id })));
+      pool = pool.filter((_, i) => !reasons[i].error && reasons[i].data === null);
+    }
+  }
 
   let best: Coupon | null = null;
   let bestValue = 0;
@@ -76,12 +99,12 @@ async function computeQuote(items: LineRequest[], claimedIds: unknown, pointsNai
     const v = quoteCart(lines, { promo, coupon: c }).coupon;
     if (v > bestValue) [best, bestValue] = [c, v];
   }
-  const q = quoteCart(lines, { promo, coupon: best, pointsNaira });
-  return { promo, requested, lines, best, q };
+  const q = quoteCart(lines, { promo, coupon: best, pointsNaira: usePoints ? balance : 0 });
+  return { promo, requested, lines, best, q, balance, couponHint, user };
 }
 
 export async function quoteCheckout(items: LineRequest[], opts: { claimedCouponIds?: string[]; usePoints?: boolean } = {}): Promise<CheckoutQuote> {
-  const { promo, requested, lines, best, q } = await computeQuote(items, opts.claimedCouponIds, opts.usePoints ? DEMO_POINTS : 0);
+  const { promo, requested, lines, best, q, balance, couponHint } = await computeQuote(items, opts.claimedCouponIds, Boolean(opts.usePoints));
   return {
     promo,
     lines: lines.map((l) => ({ slug: l.slug, variantId: l.variantId, qty: l.qty, prices: l.prices, unit: unitFromPrices(l.prices, l.qty, promo) })),
@@ -89,10 +112,11 @@ export async function quoteCheckout(items: LineRequest[], opts: { claimedCouponI
     subtotalList: q.subtotalList,
     subtotal: q.subtotal,
     priceSavings: q.priceSavings,
-    couponLabel: best?.label ?? null,
+    couponLabel: q.coupon > 0 ? (best?.label ?? null) : null,
     coupon: q.coupon,
-    couponNote: q.couponNote,
+    couponNote: q.coupon > 0 ? q.couponNote : (couponHint ?? q.couponNote),
     points: q.points,
+    pointsBalance: balance,
     total: q.total,
   };
 }
@@ -131,10 +155,10 @@ function normalisePhone(raw: unknown): string | null {
 
 /**
  * Places an order. Everything is re-priced here; the browser only says what's in the cart.
- * Points aren't used yet (wallet balances arrive with payments). Payment is taken next (Flutterwave).
+ * Coupons and points are checked again by the database when the order is saved. Payment is taken next (Flutterwave).
  */
 export async function placeOrder(input: {
-  items: LineRequest[]; stationId: string; phone: string; mode: "full" | "small" | "group"; weeks?: number; claimedCouponIds?: string[];
+  items: LineRequest[]; stationId: string; phone: string; mode: "full" | "small" | "group"; weeks?: number; claimedCouponIds?: string[]; usePoints?: boolean;
 }): Promise<PlaceResult> {
   const phone = normalisePhone(input?.phone);
   if (!phone) return { ok: false, message: "Enter a Nigerian phone number for SMS updates." };
@@ -142,7 +166,7 @@ export async function placeOrder(input: {
   if (typeof input.stationId !== "string" || !input.stationId) return { ok: false, message: "Choose a pickup station." };
   if (!hasSupabase) return { ok: false, demo: true, message: "Demo mode: orders turn on when the database is connected." };
 
-  const { requested, lines, best, q, promo } = await computeQuote(input.items, input.claimedCouponIds, 0);
+  const { requested, lines, best, q, promo, user } = await computeQuote(input.items, input.claimedCouponIds, Boolean(input.usePoints));
   if (!lines.length) return { ok: false, message: "Your cart is empty." };
   if (lines.length !== requested.length) return { ok: false, message: "Some items changed or sold out. Check your cart and try again." };
   let weeks: number | null = null;
@@ -151,15 +175,16 @@ export async function placeOrder(input: {
     if (!planOptions(q.total).includes(weeks)) return { ok: false, message: "That plan length isn’t available for this total." };
   }
 
-  const user = await getSessionUser();
+  // The database re-checks the coupon and the points balance under a lock, so they can't be used twice.
   const { data, error } = await secretDb().rpc("place_order", {
     p_customer: user?.id ?? null,
     p_station: input.stationId,
     p_phone: phone,
     p_mode: input.mode,
     p_total: q.total,
-    p_discount: q.coupon + q.points,
     p_coupon: q.coupon > 0 ? best?.id ?? null : null,
+    p_coupon_amount: q.coupon,
+    p_points: q.points,
     p_weeks: weeks,
     p_items: lines.map((l) => ({
       sku_id: l.variantId, qty: l.qty, unit: l.noDiscounts ? l.prices.list : unitFromPrices(l.prices, l.qty, promo),
@@ -240,4 +265,46 @@ export async function linkProgress(code: unknown): Promise<LinkProgress | null> 
   if (!hasSupabase || typeof code !== "string" || !/^[A-Za-z0-9-]{4,20}$/.test(code)) return null;
   const { data } = await publicDb().rpc("group_link_progress", { p_code: code });
   return ((data as LinkProgress[] | null) ?? [])[0] ?? null;
+}
+
+export interface InAppNotice { id: string; kind: string; title: string; body: string; link: string | null; created_at: string; read_at: string | null }
+
+/** The signed-in customer's latest notifications, or null when signed out. */
+export async function myNotifications(): Promise<{ items: InAppNotice[]; unread: number } | null> {
+  if (!hasSupabase) return null;
+  const user = await getSessionUser();
+  if (!user) return null;
+  const db = await userDb();
+  const [{ data }, { count }] = await Promise.all([
+    db.from("notifications").select("id, kind, title, body, link, created_at, read_at").order("created_at", { ascending: false }).limit(50),
+    db.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null),
+  ]);
+  return { items: (data ?? []) as InAppNotice[], unread: count ?? 0 };
+}
+
+export async function markNotificationsRead(ids?: unknown): Promise<void> {
+  if (!hasSupabase) return;
+  const db = await userDb();
+  let q = db.from("notifications").update({ read_at: new Date().toISOString() }).is("read_at", null);
+  if (Array.isArray(ids)) q = q.in("id", ids.filter((x): x is string => typeof x === "string").slice(0, 100));
+  await q;
+}
+
+export interface Prefs { order_email: boolean; marketing_email: boolean; in_app_marketing: boolean }
+
+export async function getPrefs(): Promise<Prefs | null> {
+  if (!hasSupabase) return null;
+  const user = await getSessionUser();
+  if (!user) return null;
+  const { data } = await (await userDb()).from("notification_prefs").select("order_email, marketing_email, in_app_marketing").maybeSingle();
+  return data ?? { order_email: true, marketing_email: false, in_app_marketing: true };
+}
+
+export async function savePrefs(p: unknown): Promise<{ ok: boolean; message: string }> {
+  const user = hasSupabase ? await getSessionUser() : null;
+  if (!user) return { ok: false, message: "Sign in to change notifications." };
+  const v = (p ?? {}) as Record<string, unknown>;
+  const row = { customer_id: user.id, order_email: v.order_email !== false, marketing_email: v.marketing_email === true, in_app_marketing: v.in_app_marketing !== false, updated_at: new Date().toISOString() };
+  const { error } = await (await userDb()).from("notification_prefs").upsert(row);
+  return error ? { ok: false, message: "Couldn’t save. Try again." } : { ok: true, message: "Saved" };
 }

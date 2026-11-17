@@ -1,0 +1,22 @@
+<!-- Supabase → Authentication → Emails → "Magic link" (also used for sign-in codes). Subject: "Your FastChina code: {{ .Token }}" -->
+<!doctype html>
+<html lang="en">
+  <body style="margin:0;padding:24px 0;background:#f2f2f2;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr><td align="center">
+        <table role="presentation" width="100%" style="max-width:480px;background:#fff;border-radius:12px" cellpadding="0" cellspacing="0">
+          <tr><td style="padding:20px 28px;border-bottom:1px solid #eaeaea">
+            <span style="display:inline-block;width:30px;height:30px;border-radius:7px;background:#111;color:#f5c542;text-align:center;line-height:30px;font-weight:900">&#9889;</span>
+            <span style="font-size:19px;font-weight:900;font-style:italic;vertical-align:middle;margin-left:6px">FAST<span style="color:#e11d48">CHINA</span></span>
+          </td></tr>
+          <tr><td style="padding:28px">
+            <h1 style="font-size:22px;margin:0 0 10px">Your sign-in code</h1>
+            <p style="font-size:15px;line-height:23px;margin:0 0 18px">Enter this code on FastChina. It expires in 10 minutes.</p>
+            <p style="font-size:34px;font-weight:800;letter-spacing:10px;font-family:Menlo,Consolas,monospace;background:#f6f6f6;border-radius:10px;padding:16px;text-align:center;margin:0 0 18px">{{ .Token }}</p>
+            <p style="font-size:13px;line-height:20px;color:#6b6b6b;margin:0">Didn’t ask for this? Ignore this email; nobody can sign in without the code. We’ll never ask you to share it.</p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>

@@ -20,7 +20,6 @@ import { type CheckoutQuote, placeOrder, quoteCheckout } from "../actions";
 import { addDaysLabel } from "@/lib/time";
 
 type Mode = "full" | "small" | "group";
-const POINTS = 1240;
 
 export function CheckoutView() {
   const params = useSearchParams();
@@ -66,7 +65,7 @@ export function CheckoutView() {
 
   const estimateList = selected.reduce((s, i) => s + i.snap.prices.list * i.qty, 0);
   const estimate = selected.reduce((s, i) => s + unitOf(i) * i.qty, 0);
-  const quote = serverQuote ?? { subtotalList: estimateList, subtotal: estimate, priceSavings: estimateList - estimate, coupon: 0, couponLabel: null, couponNote: undefined, points: 0, total: estimate, lines: [], missing: 0, promo };
+  const quote = serverQuote ?? { subtotalList: estimateList, subtotal: estimate, priceSavings: estimateList - estimate, coupon: 0, couponLabel: null, couponNote: undefined, points: 0, pointsBalance: 0, total: estimate, lines: [], missing: 0, promo };
   const best = quote.couponLabel ? { label: quote.couponLabel } : null;
   const due = quote.total;
   // Pay small small: only plan lengths this total allows; the schedule adds up to the total exactly.
@@ -308,7 +307,7 @@ export function CheckoutView() {
           </div>
           <button type="button" role="switch" aria-checked={usePoints} onClick={() => setUsePoints(!usePoints)} className="flex min-h-10 items-center justify-between text-left">
             <span>
-              <strong className="flex items-center">Use {POINTS.toLocaleString("en-NG")} points</strong>
+              <strong className="flex items-center">Use {(quote.pointsBalance ?? 0).toLocaleString("en-NG")} points</strong>
               <span className="text-xs text-muted">100 pts = ₦100 · up to 10% of the order</span>
             </span>
             <span className={cn("flex h-[26px] w-11 rounded-full p-[3px]", usePoints ? "justify-end bg-ink" : "justify-start bg-[#d4d4d4]")}>
@@ -338,7 +337,7 @@ export function CheckoutView() {
                 setPlaceMsg(null);
                 const r = await placeOrder({
                   items: selected.map((i) => ({ slug: i.slug, variantId: i.variantId, qty: i.qty })),
-                  stationId: station, phone, mode, weeks, claimedCouponIds: claimed,
+                  stationId: station, phone, mode, weeks, claimedCouponIds: claimed, usePoints,
                 });
                 if (!r.ok) return setPlaceMsg(r.message);
                 try {

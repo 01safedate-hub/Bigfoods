@@ -126,3 +126,18 @@ export async function getEditorData(): Promise<EditorData | null> {
   if (err) throw new Error(`Settings: ${err.message}`);
   return { coupons: c.data ?? [], events: e.data ?? [], stations: s.data ?? [] };
 }
+
+export interface OutboxRow { id: string; to_email: string; template: string; status: string; attempts: number; last_error: string | null; created_at: string; sent_at: string | null }
+
+export async function getOutbox(status?: string): Promise<{ rows: OutboxRow[]; counts: Record<string, number> } | null> {
+  if (!hasSupabase) return null;
+  const db = secretDb();
+  let q = db.from("email_outbox").select("id, to_email, template, status, attempts, last_error, created_at, sent_at").order("created_at", { ascending: false }).limit(50);
+  if (status) q = q.eq("status", status);
+  const [{ data, error }, ...counts] = await Promise.all([
+    q,
+    ...["pending", "sent", "failed"].map((s) => db.from("email_outbox").select("id", { count: "exact", head: true }).eq("status", s)),
+  ]);
+  if (error) throw new Error(`Outbox: ${error.message}`);
+  return { rows: (data ?? []) as OutboxRow[], counts: { pending: counts[0].count ?? 0, sent: counts[1].count ?? 0, failed: counts[2].count ?? 0 } };
+}

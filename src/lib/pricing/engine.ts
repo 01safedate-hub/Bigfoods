@@ -194,25 +194,26 @@ export function quoteCart(
     else if (eligibleSubtotal < coupon.minSpend) couponNote = `Spend ₦${(coupon.minSpend - eligibleSubtotal).toLocaleString("en-NG")} more on eligible items`;
     else couponWanted = coupon.amount ?? Math.min(coupon.max ?? Infinity, (eligibleSubtotal * (coupon.percent ?? 0)) / 100);
   }
-  const couponGiven = Math.min(couponWanted, g.maxCouponShareOfProfit * eligibleProfit, room);
+  // Whole naira, rounded down: a discount is never bigger than the rules allow, and the bill adds up exactly.
+  const couponGiven = Math.floor(Math.min(couponWanted, g.maxCouponShareOfProfit * eligibleProfit, room));
   if (couponGiven < couponWanted && !couponNote) couponNote = "Reduced to keep the deal fair for everyone";
 
-  const pointsWanted = Math.min(opts.pointsNaira ?? 0, g.maxPointsShareOfOrder * (subtotal - couponGiven));
-  const pointsGiven = Math.min(pointsWanted, Math.max(0, room - couponGiven));
+  const pointsWanted = Math.floor(Math.min(Math.max(0, opts.pointsNaira ?? 0), g.maxPointsShareOfOrder * (subtotal - couponGiven)));
+  const pointsGiven = Math.floor(Math.min(pointsWanted, Math.max(0, room - couponGiven)));
 
-  const total = Math.round(subtotal - couponGiven - pointsGiven);
+  const total = subtotal - couponGiven - pointsGiven;
   const profitKept = total - cost - paymentFee(total);
 
   return {
     subtotalList,
     subtotal,
     priceSavings,
-    coupon: Math.round(couponGiven),
+    coupon: couponGiven,
     couponNote,
-    points: Math.round(pointsGiven),
+    points: pointsGiven,
     total,
     plannedProfit,
     profitKept,
-    refused: Math.round(couponWanted - couponGiven + (opts.pointsNaira ? Math.min(opts.pointsNaira, g.maxPointsShareOfOrder * (subtotal - couponGiven)) - pointsGiven : 0)),
+    refused: Math.round(couponWanted - couponGiven) + (pointsWanted - pointsGiven),
   };
 }
