@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-instrument), ui-serif, Georgia, serif;
+
+  --color-ink: #111111;
+  --color-muted: #555555;
+  --color-subtle: #777777;
+  --color-line: #ececec;
+  --color-surface: #f5f5f5;
+  --color-sale: #c8102e;
+  --color-sale-soft: #fff4f5;
+  --color-success: #0b6b3a;
+  --color-success-soft: #eaf6ee;
+  --color-night: #1e1b4b;
+  --color-night-soft: #a5b4fc;
+  --color-gold: #f5c542;
+  --color-gold-ink: #5c4a22;
+  --color-gold-soft: #f6f1e4;
+  --color-group: #4f46e5;
+  --color-group-soft: #f4f3ff;
+  --color-sea: #0b2545;
+  --color-orange: #c2410c;
+}
+
+/* Event themes: switched on <html data-theme> by the schedule (see lib/events.ts). */
+:root,
+[data-theme="everyday"] {
+  --banner-bg: #f6e3e6;
+  --banner-fg: #111111;
+  --banner-accent: #c8102e;
+  --banner-hi: #111111;
+  --banner-hi-fg: #ffffff;
+}
+[data-theme="black-friday"] {
+  --banner-bg: #0a0a0a;
+  --banner-fg: #ffffff;
+  --banner-accent: #d7182a;
+  --banner-hi: #f5c542;
+  --banner-hi-fg: #111111;
+}
+[data-theme="gadget-hunt"] {
+  --banner-bg: #0b1b3a;
+  --banner-fg: #ffffff;
+  --banner-accent: #1d4ed8;
+  --banner-hi: #7dd3fc;
+  --banner-hi-fg: #111111;
+}
+[data-theme="christmas"] {
+  --banner-bg: #0f3d2e;
+  --banner-fg: #ffffff;
+  --banner-accent: #b4141f;
+  --banner-hi: #f2d27a;
+  --banner-hi-fg: #111111;
+}
+[data-theme="valentine"] {
+  --banner-bg: #8a0b3a;
+  --banner-fg: #ffffff;
+  --banner-accent: #b4235a;
+  --banner-hi: #ffd1dc;
+  --banner-hi-fg: #111111;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: #ffffff;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Bottom sheet on phones, centred dialog on larger screens. */
+dialog.sheet {
+  margin: auto auto 0;
+  width: 100%;
+  max-width: 100%;
+  max-height: 85dvh;
+  border: 0;
+  padding: 0;
+  border-radius: 16px 16px 0 0;
+  color: var(--color-ink);
+}
+dialog.sheet::backdrop {
+  background: rgb(0 0 0 / 0.45);
+}
+@media (min-width: 768px) {
+  dialog.sheet {
+    margin: auto;
+    max-width: 480px;
+    border-radius: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bar-fill {
+    transition: width 600ms ease;
+  }
+}

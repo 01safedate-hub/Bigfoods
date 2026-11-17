@@ -1,0 +1,38 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/format";
+
+const NAV: { label: string; href?: string; badge?: number }[] = [
+  { label: "Dashboard" }, { label: "Orders", badge: 214 }, { label: "Purchasing & dispatch", href: "/admin/purchasing" },
+  { label: "Q&A inbox", badge: 12 }, { label: "Group pay & plans" }, { label: "Events & themes" },
+  { label: "Pricing rules & guardrails", href: "/admin/pricing" }, { label: "Coupons & rewards" }, { label: "Cart Clear-Out" },
+  { label: "Dropship sellers" }, { label: "Customers" }, { label: "Staff & roles" },
+];
+
+export function AdminNav() {
+  const path = usePathname();
+  return (
+    <nav aria-label="Admin" className="no-scrollbar flex gap-0.5 overflow-x-auto lg:flex-col lg:overflow-visible">
+      {NAV.map((n) => {
+        const active = n.href === path;
+        const cls = cn(
+          "flex min-h-9 shrink-0 items-center justify-between gap-3 whitespace-nowrap rounded-md px-2.5 text-[13px]",
+          active ? "bg-[#23262E] font-bold text-white" : n.href ? "text-[#D7DAE0] hover:bg-[#1A1D24]" : "text-[#7C828E]",
+        );
+        const inner = (
+          <>
+            <span>{n.label}</span>
+            {n.badge && <span className="rounded-full bg-sale px-1.5 text-[11px] font-extrabold text-white">{n.badge}</span>}
+          </>
+        );
+        return n.href ? (
+          <Link key={n.label} href={n.href} aria-current={active ? "page" : undefined} className={cls}>{inner}</Link>
+        ) : (
+          <span key={n.label} className={cls} title="Coming next">{inner}</span>
+        );
+      })}
+    </nav>
+  );
+}
