@@ -10,13 +10,14 @@ import { ProductTile } from "@/components/shop/product-card";
 import { Countdown } from "@/components/ui/countdown";
 import { InfoButton } from "@/components/ui/info-button";
 import { Progress } from "@/components/ui/progress";
-import { COUPONS } from "@/lib/catalog/coupons";
+import { useSiteData } from "@/components/shop/site-data";
 import { cn, naira } from "@/lib/format";
 import { unitFromPrices } from "@/lib/pricing/prices";
 
 const FILTERS = ["All", "Price drops", "Sea items"] as const;
 
 export function CartView() {
+  const { coupons } = useSiteData();
   const { items, setQty, toggle, setAll, remove, refresh } = useCart();
   const promo = useLivePromo();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
@@ -44,7 +45,7 @@ export function CartView() {
 
   // Next coupon tier, counted on items coupons can apply to.
   const eligible = selected.filter((i) => !i.snap.isGadget && i.qty < 10).reduce((s, i) => s + unitOf(i) * i.qty, 0);
-  const tiers = COUPONS.filter((c) => !c.gadgetOnly && c.amount).sort((a, b) => a.minSpend - b.minSpend);
+  const tiers = coupons.filter((c) => !c.gadgetOnly && c.amount).sort((a, b) => a.minSpend - b.minSpend);
   const next = tiers.find((c) => eligible < c.minSpend);
   const best = [...tiers].reverse().find((c) => eligible >= c.minSpend);
 

@@ -15,6 +15,7 @@ import { cn, compact, naira } from "@/lib/format";
 import { PRICING } from "@/lib/pricing/config";
 import { unitFromPrices, weekly as weeklyOf } from "@/lib/pricing/prices";
 import { addDaysLabel } from "@/lib/time";
+import { askQuestion } from "../../actions";
 
 type Pay = "full" | "small" | "group";
 
@@ -31,6 +32,8 @@ export function ProductView({ product }: { product: Product }) {
   const [plan, setPlan] = useState(4);
   const [watch, setWatch] = useState(false);
   const [qa, setQa] = useState<QA[]>(product.qa ?? []);
+  const [asking, setAsking] = useState(false);
+  const [askNote, setAskNote] = useState<{ ok: boolean; message: string } | null>(null);
   const [draft, setDraft] = useState("");
   const [added, setAdded] = useState(false);
 
@@ -244,18 +247,25 @@ export function ProductView({ product }: { product: Product }) {
           <h2 className="text-sm font-extrabold">Ask about this product</h2>
           <form
             className="flex gap-1.5"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
               const v = draft.trim();
-              if (!v) return;
-              setQa([{ q: v, who: "You · just now" }, ...qa]);
-              setDraft("");
+              if (!v || asking) return;
+              setAsking(true);
+              const res = await askQuestion(product.slug, v);
+              setAsking(false);
+              setAskNote(res);
+              if (res.ok) {
+                setQa([{ q: v, who: "You · just now" }, ...qa]);
+                setDraft("");
+              }
             }}
           >
             <label htmlFor="ask" className="sr-only">Your question</label>
             <input id="ask" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="e.g. Does it come with a warranty?" className="min-w-0 flex-1 border border-black/15 px-2.5 text-sm" />
-            <button type="submit" className="min-h-11 bg-ink px-4 text-xs font-extrabold text-white">ASK</button>
+            <button type="submit" disabled={asking} className="min-h-11 bg-ink px-4 text-xs font-extrabold text-white disabled:opacity-60">{asking ? "…" : "ASK"}</button>
           </form>
+          {askNote && <p role="status" className={askNote.ok ? "text-success" : "text-sale"}>{askNote.message}</p>}
           {qa.length === 0 && <p className="text-muted">No questions yet. Ask the first one. Our team usually answers within a few hours.</p>}
           {qa.map((q) => (
             <div key={q.q} className="flex flex-col gap-1.5 border-t border-[#f2f2f2] py-2">

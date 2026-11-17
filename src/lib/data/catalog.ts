@@ -2,7 +2,7 @@ import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { sampleQuoteLine, sampleToProduct } from "@/lib/catalog/from-sample";
 import { SAMPLE_PRODUCTS, sampleBySlug } from "@/lib/catalog/sample";
-import type { IconKey, PriceSet, Product, Variant } from "@/lib/catalog/types";
+import type { IconKey, PriceSet, Product, QA, Variant } from "@/lib/catalog/types";
 import type { CategoryKey, QuoteLine } from "@/lib/pricing/engine";
 import { hasSupabase } from "@/lib/supabase/env";
 import { publicDb, secretDb } from "@/lib/supabase/server";
@@ -132,4 +132,47 @@ export async function getQuoteLines(items: LineRequest[]): Promise<(QuoteLine & 
       gadget: r.products.categories?.is_gadget ?? false,
     }];
   });
+}
+
+/** Answered questions for a product, newest first. Refreshed when staff answer (tag `qa:<slug>`). */
+export async function getQuestions(slug: string): Promise<QA[] | null> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("qa", `qa:${slug}`);
+  if (!hasSupabase) return null; // sample products carry their own demo Q&A
+  const { data, error } = await publicDb()
+    .from("product_questions")
+    .select("question, asker_name, answer, answered_at, products!inner(slug)")
+    .eq("products.slug", slug)
+    .eq("status", "answered")
+    .order("created_at", { ascending: false })
+    .limit(30);
+  if (error) throw new Error(`Q&A: ${error.message}`);
+  const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Africa/Lagos" }) : "");
+  return (data ?? []).map((r) => ({ q: r.question, who: r.asker_name, a: r.answer ?? undefined, by: `FastChina team · ${day(r.answered_at)}` }));
+}
+
+/** Ranked product slugs for a search, or null when search must run in the browser (no database). */
+export async function searchSlugs(q: string): Promise<string[] | null> {
+  if (!hasSupabase) return null;
+  const { data, error } = await publicDb().rpc("search_products", { q, lim: 60 });
+  if (error) throw new Error(`Search: ${error.message}`);
+  return ((data ?? []) as { slug: string }[]).map((r) => r.slug);
+}
+
+/** Saves a new question as pending; staff answer it in admin. Server-only (uses the secret key). */
+export async function insertQuestion(slug: string, question: string, name: string): Promise<"ok" | "unknown-product" | "busy"> {
+  if (!hasSupabase) return "ok";
+  const db = secretDb();
+  const { data: p } = await db.from("products").select("id").eq("slug", slug).eq("status", "active").maybeSingle();
+  if (!p) return "unknown-product";
+  // Simple flood guard: at most 20 unanswered questions per product per hour, and no exact repeats.
+  const since = new Date(Date.now() - 3_600_000).toISOString();
+  const { count } = await db.from("product_questions").select("id", { count: "exact", head: true }).eq("product_id", p.id).eq("status", "pending").gte("created_at", since);
+  if ((count ?? 0) >= 20) return "busy";
+  const { data: dup } = await db.from("product_questions").select("id").eq("product_id", p.id).ilike("question", question).limit(1);
+  if (dup?.length) return "ok";
+  const { error } = await db.from("product_questions").insert({ product_id: p.id, question, asker_name: name });
+  if (error) throw new Error(`Ask: ${error.message}`);
+  return "ok";
 }

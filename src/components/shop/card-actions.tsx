@@ -40,7 +40,7 @@ export function AddToCartIcon({ product, variant, className }: { product: Produc
         setDone(true);
         setTimeout(() => setDone(false), 1200);
       }}
-      className={cn("flex h-8 w-10 items-center justify-center rounded border border-black/15 bg-white", className)}
+      className={cn("flex size-9 items-center justify-center rounded-full bg-white/95 shadow-[0_1px_4px_rgb(0_0_0/0.12)]", className)}
     >
       {done ? <Check aria-hidden size={16} className="text-success" /> : <ShoppingCart aria-hidden size={16} />}
     </button>

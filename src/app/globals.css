@@ -111,3 +111,39 @@ dialog.sheet::backdrop {
     transition: width 600ms ease;
   }
 }
+
+/* Bolt sweep: a thin dark flash runs across the page every 14 seconds.
+   Sits above content but ignores clicks; switched off for reduced motion. */
+.bolt-sweep {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  overflow: hidden;
+}
+.bolt-sweep::before {
+  content: "";
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: 0;
+  width: 38vw;
+  min-width: 220px;
+  background: linear-gradient(100deg, transparent 0%, rgb(0 0 0 / 0.05) 35%, rgb(0 0 0 / 0.16) 50%, rgb(0 0 0 / 0.05) 65%, transparent 100%);
+  transform: translateX(-120%) skewX(-18deg);
+  animation: bolt-sweep 14s cubic-bezier(0.6, 0, 0.3, 1) 3s infinite;
+}
+@keyframes bolt-sweep {
+  0% { transform: translateX(-120%) skewX(-18deg); }
+  9% { transform: translateX(calc(100vw + 120%)) skewX(-18deg); }
+  100% { transform: translateX(calc(100vw + 120%)) skewX(-18deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bolt-sweep { display: none; }
+}
+
+/* We draw our own clear button in search boxes. */
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration {
+  appearance: none;
+}

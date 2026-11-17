@@ -18,3 +18,9 @@ export const COUPON_COPY: Record<string, { title: string; rule: string }> = {
 
 /** Best coupon for a cart is picked at checkout; this is the default the UI preselects. */
 export const pickBestCoupon = (ids: string[]) => COUPONS.filter((c) => ids.includes(c.id));
+
+/** A coupon as shown on claim cards: the pricing rule plus its display copy. */
+export type CouponCard = Coupon & { title: string; rule: string };
+
+/** Used only when the database isn't connected; the live list is the `coupons` table. */
+export const FALLBACK_COUPONS: CouponCard[] = COUPONS.map((c) => ({ ...c, ...COUPON_COPY[c.id] }));

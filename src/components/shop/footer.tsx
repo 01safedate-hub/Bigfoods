@@ -11,13 +11,13 @@ const TRUST = [
 
 export function TrustGrid() {
   return (
-    <section aria-label="Why shop with us" className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-5">
+    <section aria-label="Why shop with us" className="grid grid-cols-2 gap-2 sm:gap-2.5 lg:grid-cols-5">
       {TRUST.map(({ icon: Icon, title, text }) => (
-        <div key={title} className="flex gap-2.5 rounded-lg border border-line p-3.5">
-          <Icon aria-hidden size={22} strokeWidth={1.6} className="shrink-0 text-success" />
+        <div key={title} className="flex items-center gap-2 rounded-lg bg-surface p-3 last:col-span-2 sm:items-start sm:gap-2.5 sm:p-3.5 lg:last:col-span-1">
+          <Icon aria-hidden size={20} strokeWidth={1.7} className="shrink-0 text-success" />
           <span>
             <strong className="block text-[13px]">{title}</strong>
-            <span className="text-xs text-muted">{text}</span>
+            <span className="hidden text-xs text-muted sm:block">{text}</span>
           </span>
         </div>
       ))}

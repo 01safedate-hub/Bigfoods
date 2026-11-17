@@ -9,13 +9,15 @@ import { InfoButton } from "@/components/ui/info-button";
 import { useNow } from "@/hooks/use-now";
 import { usePersistentState } from "@/hooks/use-persistent-state";
 import type { Product } from "@/lib/catalog/types";
-import { EVENTS, eventDates, eventStatus } from "@/lib/events";
+import { eventDates, eventStatus } from "@/lib/events";
+import { useSiteData } from "@/components/shop/site-data";
 import { cn } from "@/lib/format";
 import { dhm, nextDraw } from "@/lib/time";
 
 const STREAK_PTS = [5, 5, 5, 10, 5, 5, 30];
 
 export function DealsView({ flash }: { flash: Product[] }) {
+  const { events } = useSiteData();
   const now = useNow();
   const [points, setPoints] = usePersistentState("fc-points", 1240);
   const [checked, setChecked] = useState(false);
@@ -131,7 +133,7 @@ export function DealsView({ flash }: { flash: Product[] }) {
 
       <section className="flex flex-col rounded-lg bg-white p-3.5 md:border md:border-line">
         <h2 className="mb-1.5 text-[15px] font-bold">Event calendar</h2>
-        {EVENTS.map((e) => {
+        {events.map((e) => {
           const st = now === null ? null : eventStatus(now, e.start, e.end);
           const on = reminders.includes(e.name);
           return (

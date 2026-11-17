@@ -2,7 +2,16 @@
  * Jumia pickup stations. Placeholder entries until the official list is loaded
  * into the `pickup_stations` table (admin import).
  */
-export const STATIONS = [
+export interface Station {
+  id: string;
+  state: string;
+  area: string;
+  name: string;
+  hours: string;
+}
+
+/** Used only when the database isn't connected; the live list is the `pickup_stations` table. */
+export const STATIONS: readonly Station[] = [
   { id: "lag-ikeja-1", state: "Lagos", area: "Ikeja", name: "Jumia Pickup Station, Ikeja 1", hours: "Mon–Sat 8am–7pm" },
   { id: "lag-ikeja-2", state: "Lagos", area: "Ikeja", name: "Jumia Pickup Station, Ikeja 2", hours: "Mon–Sat 9am–6pm" },
   { id: "lag-lekki-1", state: "Lagos", area: "Lekki", name: "Jumia Pickup Station, Lekki 1", hours: "Mon–Sat 8am–7pm" },
@@ -10,6 +19,6 @@ export const STATIONS = [
   { id: "fct-wuse-1", state: "FCT Abuja", area: "Wuse", name: "Jumia Pickup Station, Wuse 1", hours: "Mon–Sat 8am–6pm" },
   { id: "riv-ph-1", state: "Rivers", area: "Port Harcourt", name: "Jumia Pickup Station, Port Harcourt 1", hours: "Mon–Sat 8am–6pm" },
   { id: "oyo-ibadan-1", state: "Oyo", area: "Ibadan", name: "Jumia Pickup Station, Ibadan 1", hours: "Mon–Sat 8am–6pm" },
-] as const;
+];
 
-export const STATES = [...new Set(STATIONS.map((s) => s.state))];
+export const statesOf = (stations: readonly Station[]) => [...new Set(stations.map((s) => s.state))];

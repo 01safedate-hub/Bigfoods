@@ -12,9 +12,18 @@ export function useLivePromo() {
   return now !== null && midnightDrop(now).live ? ("midnight" as const) : ("none" as const);
 }
 
-export function LivePrice({ prices, className }: { prices: PriceSet; className?: string }) {
+export function LivePrice({ prices, className, showWas }: { prices: PriceSet; className?: string; showWas?: boolean }) {
   const promo = useLivePromo();
-  return <span className={className}>{naira(promo === "midnight" ? prices.midnight : prices.list)}</span>;
+  const live = promo === "midnight" && prices.midnight < prices.list;
+  return (
+    <>
+      <span className={className} style={live ? { color: "var(--color-night)" } : undefined}>
+        {live && <Moon aria-label="Midnight Drop price" size={12} strokeWidth={2.6} className="mr-0.5 inline -translate-y-px" />}
+        {naira(live ? prices.midnight : prices.list)}
+      </span>
+      {showWas && live && <s className="text-[11px] text-subtle">{naira(prices.list)}</s>}
+    </>
+  );
 }
 
 export function MidnightHint({ prices }: { prices: PriceSet }) {

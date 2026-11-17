@@ -1,8 +1,9 @@
 "use server";
 
-import { COUPONS } from "@/lib/catalog/coupons";
+import type { Coupon } from "@/lib/pricing/engine";
+import { getSiteData } from "@/lib/data/site";
 import type { PriceSet } from "@/lib/catalog/types";
-import { getQuoteLines, type LineRequest } from "@/lib/data/catalog";
+import { getQuoteLines, insertQuestion, type LineRequest, searchSlugs } from "@/lib/data/catalog";
 import { quoteCart } from "@/lib/pricing/engine";
 import { unitFromPrices } from "@/lib/pricing/prices";
 import { midnightDrop } from "@/lib/time";
@@ -58,9 +59,11 @@ export async function quoteCheckout(items: LineRequest[], opts: { claimedCouponI
   const requested = clean(items);
   const lines = await getQuoteLines(requested);
   const claimed = Array.isArray(opts.claimedCouponIds) ? opts.claimedCouponIds.filter((x) => typeof x === "string") : [];
-  const pool = COUPONS.filter((c) => claimed.length === 0 || claimed.includes(c.id));
+  // Coupon rules come from the database (only live coupons are readable), never from the browser.
+  const { coupons } = await getSiteData();
+  const pool = coupons.filter((c) => claimed.length === 0 || claimed.includes(c.id));
 
-  let best: (typeof COUPONS)[number] | null = null;
+  let best: Coupon | null = null;
   let bestValue = 0;
   for (const c of pool) {
     const v = quoteCart(lines, { promo, coupon: c }).coupon;
@@ -81,4 +84,26 @@ export async function quoteCheckout(items: LineRequest[], opts: { claimedCouponI
     points: q.points,
     total: q.total,
   };
+}
+
+/** Ranked search results from the database; null means "search in the browser". */
+export async function searchCatalog(q: unknown): Promise<string[] | null> {
+  if (typeof q !== "string") return [];
+  const term = q.trim().slice(0, 120);
+  if (term.length < 2) return [];
+  return searchSlugs(term);
+}
+
+/** A shopper's question about a product. Saved as pending until staff answer it. */
+export async function askQuestion(slug: unknown, question: unknown, name?: unknown): Promise<{ ok: boolean; message: string }> {
+  if (typeof slug !== "string" || typeof question !== "string") return { ok: false, message: "Something went wrong. Try again." };
+  const q = question.replace(/\s+/g, " ").trim();
+  if (q.length < 5) return { ok: false, message: "Write a little more so our team can help." };
+  if (q.length > 300) return { ok: false, message: "Keep it under 300 characters." };
+  if (/https?:\/\/|www\./i.test(q)) return { ok: false, message: "Links aren’t allowed in questions." };
+  const who = typeof name === "string" && name.trim() ? name.trim().slice(0, 40) : "Customer";
+  const res = await insertQuestion(slug.slice(0, 120), q, who);
+  if (res === "unknown-product") return { ok: false, message: "This product isn’t available any more." };
+  if (res === "busy") return { ok: false, message: "Lots of questions right now. Try again in a few minutes." };
+  return { ok: true, message: "Sent. Our team usually answers within a few hours." };
 }

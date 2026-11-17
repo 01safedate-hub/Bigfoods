@@ -1,17 +1,31 @@
 "use client";
 
-import { Camera, Heart, Mail, MapPin, Search, ShoppingCart, User } from "lucide-react";
+import { Camera, Heart, MapPin, Search, ShoppingCart, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { DEPARTMENTS } from "@/lib/catalog/categories";
 import { cn } from "@/lib/format";
 import { useCart } from "./cart-provider";
 
-export function Logo({ className, tld = ".shop" }: { className?: string; tld?: string }) {
+/** The bolt: FastChina's mark. Used alone on phones and as the favicon. */
+export function BoltMark({ size = 32, className }: { size?: number; className?: string }) {
   return (
-    <span className={cn("flex items-baseline gap-px", className)}>
-      <span className="text-2xl font-extrabold tracking-[0.06em]">FASTCHINA</span>
-      <span className="text-xs font-bold text-sale">{tld}</span>
+    <svg viewBox="0 0 64 64" width={size} height={size} aria-hidden className={className}>
+      <rect width="64" height="64" rx="14" fill="#111111" />
+      <path d="M36.5 8 15 36h14l-3.5 20L49 27H35z" fill="#F5C542" />
+    </svg>
+  );
+}
+
+export function Logo({ className, tld = ".shop", compactMark }: { className?: string; tld?: string; compactMark?: boolean }) {
+  return (
+    <span className={cn("flex items-center gap-2", className)}>
+      <BoltMark size={compactMark ? 30 : 34} />
+      <span className={cn("flex items-baseline italic", compactMark && "sr-only")}>
+        <span className="text-[22px] font-black tracking-[-0.02em]">FAST</span>
+        <span className="text-[22px] font-black tracking-[-0.02em] text-sale">CHINA</span>
+        <span className="ml-0.5 text-[11px] font-bold not-italic text-subtle">{tld}</span>
+      </span>
     </span>
   );
 }
@@ -33,14 +47,16 @@ export function ShopHeader() {
   const { count } = useCart();
   const path = usePathname();
   const showDepts = path === "/";
+  // These pages draw their own search box or title bar on phones; one header is enough.
+  const ownBar = path === "/search" || path === "/checkout";
+  const onSearch = path === "/search";
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-white">
       {/* Phones */}
-      <div className="flex items-center gap-2 px-3 pt-2.5 pb-2 md:hidden">
-        <Link href="/account" aria-label="Messages" className="relative flex h-11 w-9 items-center justify-center">
-          <Mail aria-hidden size={24} strokeWidth={1.6} />
-          <span className="absolute right-0.5 top-2.5 size-2 rounded-full bg-sale" />
+      <div className={cn("flex items-center gap-2 px-3 pt-2.5 pb-2 md:hidden", ownBar && "hidden")}>
+        <Link href="/" aria-label="FastChina home" className="flex h-11 items-center">
+          <Logo compactMark />
         </Link>
         <Link href="/search" className="flex h-10 min-w-0 flex-1 items-center overflow-hidden rounded-md border-2 border-ink">
           <span className="flex-1 truncate px-2.5 text-sm text-muted">Lace front wig</span>
@@ -73,7 +89,7 @@ export function ShopHeader() {
         <Link href="/" aria-label="FastChina home">
           <Logo />
         </Link>
-        <form action="/search" role="search" className="flex h-11 min-w-0 flex-1 items-center overflow-hidden rounded-full border-[1.5px] border-ink">
+        <form action="/search" role="search" className={cn(onSearch && "invisible", "flex h-11 min-w-0 flex-1 items-center overflow-hidden rounded-full border-[1.5px] border-ink")}>
           <label htmlFor="q" className="sr-only">
             Search FastChina
           </label>

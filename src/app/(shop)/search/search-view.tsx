@@ -3,11 +3,12 @@
 import { Camera, ChevronLeft, Link2, Search, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ProductCard } from "@/components/shop/product-card";
 import { ProductIcon } from "@/components/ui/product-icon";
 import type { IconKey, Product } from "@/lib/catalog/types";
 import { cn } from "@/lib/format";
+import { searchCatalog } from "../actions";
 
 const DISCOVER = ["Necklace for men", "Watch for men", "Bone straight wig", "Android phone", "Chain", "Office chair", "Party dress", "Lipstick", "Sneakers"];
 const HOT: [string, string, IconKey, string][] = [
@@ -17,9 +18,14 @@ const HOT: [string, string, IconKey, string][] = [
 ];
 const SORTS = ["Relevance", "Best selling", "Price ↑", "Price ↓", "Air only"] as const;
 
-function search(products: Product[], q: string, sort: (typeof SORTS)[number]) {
+/** Browser fallback used when the database isn't connected. */
+function localMatch(products: Product[], q: string) {
   const words = q.toLowerCase().split(/\s+/).filter((w) => w.length > 1);
-  let res = products.filter((p) => words.some((w) => `${p.name} ${p.category} ${p.description}`.toLowerCase().includes(w.replace(/s$/, ""))));
+  return products.filter((p) => words.some((w) => `${p.name} ${p.category} ${p.description}`.toLowerCase().includes(w.replace(/s$/, ""))));
+}
+
+function sortResults(matches: Product[], sort: (typeof SORTS)[number]) {
+  let res = matches;
   if (sort === "Best selling") res = [...res].sort((a, b) => b.sold - a.sold);
   if (sort === "Price ↑") res = [...res].sort((a, b) => a.prices.list - b.prices.list);
   if (sort === "Price ↓") res = [...res].sort((a, b) => b.prices.list - a.prices.list);
@@ -34,7 +40,23 @@ export function SearchView({ products }: { products: Product[] }) {
   const [recent, setRecent] = useState(["Silver necklace", "Lace wig", "Earbuds", "Phone case"]);
   const [sort, setSort] = useState<(typeof SORTS)[number]>("Relevance");
   const term = q.trim();
-  const results = term ? search(products, term, sort) : [];
+  // Ranked slugs from the database (typo-tolerant). Debounced so typing doesn't flood the server.
+  const [ranked, setRanked] = useState<{ term: string; slugs: string[] | null } | null>(null);
+  useEffect(() => {
+    if (term.length < 2) return;
+    let stale = false;
+    const t = setTimeout(async () => {
+      const slugs = await searchCatalog(term).catch(() => null);
+      if (!stale) setRanked({ term, slugs });
+    }, 220);
+    return () => {
+      stale = true;
+      clearTimeout(t);
+    };
+  }, [term]);
+  const bySlug = new Map(products.map((p) => [p.slug, p]));
+  const fromDb = ranked && ranked.term === term && ranked.slugs ? ranked.slugs.flatMap((s) => bySlug.get(s) ?? []) : null;
+  const results = term ? sortResults(fromDb ?? localMatch(products, term), sort) : [];
 
   const go = (v: string) => {
     setQ(v);

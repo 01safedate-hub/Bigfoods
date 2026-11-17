@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useNow } from "@/hooks/use-now";
-import { THEMES, themeFor } from "@/lib/events";
+import { bannerFor, THEMES } from "@/lib/events";
+import { useSiteData } from "./site-data";
 
 export function EventBanner() {
   const now = useNow(60_000);
-  const t = THEMES[now === null ? "everyday" : themeFor(now)];
+  const { events } = useSiteData();
+  const t = now === null ? THEMES.everyday : bannerFor(now, events);
   return (
     <Link
       href="/deals"
