@@ -14,7 +14,8 @@ import { useNow } from "@/hooks/use-now";
 import { statesOf } from "@/lib/catalog/stations";
 import { useSiteData } from "@/components/shop/site-data";
 import { cn, naira } from "@/lib/format";
-import { unitFromPrices, weekly as weeklyOf } from "@/lib/pricing/prices";
+import { unitFromPrices } from "@/lib/pricing/prices";
+import { buildSchedule, planOptions, SMALL_SMALL } from "@/lib/payments/instalments";
 import { type CheckoutQuote, quoteCheckout } from "../actions";
 import { addDaysLabel } from "@/lib/time";
 
@@ -64,7 +65,11 @@ export function CheckoutView() {
   const quote = serverQuote ?? { subtotalList: estimateList, subtotal: estimate, priceSavings: estimateList - estimate, coupon: 0, couponLabel: null, couponNote: undefined, points: 0, total: estimate, lines: [], missing: 0, promo };
   const best = quote.couponLabel ? { label: quote.couponLabel } : null;
   const due = quote.total;
-  const weekly = weeklyOf(due, plan);
+  // Pay small small: only plan lengths this total allows; the schedule adds up to the total exactly.
+  const planChoices = planOptions(due);
+  const weeks = planChoices.includes(plan) ? plan : (planChoices[0] ?? plan);
+  const schedule = planChoices.length ? buildSchedule(due, weeks, 0) : [];
+  const weekly = schedule[0]?.amount ?? 0;
   const lineTotal = (i: (typeof selected)[number]) => {
     const l = quote.lines.find((x) => x.slug === i.slug && x.variantId === i.variantId);
     return (l ? l.unit : unitOf(i)) * i.qty;
@@ -103,7 +108,7 @@ export function CheckoutView() {
 
   const stations = STATIONS.filter((s) => s.state === state);
   const eta = now ? `${addDaysLabel(now, 10)} – ${addDaysLabel(now, 18)}` : "in 10–18 days";
-  const cta = mode === "full" ? `PAY ${naira(due)}` : mode === "small" ? `PAY ${naira(weekly)} TODAY` : mine ? `PAY ${naira(mine)} & SHARE LINK` : "CREATE LINK";
+  const cta = mode === "full" ? `PAY ${naira(due)}` : mode === "small" ? (weekly ? `PAY ${naira(weekly)} TODAY` : `PAY ${naira(due)} IN FULL`) : mine ? `PAY ${naira(mine)} & SHARE LINK` : "CREATE LINK";
 
   if (selected.length === 0) {
     return (
@@ -203,22 +208,28 @@ export function CheckoutView() {
 
           {mode === "small" && (
             <div className="flex flex-col gap-2">
-              <span className="flex items-center gap-1.5">
-                {[4, 8, 12].map((n) => (
-                  <button key={n} type="button" aria-pressed={plan === n} onClick={() => setPlan(n)} className={chip(plan === n)}>{n} weeks</button>
-                ))}
-                <InfoButton topic="smallsmall" />
-              </span>
-              <ol>
-                {Array.from({ length: Math.min(plan, 3) }, (_, k) => (
-                  <li key={k} className="flex justify-between border-b border-dashed border-[#e2e2e2] py-1.5">
-                    <span>{k === 0 ? "Today" : now ? addDaysLabel(now, 7 * k) : `Week ${k + 1}`} · payment {k + 1} of {plan}</span>
-                    <strong>{naira(weekly)}</strong>
-                  </li>
-                ))}
-                <li className="py-1.5 text-muted">+ {plan - 3} more weekly payments</li>
-              </ol>
-              <span className="leading-relaxed text-muted">0% interest. Today’s price is locked. We order from the factory when your last payment clears.</span>
+              {planChoices.length === 0 ? (
+                <span className="text-muted">Pay small small starts from {naira(SMALL_SMALL.minOrder)}. Add a little more to your cart to use it.</span>
+              ) : (
+                <>
+                  <span className="flex items-center gap-1.5">
+                    {SMALL_SMALL.weekOptions.map((n) => (
+                      <button key={n} type="button" disabled={!planChoices.includes(n)} aria-pressed={weeks === n} onClick={() => setPlan(n)} className={cn(chip(weeks === n), "disabled:opacity-35")}>{n} weeks</button>
+                    ))}
+                    <InfoButton topic="smallsmall" />
+                  </span>
+                  <ol>
+                    {schedule.slice(0, 3).map((i) => (
+                      <li key={i.n} className="flex justify-between border-b border-dashed border-[#e2e2e2] py-1.5">
+                        <span>{i.n === 1 ? "Today" : now ? addDaysLabel(now, 7 * (i.n - 1)) : `Week ${i.n}`} · payment {i.n} of {weeks}</span>
+                        <strong>{naira(i.amount)}</strong>
+                      </li>
+                    ))}
+                    {weeks > 3 && <li className="py-1.5 text-muted">+ {weeks - 3} more weekly {weeks - 3 === 1 ? "payment" : "payments"} of {naira(schedule[1]?.amount ?? 0)}</li>}
+                  </ol>
+                  <span className="leading-relaxed text-muted">0% interest. Adds up to exactly {naira(due)}. Today’s price is locked. We order from the factory when your last payment clears.</span>
+                </>
+              )}
             </div>
           )}
 

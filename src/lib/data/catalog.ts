@@ -4,6 +4,7 @@ import { sampleQuoteLine, sampleToProduct } from "@/lib/catalog/from-sample";
 import { SAMPLE_PRODUCTS, sampleBySlug } from "@/lib/catalog/sample";
 import type { IconKey, PriceSet, Product, QA, Variant } from "@/lib/catalog/types";
 import type { CategoryKey, QuoteLine } from "@/lib/pricing/engine";
+import { pausedPrices } from "@/lib/pricing/audit";
 import { hasSupabase } from "@/lib/supabase/env";
 import { publicDb, secretDb } from "@/lib/supabase/server";
 
@@ -11,7 +12,7 @@ import { publicDb, secretDb } from "@/lib/supabase/server";
 const PRODUCT_COLUMNS =
   "slug, title, description, main_images, sale_count, rating, reviews, badge, is_new, tint, icon, flash_claimed_pct, specs, options, " +
   "categories(slug, is_gadget, ship_mode), " +
-  "product_skus(id, props, image_url, stock, price_list, price_midnight, price_event, price_flash, price_retailer, active, sort)";
+  "product_skus(id, props, image_url, stock, price_list, price_midnight, price_event, price_flash, price_retailer, active, sort, promo_paused)";
 
 interface Row {
   slug: string;
@@ -30,10 +31,13 @@ interface Row {
   options: Product["options"];
   categories: { slug: string; is_gadget: boolean; ship_mode: "air" | "sea" } | null;
   product_skus: {
-    id: string; props: Record<string, string>; image_url: string | null; stock: number; active: boolean; sort: number;
+    id: string; props: Record<string, string>; image_url: string | null; stock: number; active: boolean; sort: number; promo_paused: boolean;
     price_list: number; price_midnight: number; price_event: number; price_flash: number; price_retailer: number;
   }[];
 }
+
+/** Variants the profit guard paused sell at list price only. */
+const guard = (paused: boolean, p: PriceSet): PriceSet => (paused ? pausedPrices(p) : p);
 
 function rowToProduct(r: Row): Product | null {
   const variants: Variant[] = r.product_skus
@@ -41,7 +45,8 @@ function rowToProduct(r: Row): Product | null {
     .sort((a, b) => a.sort - b.sort)
     .map((s) => ({
       id: s.id, props: s.props, image: s.image_url, stock: s.stock,
-      prices: { list: s.price_list, midnight: s.price_midnight, event: s.price_event, flash: s.price_flash, retailer: s.price_retailer },
+      // The profit guard paused discounts on this variant: it sells at list price only.
+      prices: guard(s.promo_paused, { list: s.price_list, midnight: s.price_midnight, event: s.price_event, flash: s.price_flash, retailer: s.price_retailer }),
     }));
   if (!variants.length) return null;
   const min = (k: keyof PriceSet) => Math.min(...variants.map((v) => v.prices[k]));
@@ -113,11 +118,11 @@ export async function getQuoteLines(items: LineRequest[]): Promise<(QuoteLine & 
   const ids = items.map((i) => i.variantId);
   const { data, error } = await secretDb()
     .from("product_skus")
-    .select("id, active, price_list, price_midnight, price_event, price_flash, price_retailer, cost_ngn, planned_profit_ngn, products!inner(slug, status, categories(is_gadget))")
+    .select("id, active, promo_paused, price_list, price_midnight, price_event, price_flash, price_retailer, cost_ngn, planned_profit_ngn, products!inner(slug, status, categories(is_gadget))")
     .in("id", ids);
   if (error) throw new Error(`Quote: ${error.message}`);
   type SkuRow = {
-    id: string; active: boolean; price_list: number; price_midnight: number; price_event: number; price_flash: number; price_retailer: number;
+    id: string; active: boolean; promo_paused: boolean; price_list: number; price_midnight: number; price_event: number; price_flash: number; price_retailer: number;
     cost_ngn: number; planned_profit_ngn: number; products: { slug: string; status: string; categories: { is_gadget: boolean } | null };
   };
   const byId = new Map(((data ?? []) as unknown as SkuRow[]).map((r) => [r.id, r]));
@@ -126,10 +131,11 @@ export async function getQuoteLines(items: LineRequest[]): Promise<(QuoteLine & 
     if (!r || !r.active || r.products.status !== "active" || r.products.slug !== it.slug) return [];
     return [{
       ...it,
-      prices: { list: r.price_list, midnight: r.price_midnight, event: r.price_event, flash: r.price_flash, retailer: r.price_retailer },
+      prices: guard(r.promo_paused, { list: r.price_list, midnight: r.price_midnight, event: r.price_event, flash: r.price_flash, retailer: r.price_retailer }),
       cost: Number(r.cost_ngn),
       plannedProfit: Number(r.planned_profit_ngn),
       gadget: r.products.categories?.is_gadget ?? false,
+      noDiscounts: r.promo_paused,
     }];
   });
 }

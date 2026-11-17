@@ -126,6 +126,8 @@ export interface QuoteLine {
   plannedProfit: number;
   gadget: boolean;
   qty: number;
+  /** Set by the profit guard: this variant sells at list price only (no promotions, coupons or points drawn from it). */
+  noDiscounts?: boolean;
 }
 
 /** Build a quote line from 1688 costs (sample data, admin tools and tests). */
@@ -168,13 +170,14 @@ export function quoteCart(
 
   for (const line of lines) {
     const { qty } = line;
-    const unit = unitFromPrices(line.prices, qty, promo);
+    const unit = line.noDiscounts ? line.prices.list : unitFromPrices(line.prices, qty, promo);
     subtotalList += line.prices.list * qty;
     subtotal += unit * qty;
-    plannedProfit += line.plannedProfit * qty;
+    // A guarded line keeps all its profit: it adds nothing to the room other discounts can use.
+    if (!line.noDiscounts) plannedProfit += line.plannedProfit * qty;
     cost += line.cost * qty;
     const retail = qty >= PRICING.retailerMinQty;
-    const fits = coupon ? (coupon.gadgetOnly ? line.gadget : !line.gadget) : false;
+    const fits = coupon && !line.noDiscounts ? (coupon.gadgetOnly ? line.gadget : !line.gadget) : false;
     if (!retail && fits) {
       eligibleSubtotal += unit * qty;
       eligibleProfit += line.plannedProfit * qty;

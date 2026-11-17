@@ -8,8 +8,11 @@ import { LivePrice } from "./live-price";
 
 export function ShipTag({ sea, className = "" }: { sea: boolean; className?: string }) {
   return (
-    <span className={`rounded-sm px-1.5 py-0.5 text-[9px] font-extrabold tracking-wide ${sea ? "bg-sea text-white" : "bg-white/95 text-success"} ${className}`}>
-      {sea ? "SEA · 90+ DAYS" : "FREE · AIR 10+ DAYS"}
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-[3px] text-[10px] font-semibold leading-none backdrop-blur-sm ${sea ? "bg-sea/90 text-white" : "bg-white/90 text-success"} ${className}`}
+    >
+      <span aria-hidden className={`size-1.5 rounded-full ${sea ? "bg-gold" : "bg-success"}`} />
+      {sea ? "Sea · 90+ days" : "Free shipping"}
     </span>
   );
 }
@@ -44,7 +47,7 @@ export function ProductCard({ product }: { product: Product }) {
       <Link href={`/product/${product.slug}`} className="flex flex-col gap-1">
         <span className="relative">
           <ProductTile tint={product.tint} icon={product.icon} name={product.name} image={product.images[0]} badge={product.badge} className="aspect-[3/4] w-full" />
-          {product.shipMode === "sea" && <ShipTag sea className="absolute bottom-1.5 left-1.5" />}
+          <ShipTag sea={product.shipMode === "sea"} className="absolute bottom-2 left-1.5" />
         </span>
         <span className="mt-0.5 truncate text-xs text-[#333] md:text-[13px]">{product.name}</span>
         <span className="flex items-baseline gap-1.5">
