@@ -59,7 +59,7 @@ export function ProductCard({ product }: { product: Product }) {
       </Link>
       {/* Same shape as the photo, so the buttons sit on its corners whatever the card width. */}
       <div className="pointer-events-none absolute inset-x-0 top-0 aspect-[3/4] [&>*]:pointer-events-auto">
-        <WishlistButton className="absolute right-1.5 top-1.5" />
+        <WishlistButton slug={product.slug} className="absolute right-1.5 top-1.5" />
         <AddToCartIcon product={product} variant={single} className="absolute bottom-1.5 right-1.5" />
       </div>
     </article>

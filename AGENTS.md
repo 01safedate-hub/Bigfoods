@@ -20,6 +20,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - 007: `pickup_stations`, `sale_events`, `coupons`, `product_questions`, `search_products()`.
 - 008: `orders` (status machine trigger), Pay small small plans, Group pay links, Cart Clear-Out draws, profit guard; pg_cron jobs `fc-*`.
 - 009: `place_order`, `track_order`, `record_purchase`, `dispatch_state`, `purchase_list` / `dispatch_by_state` views.
+- 010–011: `wishlists`, `points_ledger` + `daily_checkin()`, `my_balances`, `cancel_or_refund` (once only), `set_staff_role`, `admin_dashboard()`.
 - Money-moving functions are service-role only; the site calls them from server actions with `SUPABASE_SECRET_KEY`.
 - The same rules live in TypeScript with tests: `src/lib/{orders,payments,draw,pricing/audit}.ts`. Keep both in step.
 - Auth: passwordless OTP (`/sign-in`), session refreshed in `src/proxy.ts`, `/admin` gated by `StaffGate` (staff role).

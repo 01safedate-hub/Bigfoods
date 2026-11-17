@@ -41,3 +41,50 @@ export async function answerQuestion(id: unknown, answer: unknown, hide = false)
   if (slug) updateTag(`qa:${slug}`);
   return { ok: true, message: hide ? "Hidden" : "Answered" };
 }
+
+const ROLES = ["customer", "super_admin", "finance", "purchasing", "warehouse", "customer_care", "marketing"] as const;
+
+async function isSuperAdmin(userId: string) {
+  const { data } = await secretDb().from("profiles").select("role").eq("id", userId).maybeSingle();
+  return data?.role === "super_admin";
+}
+
+/** Cancel before purchase, or refund a shipped order that never arrived. Money goes back once (the database refuses repeats). */
+export async function cancelOrder(orderId: unknown, note: unknown): Promise<Result> {
+  await requireStaff();
+  if (typeof orderId !== "string") return { ok: false, message: "Unknown order." };
+  if (!hasSupabase) return { ok: true, message: "Demo: not saved." };
+  const { data, error } = await secretDb().rpc("cancel_or_refund", { p_order: orderId, p_note: typeof note === "string" ? note.slice(0, 200) : "" });
+  return error ? { ok: false, message: error.message } : { ok: true, message: data === "refunded" ? "Refunded" : "Cancelled" };
+}
+
+/** Super admins only. The database also refuses demoting the last super admin. */
+export async function setRole(userId: unknown, role: unknown): Promise<Result> {
+  const me = await requireStaff();
+  if (typeof userId !== "string" || !ROLES.includes(role as (typeof ROLES)[number])) return { ok: false, message: "Unknown role." };
+  if (!hasSupabase || !me) return { ok: true, message: "Demo: not saved." };
+  if (!(await isSuperAdmin(me.id))) return { ok: false, message: "Only a super admin can change roles." };
+  const { error } = await secretDb().rpc("set_staff_role", { p_actor: me.id, p_user: userId, p_role: role });
+  return error ? { ok: false, message: error.message } : { ok: true, message: "Role updated" };
+}
+
+type Table = "coupons" | "sale_events" | "pickup_stations";
+const EDITABLE: Record<Table, string[]> = {
+  coupons: ["id", "label", "title", "rule", "amount_ngn", "percent", "max_off_ngn", "min_spend_ngn", "gadget_only", "active", "ends_at"],
+  sale_events: ["id", "name", "starts_on", "ends_on", "theme", "kicker", "title", "sub", "color", "early_access_days", "active"],
+  pickup_stations: ["id", "state", "area", "name", "hours", "active"],
+};
+
+/** Create or update a coupon, sale event or pickup station. Database checks still apply (e.g. percentage coupons need a cap). */
+export async function saveRow(table: unknown, row: unknown): Promise<Result> {
+  await requireStaff();
+  if (typeof table !== "string" || !(table in EDITABLE) || typeof row !== "object" || !row) return { ok: false, message: "Nothing to save." };
+  const allowed = EDITABLE[table as Table];
+  const clean = Object.fromEntries(Object.entries(row).filter(([k, v]) => allowed.includes(k) && v !== undefined).map(([k, v]) => [k, v === "" ? null : v]));
+  if (table === "sale_events" && !clean.id) delete clean.id;
+  if (!hasSupabase) return { ok: true, message: "Demo: not saved." };
+  const { error } = await secretDb().from(table as Table).upsert(clean);
+  if (error) return { ok: false, message: error.message };
+  updateTag("site");
+  return { ok: true, message: "Saved" };
+}

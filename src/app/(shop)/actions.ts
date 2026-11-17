@@ -194,3 +194,50 @@ export async function signOut() {
   if (hasSupabase) await (await userDb()).auth.signOut();
   redirect("/");
 }
+
+/** Daily check-in: +5 points, +30 on the 7th day in a row. Once per Lagos day (enforced by the database). */
+export async function checkIn(): Promise<{ ok: boolean; message: string; streak?: number }> {
+  if (!hasSupabase) return { ok: false, message: "Check-in turns on when the database is connected." };
+  const db = await userDb();
+  const { data, error } = await db.rpc("daily_checkin");
+  if (error) return { ok: false, message: error.message.includes("Sign in") ? "Sign in to check in." : "Try again in a moment." };
+  const r = data as { already: boolean; points: number; streak: number };
+  return { ok: true, streak: r.streak, message: r.already ? `Already checked in today · ${r.streak}-day streak` : `+${r.points} points · ${r.streak}-day streak` };
+}
+
+/** The signed-in customer's saved product slugs, or null when signed out (the browser keeps them instead). */
+export async function myWishlist(): Promise<string[] | null> {
+  if (!hasSupabase) return null;
+  const user = await getSessionUser();
+  if (!user) return null;
+  const { data } = await (await userDb()).from("wishlists").select("products(slug)").order("created_at", { ascending: false });
+  return (data ?? []).map((r) => (r.products as unknown as { slug: string }).slug);
+}
+
+/** Saves or removes products for the signed-in customer. Returns false when signed out. */
+export async function syncWishlist(add: unknown, remove: unknown): Promise<boolean> {
+  if (!hasSupabase) return false;
+  const user = await getSessionUser();
+  if (!user) return false;
+  const slugs = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string").slice(0, 200) : []);
+  const [a, r] = [slugs(add), slugs(remove)];
+  const db = await userDb();
+  const all = [...a, ...r];
+  if (!all.length) return true;
+  const { data: ps } = await db.from("products").select("id, slug").in("slug", all);
+  const id = new Map((ps ?? []).map((p) => [p.slug, p.id]));
+  const addIds = a.flatMap((s) => id.get(s) ?? []);
+  const removeIds = r.flatMap((s) => id.get(s) ?? []);
+  if (addIds.length) await db.from("wishlists").upsert(addIds.map((product_id) => ({ customer_id: user.id, product_id })), { ignoreDuplicates: true });
+  if (removeIds.length) await db.from("wishlists").delete().eq("customer_id", user.id).in("product_id", removeIds);
+  return true;
+}
+
+export interface LinkProgress { target: number; raised: number; expires_at: string; people: number; items: { title: string; amount: number; funded: boolean }[] }
+
+/** Public progress for a Group pay link (totals and item names only). */
+export async function linkProgress(code: unknown): Promise<LinkProgress | null> {
+  if (!hasSupabase || typeof code !== "string" || !/^[A-Za-z0-9-]{4,20}$/.test(code)) return null;
+  const { data } = await publicDb().rpc("group_link_progress", { p_code: code });
+  return ((data as LinkProgress[] | null) ?? [])[0] ?? null;
+}

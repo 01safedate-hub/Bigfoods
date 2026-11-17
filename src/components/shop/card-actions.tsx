@@ -8,15 +8,17 @@ import { cn } from "@/lib/format";
 import { unitFromPrices } from "@/lib/pricing/prices";
 import { useCart } from "./cart-provider";
 import { useLivePromo } from "./live-price";
+import { useWishlist } from "./wishlist-provider";
 
-export function WishlistButton({ className }: { className?: string }) {
-  const [on, setOn] = useState(false);
+export function WishlistButton({ slug, className }: { slug: string; className?: string }) {
+  const { has, toggle } = useWishlist();
+  const on = has(slug);
   return (
     <button
       type="button"
       aria-pressed={on}
       aria-label={on ? "Remove from wishlist" : "Save to wishlist"}
-      onClick={() => setOn(!on)}
+      onClick={() => toggle(slug)}
       className={cn("flex size-9 items-center justify-center rounded-full bg-white shadow-sm", className)}
     >
       <Heart aria-hidden size={16} className={on ? "fill-sale text-sale" : "text-ink"} />

@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/format";
 
 const NAV: { label: string; href?: string; badge?: number }[] = [
-  { label: "Dashboard" }, { label: "Orders", badge: 214 }, { label: "Purchasing & dispatch", href: "/admin/purchasing" },
-  { label: "Q&A inbox", href: "/admin/questions" }, { label: "Group pay & plans" }, { label: "Events & themes" },
-  { label: "Pricing rules & guardrails", href: "/admin/pricing" }, { label: "Coupons & rewards" }, { label: "Cart Clear-Out" },
-  { label: "Dropship sellers" }, { label: "Customers" }, { label: "Staff & roles" },
+  { label: "Dashboard", href: "/admin" }, { label: "Orders", href: "/admin/orders" }, { label: "Purchasing & dispatch", href: "/admin/purchasing" },
+  { label: "Q&A inbox", href: "/admin/questions" }, { label: "Coupons, events & stations", href: "/admin/settings" },
+  { label: "Pricing rules & guardrails", href: "/admin/pricing" }, { label: "Staff & roles", href: "/admin/staff" },
+  { label: "Group pay & plans" }, { label: "Cart Clear-Out" }, { label: "Dropship sellers" }, { label: "Customers" },
 ];
 
 export function AdminNav() {

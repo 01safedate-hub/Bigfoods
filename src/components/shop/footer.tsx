@@ -54,7 +54,12 @@ export function ShopFooter() {
       </div>
       <div className="mx-auto flex max-w-[1360px] flex-wrap justify-between gap-2 border-t border-[#e2e2e2] px-4 pt-3.5 pb-6 text-xs text-muted md:px-6">
         <span>© 2026 FastChina.shop · RC [CAC NUMBER]</span>
-        <span>Terms · Privacy (NDPA 2023) · Draw rules · Cookies</span>
+        <span className="flex flex-wrap gap-x-3">
+          <Link href="/legal/terms">Terms</Link>
+          <Link href="/legal/privacy">Privacy (NDPA 2023)</Link>
+          <Link href="/legal/refunds">Refunds</Link>
+          <Link href="/legal/draw-rules">Draw rules</Link>
+        </span>
       </div>
     </footer>
   );

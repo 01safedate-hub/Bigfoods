@@ -66,7 +66,7 @@ export function ShopHeader() {
           </span>
           <span className="sr-only">Search</span>
         </Link>
-        <Link href="/account" aria-label="Wishlist" className="flex h-11 w-9 items-center justify-center">
+        <Link href="/wishlist" aria-label="Wishlist" className="flex h-11 w-9 items-center justify-center">
           <Heart aria-hidden size={24} strokeWidth={1.6} />
         </Link>
       </div>
@@ -109,7 +109,7 @@ export function ShopHeader() {
           <Link href="/account" aria-label="Account" className="flex size-11 items-center justify-center">
             <User aria-hidden size={22} strokeWidth={1.6} />
           </Link>
-          <Link href="/account" aria-label="Wishlist" className="flex size-11 items-center justify-center">
+          <Link href="/wishlist" aria-label="Wishlist" className="flex size-11 items-center justify-center">
             <Heart aria-hidden size={22} strokeWidth={1.6} />
           </Link>
           <Link href="/cart" aria-label={`Cart, ${count} items`} className="relative flex size-11 items-center justify-center">
