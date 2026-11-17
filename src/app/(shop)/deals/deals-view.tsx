@@ -8,14 +8,14 @@ import { Countdown, MidnightLabel } from "@/components/ui/countdown";
 import { InfoButton } from "@/components/ui/info-button";
 import { useNow } from "@/hooks/use-now";
 import { usePersistentState } from "@/hooks/use-persistent-state";
-import { PRODUCTS } from "@/lib/catalog/products";
+import type { Product } from "@/lib/catalog/types";
 import { EVENTS, eventDates, eventStatus } from "@/lib/events";
 import { cn } from "@/lib/format";
 import { dhm, nextDraw } from "@/lib/time";
 
 const STREAK_PTS = [5, 5, 5, 10, 5, 5, 30];
 
-export function DealsView() {
+export function DealsView({ flash }: { flash: Product[] }) {
   const now = useNow();
   const [points, setPoints] = usePersistentState("fc-points", 1240);
   const [checked, setChecked] = useState(false);
@@ -158,7 +158,7 @@ export function DealsView() {
       </section>
 
       <div className="md:col-span-2 lg:col-span-3">
-        <FlashSale products={PRODUCTS.filter((p) => p.flash)} />
+        <FlashSale products={flash} />
       </div>
       <p className="px-1 text-xs leading-relaxed text-muted md:col-span-2 lg:col-span-3">
         One coupon per order. Coupons don’t apply to retailer (10+) prices. Points can pay up to 10% of an order.

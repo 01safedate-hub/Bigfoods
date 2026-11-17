@@ -9,7 +9,6 @@ import { usePersistentState } from "@/hooks/use-persistent-state";
 import { COUPON_COPY, COUPONS } from "@/lib/catalog/coupons";
 import type { Product } from "@/lib/catalog/types";
 import { cn, naira } from "@/lib/format";
-import { priceOf } from "@/lib/pricing/engine";
 import { ProductTile } from "./product-card";
 
 export function MidnightStrip() {
@@ -90,13 +89,13 @@ export function FlashSale({ products }: { products: Product[] }) {
       </div>
       <div className="no-scrollbar flex gap-2 overflow-x-auto md:grid md:grid-cols-6 md:gap-3 md:overflow-visible">
         {products.map((p) => {
-          const b = priceOf(p);
+          const b = p.prices;
           const off = Math.round((1 - b.flash / b.list) * 100);
           const pct = p.flash?.claimedPct ?? 50;
           return (
             <Link key={p.slug} href={`/product/${p.slug}`} className="flex w-24 shrink-0 flex-col gap-1 md:w-auto">
               <span className="relative">
-                <ProductTile product={{ ...p, badge: undefined }} className="h-24 w-full md:h-36" iconSize={40} />
+                <ProductTile tint={p.tint} icon={p.icon} name={p.name} image={p.images[0]} className="h-24 w-full md:h-36" iconSize={40} sizes="160px" />
                 <span className="absolute left-0 top-0 bg-sale px-1 py-0.5 text-[10px] font-extrabold text-white">-{off}%</span>
               </span>
               <strong className="text-[13px] text-sale md:text-[15px]">{naira(b.flash)}</strong>

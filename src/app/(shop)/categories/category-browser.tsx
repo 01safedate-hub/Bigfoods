@@ -6,17 +6,17 @@ import { ProductCard } from "@/components/shop/product-card";
 import { InfoButton } from "@/components/ui/info-button";
 import { ProductIcon } from "@/components/ui/product-icon";
 import { CATEGORIES } from "@/lib/catalog/categories";
-import { PRODUCTS } from "@/lib/catalog/products";
+import type { Product } from "@/lib/catalog/types";
 import { cn } from "@/lib/format";
 
 const NOTE_TONE = { sea: "bg-[#EEF4FF] text-sea", retail: "bg-[#FBF6EA] text-gold-ink", plain: "bg-surface text-[#333]" } as const;
 
-export function CategoryBrowser() {
+export function CategoryBrowser({ products: all }: { products: Product[] }) {
   const params = useSearchParams();
   const router = useRouter();
   const slug = params.get("c") ?? "for-you";
   const cat = CATEGORIES.find((c) => c.slug === slug) ?? CATEGORIES[0];
-  const products = PRODUCTS.filter((p) =>
+  const products = all.filter((p) =>
     cat.slug === "for-you" ? true : cat.slug === "women" ? ["fashion", "bags"].includes(p.category) : cat.slug === "men" ? ["fashion", "jewellery", "shoes"].includes(p.category) : cat.slug === "retailer" ? !["gadgets", "furniture", "machines"].includes(p.category) : p.category === cat.slug,
   );
 

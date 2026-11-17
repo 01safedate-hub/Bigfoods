@@ -10,7 +10,7 @@ import { Countdown } from "@/components/ui/countdown";
 import { InfoButton } from "@/components/ui/info-button";
 import { Progress } from "@/components/ui/progress";
 import { useNow } from "@/hooks/use-now";
-import { productBySlug } from "@/lib/catalog/products";
+import type { Product } from "@/lib/catalog/types";
 import { cn } from "@/lib/format";
 import { addDaysLabel } from "@/lib/time";
 
@@ -26,10 +26,9 @@ const SERVICES = [
   { label: "Request a product", icon: Link2, href: "/search" }, { label: "Open a store", icon: Store, href: "/store" },
 ];
 
-export function AccountView() {
+export function AccountView({ cheaper }: { cheaper: Product[] }) {
   const now = useNow(60_000);
   const [banner, setBanner] = useState(true);
-  const cheaper = ["mens-steel-quartz-watch", "wireless-earbuds-enc", "quilted-crossbody-chain-bag", "chunky-platform-sneakers"].map((s) => productBySlug(s)!);
   const current = 3;
 
   return (

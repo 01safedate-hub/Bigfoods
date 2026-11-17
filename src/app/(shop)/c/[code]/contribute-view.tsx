@@ -6,10 +6,9 @@ import { ProductTile } from "@/components/shop/product-card";
 import { InfoButton } from "@/components/ui/info-button";
 import { Progress } from "@/components/ui/progress";
 import { useNow } from "@/hooks/use-now";
-import { productBySlug } from "@/lib/catalog/products";
+import type { Product } from "@/lib/catalog/types";
 import { allocate } from "@/lib/group-pay";
 import { cn, naira } from "@/lib/format";
-import { priceOf } from "@/lib/pricing/engine";
 
 interface Gift {
   name: string;
@@ -20,9 +19,7 @@ interface Gift {
 const COLORS = ["#4F46E5", "#0B6B3A", "#C8102E", "#7A5C17", "#0B2545", "#B4235A"];
 
 /** Demo order behind link TOLU-7K2X. In production: `group_pay_links` + Supabase Realtime. */
-const ITEMS = ["satin-cowl-neck-midi-dress", "body-wave-lace-front-wig-22", "amoled-android-phone-5g"].map((s) => productBySlug(s)!);
-
-export function ContributeView({ code }: { code: string }) {
+export function ContributeView({ code, items: ITEMS }: { code: string; items: Product[] }) {
   const now = useNow(30_000);
   const [feed, setFeed] = useState<Gift[]>([]);
   const [amount, setAmount] = useState(5_000);
@@ -52,7 +49,7 @@ export function ContributeView({ code }: { code: string }) {
     };
   }, []);
 
-  const prices = ITEMS.map((p) => priceOf(p).list);
+  const prices = ITEMS.map((p) => p.prices.list);
   const total = prices.reduce((a, b) => a + b, 0);
   const raised = Math.min(total, feed.reduce((a, b) => a + b.amount, 0));
   const gotByItem = allocate(prices, raised);
@@ -91,7 +88,7 @@ export function ContributeView({ code }: { code: string }) {
               const done = got >= prices[i];
               return (
                 <li key={p.slug} className="flex items-center gap-2">
-                  <ProductTile product={{ ...p, badge: undefined }} className="h-[42px] w-[34px] shrink-0" iconSize={18} />
+                  <ProductTile tint={p.tint} icon={p.icon} name={p.name} image={p.images[0]} sizes="40px" className="h-[42px] w-[34px] shrink-0" iconSize={18} />
                   <span className="flex min-w-0 flex-1 flex-col gap-1">
                     <span className="flex justify-between gap-1.5"><span className="truncate">{p.name}</span><strong>{naira(prices[i])}</strong></span>
                     <Progress value={(got / prices[i]) * 100} className="h-1" barClass={done ? "bg-[#16A34A]" : "bg-group"} label={`${p.name} paid`} />

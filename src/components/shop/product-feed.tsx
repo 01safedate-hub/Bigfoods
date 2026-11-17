@@ -4,7 +4,6 @@ import { useState } from "react";
 import { InfoButton } from "@/components/ui/info-button";
 import type { Product } from "@/lib/catalog/types";
 import { cn } from "@/lib/format";
-import { isGadget, priceOf, shipsBySea } from "@/lib/pricing/engine";
 import { ProductCard } from "./product-card";
 
 const TABS = ["For You", "Gadgets", "New In", "Under ₦10k", "Sea items"] as const;
@@ -12,10 +11,10 @@ type Tab = (typeof TABS)[number];
 
 const filter = (tab: Tab, list: Product[]) => {
   switch (tab) {
-    case "Gadgets": return list.filter(isGadget);
+    case "Gadgets": return list.filter((p) => p.isGadget);
     case "New In": return list.filter((p) => p.isNew);
-    case "Under ₦10k": return list.filter((p) => priceOf(p).list < 10_000);
-    case "Sea items": return list.filter(shipsBySea);
+    case "Under ₦10k": return list.filter((p) => p.prices.list < 10_000);
+    case "Sea items": return list.filter((p) => p.shipMode === "sea");
     default: return list;
   }
 };

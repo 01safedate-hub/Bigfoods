@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getProducts } from "@/lib/data/catalog";
 import { ContributeView } from "./contribute-view";
 
 export const metadata: Metadata = {
@@ -13,5 +14,8 @@ export function generateStaticParams() {
 
 export default async function ContributePage({ params }: PageProps<"/c/[code]">) {
   const { code } = await params;
-  return <ContributeView code={code.toUpperCase()} />;
+  // Demo order until group-pay links are stored in Supabase.
+  const all = await getProducts();
+  const items = ["satin-cowl-neck-midi-dress", "body-wave-lace-front-wig-22", "amoled-android-phone-5g"].flatMap((s) => all.filter((p) => p.slug === s));
+  return <ContributeView code={code.toUpperCase()} items={items.length ? items : all.slice(0, 3)} />;
 }

@@ -2,77 +2,74 @@
 
 import { createContext, useContext, useMemo } from "react";
 import { usePersistentState } from "@/hooks/use-persistent-state";
-import { productBySlug } from "@/lib/catalog/products";
-import type { Product } from "@/lib/catalog/types";
+import type { IconKey, PriceSet, Product, Variant } from "@/lib/catalog/types";
+
+/** What the cart remembers about an item. Prices are refreshed from the server before checkout. */
+export interface CartSnapshot {
+  name: string;
+  tint: string;
+  icon: IconKey;
+  image?: string | null;
+  variantLabel: string;
+  shipMode: "air" | "sea";
+  isGadget: boolean;
+  prices: PriceSet;
+}
 
 export interface CartItem {
   key: string;
   slug: string;
+  variantId: string;
   qty: number;
-  option?: string;
-  color?: string;
-  size?: string;
   /** Unit price when added, to show "₦X less than when added". */
   addedPrice: number;
   selected: boolean;
-}
-
-export interface ResolvedItem extends CartItem {
-  product: Product;
-  /** Product with the chosen cost option applied (e.g. 256GB). */
-  costed: Product;
+  snap: CartSnapshot;
 }
 
 interface CartApi {
-  items: ResolvedItem[];
+  items: CartItem[];
   count: number;
-  add: (item: Omit<CartItem, "key" | "selected">) => void;
+  add: (product: Product, variant: Variant, qty: number, unit: number) => void;
   setQty: (key: string, qty: number) => void;
   toggle: (key: string) => void;
   setAll: (selected: boolean) => void;
   remove: (key: string) => void;
+  /** Update stored prices after the server has re-priced the cart. */
+  refresh: (prices: { key: string; prices: PriceSet }[]) => void;
 }
 
 const CartContext = createContext<CartApi | null>(null);
 
-/** Demo cart until accounts are connected to Supabase. */
-const DEMO: CartItem[] = [
-  { key: "amoled-android-phone-5g|256GB|Midnight Black|", slug: "amoled-android-phone-5g", qty: 1, option: "256GB", color: "Midnight Black", addedPrice: 276_000, selected: true },
-  { key: "satin-cowl-neck-midi-dress||Wine|M", slug: "satin-cowl-neck-midi-dress", qty: 1, color: "Wine", size: "M", addedPrice: 18_000, selected: true },
-  { key: "body-wave-lace-front-wig-22||Natural black|22\"", slug: "body-wave-lace-front-wig-22", qty: 1, color: "Natural black", size: '22"', addedPrice: 80_000, selected: true },
-];
-
-export function withOption(product: Product, option?: string): Product {
-  const o = product.options?.find((x) => x.label === option);
-  return o ? { ...product, cny: o.cny } : product;
-}
+export const variantLabel = (v: Variant) => Object.values(v.props).join(" / ");
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [raw, setRaw] = usePersistentState<CartItem[]>("fc-cart-v1", DEMO);
+  const [items, setItems] = usePersistentState<CartItem[]>("fc-cart-v2", []);
 
-  const api = useMemo<CartApi>(() => {
-    const items: ResolvedItem[] = [];
-    for (const it of raw) {
-      const product = productBySlug(it.slug);
-      if (product) items.push({ ...it, product, costed: withOption(product, it.option) });
-    }
-    return {
-      items,
-      count: items.reduce((n, i) => n + i.qty, 0),
-      add: (item) => {
-        const key = [item.slug, item.option ?? "", item.color ?? "", item.size ?? ""].join("|");
-        setRaw((prev) => {
-          const found = prev.find((p) => p.key === key);
-          if (found) return prev.map((p) => (p.key === key ? { ...p, qty: p.qty + item.qty } : p));
-          return [...prev, { ...item, key, selected: true }];
-        });
-      },
-      setQty: (key, qty) => setRaw((prev) => prev.map((p) => (p.key === key ? { ...p, qty: Math.max(1, qty) } : p))),
-      toggle: (key) => setRaw((prev) => prev.map((p) => (p.key === key ? { ...p, selected: !p.selected } : p))),
-      setAll: (selected) => setRaw((prev) => prev.map((p) => ({ ...p, selected }))),
-      remove: (key) => setRaw((prev) => prev.filter((p) => p.key !== key)),
-    };
-  }, [raw, setRaw]);
+  const api = useMemo<CartApi>(() => ({
+    items,
+    count: items.reduce((n, i) => n + i.qty, 0),
+    add: (product, variant, qty, unit) => {
+      const key = `${product.slug}|${variant.id}`;
+      setItems((prev) => {
+        if (prev.some((p) => p.key === key)) return prev.map((p) => (p.key === key ? { ...p, qty: p.qty + qty } : p));
+        const snap: CartSnapshot = {
+          name: product.name, tint: product.tint, icon: product.icon, image: variant.image ?? product.images[0] ?? null,
+          variantLabel: variantLabel(variant), shipMode: product.shipMode, isGadget: product.isGadget, prices: variant.prices,
+        };
+        return [...prev, { key, slug: product.slug, variantId: variant.id, qty, addedPrice: unit, selected: true, snap }];
+      });
+    },
+    setQty: (key, qty) => setItems((prev) => prev.map((p) => (p.key === key ? { ...p, qty: Math.min(999, Math.max(1, qty)) } : p))),
+    toggle: (key) => setItems((prev) => prev.map((p) => (p.key === key ? { ...p, selected: !p.selected } : p))),
+    setAll: (selected) => setItems((prev) => prev.map((p) => ({ ...p, selected }))),
+    remove: (key) => setItems((prev) => prev.filter((p) => p.key !== key)),
+    refresh: (updates) =>
+      setItems((prev) => prev.map((p) => {
+        const u = updates.find((x) => x.key === p.key);
+        return u ? { ...p, snap: { ...p.snap, prices: u.prices } } : p;
+      })),
+  }), [items, setItems]);
 
   return <CartContext.Provider value={api}>{children}</CartContext.Provider>;
 }

@@ -11,10 +11,10 @@ import { useClaimed } from "@/components/shop/promos";
 import { InfoButton } from "@/components/ui/info-button";
 import { Progress } from "@/components/ui/progress";
 import { useNow } from "@/hooks/use-now";
-import { COUPONS } from "@/lib/catalog/coupons";
 import { STATES, STATIONS } from "@/lib/catalog/stations";
 import { cn, naira } from "@/lib/format";
-import { quoteCart, unitPrice } from "@/lib/pricing/engine";
+import { unitFromPrices, weekly as weeklyOf } from "@/lib/pricing/prices";
+import { type CheckoutQuote, quoteCheckout } from "../actions";
 import { addDaysLabel } from "@/lib/time";
 
 type Mode = "full" | "small" | "group";
@@ -39,19 +39,33 @@ export function CheckoutView() {
   const [copied, setCopied] = useState(false);
 
   const selected = items.filter((i) => i.selected);
-  const lines = selected.map((i) => ({ product: i.costed, qty: i.qty }));
+  const unitOf = (i: (typeof selected)[number]) => unitFromPrices(i.snap.prices, i.qty, promo);
 
-  // Best claimed coupon (or any coupon, for the demo) that the guardrails allow.
-  let best: (typeof COUPONS)[number] | null = null;
-  let bestValue = 0;
-  for (const c of COUPONS.filter((x) => claimed.length === 0 || claimed.includes(x.id))) {
-    const value = quoteCart(lines, { promo, coupon: c }).coupon;
-    if (value > bestValue) [best, bestValue] = [c, value];
-  }
+  // The total, coupon and points are worked out on the server with the guardrails; the browser never sees costs.
+  const [serverQuote, setServerQuote] = useState<CheckoutQuote | null>(null);
+  const requestKey = JSON.stringify([selected.map((i) => [i.slug, i.variantId, i.qty]), claimed, usePoints]);
+  useEffect(() => {
+    let live = true;
+    quoteCheckout(selected.map((i) => ({ slug: i.slug, variantId: i.variantId, qty: i.qty })), { claimedCouponIds: claimed, usePoints })
+      .then((q) => live && setServerQuote(q))
+      .catch(() => live && setServerQuote(null));
+    return () => {
+      live = false;
+    };
+    // requestKey captures every input that changes the quote.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestKey]);
 
-  const quote = quoteCart(lines, { promo, coupon: best, pointsNaira: usePoints ? POINTS : 0 });
+  const estimateList = selected.reduce((s, i) => s + i.snap.prices.list * i.qty, 0);
+  const estimate = selected.reduce((s, i) => s + unitOf(i) * i.qty, 0);
+  const quote = serverQuote ?? { subtotalList: estimateList, subtotal: estimate, priceSavings: estimateList - estimate, coupon: 0, couponLabel: null, couponNote: undefined, points: 0, total: estimate, lines: [], missing: 0, promo };
+  const best = quote.couponLabel ? { label: quote.couponLabel } : null;
   const due = quote.total;
-  const weekly = Math.ceil(due / plan / 100) * 100;
+  const weekly = weeklyOf(due, plan);
+  const lineTotal = (i: (typeof selected)[number]) => {
+    const l = quote.lines.find((x) => x.slug === i.slug && x.variantId === i.variantId);
+    return (l ? l.unit : unitOf(i)) * i.qty;
+  };
 
   // Group pay: contributions arrive live (simulated here until Supabase Realtime is connected).
   useEffect(() => {
@@ -70,7 +84,7 @@ export function CheckoutView() {
   let pool = funded;
   const allocation = ordered.map((key) => {
     const it = selected.find((i) => i.key === key)!;
-    const price = unitPrice(it.costed, it.qty, promo) * it.qty;
+    const price = lineTotal(it);
     const got = Math.max(0, Math.min(price, pool));
     pool -= got;
     return { it, price, got, done: got >= price };
@@ -150,11 +164,11 @@ export function CheckoutView() {
         {/* Items */}
         <section className="flex flex-col gap-2 bg-white p-3 md:rounded-md md:border md:border-line md:p-4">
           <div className="flex items-center justify-between">
-            <strong className="flex items-center gap-1.5 text-sm"><Plane aria-hidden size={16} /> {selected.length} items</strong>
+            <strong className="flex items-center gap-1.5 text-sm"><Plane aria-hidden size={16} /> {selected.length} {selected.length === 1 ? "item" : "items"}</strong>
             <span className="text-xs font-bold text-success">Arrives {eta}</span>
           </div>
           <div className="no-scrollbar flex gap-1.5 overflow-x-auto">
-            {selected.map((i) => <ProductTile key={i.key} product={{ ...i.product, badge: undefined }} className="h-[76px] w-16 shrink-0" iconSize={30} />)}
+            {selected.map((i) => <ProductTile key={i.key} tint={i.snap.tint} icon={i.snap.icon} name={i.snap.name} image={i.snap.image} sizes="64px" className="h-[76px] w-16 shrink-0" iconSize={30} />)}
           </div>
         </section>
 
@@ -245,10 +259,10 @@ export function CheckoutView() {
               <span className="font-bold">Pay order (top first)</span>
               {allocation.map(({ it, price, got, done }, idx) => (
                 <div key={it.key} className="flex items-center gap-2 rounded-md bg-white p-2">
-                  <ProductTile product={{ ...it.product, badge: undefined }} className="h-11 w-9 shrink-0" iconSize={18} />
+                  <ProductTile tint={it.snap.tint} icon={it.snap.icon} name={it.snap.name} image={it.snap.image} sizes="40px" className="h-11 w-9 shrink-0" iconSize={18} />
                   <span className="flex min-w-0 flex-1 flex-col gap-1">
-                    <span className="truncate">{it.product.name} · {naira(price)}</span>
-                    <Progress value={(got / price) * 100} className="h-1" barClass={done ? "bg-[#16A34A]" : "bg-group"} label={`${it.product.name} paid`} />
+                    <span className="truncate">{it.snap.name} · {naira(price)}</span>
+                    <Progress value={(got / price) * 100} className="h-1" barClass={done ? "bg-[#16A34A]" : "bg-group"} label={`${it.snap.name} paid`} />
                     <span className={cn("text-[11px] font-bold", done ? "text-success" : "text-muted")}>{done ? "Paid · ready to ship" : `${Math.round((got / price) * 100)}% paid`}</span>
                   </span>
                   <span className="flex flex-col gap-0.5">
@@ -272,7 +286,7 @@ export function CheckoutView() {
               <strong className="flex items-center">Coupon <InfoButton topic="coupons" className="-my-2" /></strong>
               <span className="text-xs text-muted">{best ? `${best.label} · best coupon applied` : "No coupon fits this cart yet"}{quote.couponNote ? ` · ${quote.couponNote}` : ""}</span>
             </span>
-            <strong className="text-sale">{quote.coupon ? `−${naira(quote.coupon)}` : "—"}</strong>
+            <strong className="shrink-0 whitespace-nowrap pl-3 text-sale">{quote.coupon ? `−${naira(quote.coupon)}` : "—"}</strong>
           </div>
           <button type="button" role="switch" aria-checked={usePoints} onClick={() => setUsePoints(!usePoints)} className="flex min-h-10 items-center justify-between text-left">
             <span>

@@ -6,10 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { ProductCard } from "@/components/shop/product-card";
 import { ProductIcon } from "@/components/ui/product-icon";
-import { PRODUCTS } from "@/lib/catalog/products";
-import type { IconKey } from "@/lib/catalog/types";
+import type { IconKey, Product } from "@/lib/catalog/types";
 import { cn } from "@/lib/format";
-import { priceOf, shipsBySea } from "@/lib/pricing/engine";
 
 const DISCOVER = ["Necklace for men", "Watch for men", "Bone straight wig", "Android phone", "Chain", "Office chair", "Party dress", "Lipstick", "Sneakers"];
 const HOT: [string, string, IconKey, string][] = [
@@ -19,24 +17,24 @@ const HOT: [string, string, IconKey, string][] = [
 ];
 const SORTS = ["Relevance", "Best selling", "Price ↑", "Price ↓", "Air only"] as const;
 
-function search(q: string, sort: (typeof SORTS)[number]) {
+function search(products: Product[], q: string, sort: (typeof SORTS)[number]) {
   const words = q.toLowerCase().split(/\s+/).filter((w) => w.length > 1);
-  let res = PRODUCTS.filter((p) => words.some((w) => `${p.name} ${p.category} ${p.description}`.toLowerCase().includes(w.replace(/s$/, ""))));
+  let res = products.filter((p) => words.some((w) => `${p.name} ${p.category} ${p.description}`.toLowerCase().includes(w.replace(/s$/, ""))));
   if (sort === "Best selling") res = [...res].sort((a, b) => b.sold - a.sold);
-  if (sort === "Price ↑") res = [...res].sort((a, b) => priceOf(a).list - priceOf(b).list);
-  if (sort === "Price ↓") res = [...res].sort((a, b) => priceOf(b).list - priceOf(a).list);
-  if (sort === "Air only") res = res.filter((p) => !shipsBySea(p));
+  if (sort === "Price ↑") res = [...res].sort((a, b) => a.prices.list - b.prices.list);
+  if (sort === "Price ↓") res = [...res].sort((a, b) => b.prices.list - a.prices.list);
+  if (sort === "Air only") res = res.filter((p) => p.shipMode === "air");
   return res;
 }
 
-export function SearchView() {
+export function SearchView({ products }: { products: Product[] }) {
   const params = useSearchParams();
   const router = useRouter();
   const [q, setQ] = useState(params.get("q") ?? "");
   const [recent, setRecent] = useState(["Silver necklace", "Lace wig", "Earbuds", "Phone case"]);
   const [sort, setSort] = useState<(typeof SORTS)[number]>("Relevance");
   const term = q.trim();
-  const results = term ? search(term, sort) : [];
+  const results = term ? search(products, term, sort) : [];
 
   const go = (v: string) => {
     setQ(v);

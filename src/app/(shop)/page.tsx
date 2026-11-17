@@ -7,7 +7,7 @@ import { ClearOutTile, CouponRow, FlashSale, MidnightStrip, RetailerTile } from 
 import { Countdown } from "@/components/ui/countdown";
 import { InfoButton } from "@/components/ui/info-button";
 import { ProductIcon } from "@/components/ui/product-icon";
-import { PRODUCTS } from "@/lib/catalog/products";
+import { getProducts } from "@/lib/data/catalog";
 
 const BUBBLES = [
   ["gadgets", "Phones", "phone", "#E8E8F0"], ["hair", "Wigs", "wig", "#F3E9DC"], ["women", "Dresses", "dress", "#F6E3E6"],
@@ -16,8 +16,9 @@ const BUBBLES = [
   ["retailer", "Retailer", "gift", "#F6F1E4"],
 ] as const;
 
-export default function HomePage() {
-  const flash = PRODUCTS.filter((p) => p.flash);
+export default async function HomePage() {
+  const products = await getProducts();
+  const flash = products.filter((p) => p.flash);
   return (
     <div className="flex flex-col gap-3 pb-6 md:gap-6 md:pt-4">
       <div className="md:overflow-hidden md:rounded-md">
@@ -81,7 +82,7 @@ export default function HomePage() {
         <RetailerTile />
       </div>
 
-      <ProductFeed products={PRODUCTS} />
+      <ProductFeed products={products} />
 
       <div className="px-3 md:px-0">
         <TrustGrid />

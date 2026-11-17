@@ -2,7 +2,8 @@
 
 import { Check, Lock, MapPin, Share2, ShieldCheck, ShoppingBag, Trash2, Truck } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { priceLines } from "../actions";
 import { useCart } from "@/components/shop/cart-provider";
 import { useLivePromo } from "@/components/shop/live-price";
 import { ProductTile } from "@/components/shop/product-card";
@@ -11,30 +12,44 @@ import { InfoButton } from "@/components/ui/info-button";
 import { Progress } from "@/components/ui/progress";
 import { COUPONS } from "@/lib/catalog/coupons";
 import { cn, naira } from "@/lib/format";
-import { isGadget, priceOf, quoteCart, shipsBySea, unitPrice } from "@/lib/pricing/engine";
+import { unitFromPrices } from "@/lib/pricing/prices";
 
 const FILTERS = ["All", "Price drops", "Sea items"] as const;
 
 export function CartView() {
-  const { items, setQty, toggle, setAll, remove } = useCart();
+  const { items, setQty, toggle, setAll, remove, refresh } = useCart();
   const promo = useLivePromo();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
 
+  // Re-check prices with the server (price changes, retailer quantities). Costs never reach the browser.
+  const requestKey = items.map((i) => `${i.key}:${i.qty}`).join(",");
+  const lastKey = useRef("");
+  useEffect(() => {
+    if (!requestKey || requestKey === lastKey.current) return;
+    lastKey.current = requestKey;
+    priceLines(items.map((i) => ({ slug: i.slug, variantId: i.variantId, qty: i.qty })))
+      .then((fresh) => refresh(fresh.map((f) => ({ key: `${f.slug}|${f.variantId}`, prices: f.prices }))))
+      .catch(() => {});
+  }, [requestKey, items, refresh]);
+
+  const unitOf = (i: (typeof items)[number], p: "none" | "midnight" = promo) => unitFromPrices(i.snap.prices, i.qty, p);
   const selected = items.filter((i) => i.selected);
-  const lines = selected.map((i) => ({ product: i.costed, qty: i.qty }));
-  const quote = quoteCart(lines, { promo });
-  const midnight = quoteCart(lines, { promo: "midnight" });
+  const subtotalList = selected.reduce((s, i) => s + i.snap.prices.list * i.qty, 0);
+  const subtotal = selected.reduce((s, i) => s + unitOf(i) * i.qty, 0);
+  const midnightTotal = selected.reduce((s, i) => s + unitOf(i, "midnight") * i.qty, 0);
+  const quote = { subtotalList, subtotal, priceSavings: subtotalList - subtotal };
+  const midnight = { subtotal: midnightTotal };
   const selCount = selected.reduce((n, i) => n + i.qty, 0);
   const allOn = items.length > 0 && items.every((i) => i.selected);
 
   // Next coupon tier, counted on items coupons can apply to.
-  const eligible = selected.filter((i) => !isGadget(i.costed) && i.qty < 10).reduce((s, i) => s + unitPrice(i.costed, i.qty, promo) * i.qty, 0);
+  const eligible = selected.filter((i) => !i.snap.isGadget && i.qty < 10).reduce((s, i) => s + unitOf(i) * i.qty, 0);
   const tiers = COUPONS.filter((c) => !c.gadgetOnly && c.amount).sort((a, b) => a.minSpend - b.minSpend);
   const next = tiers.find((c) => eligible < c.minSpend);
   const best = [...tiers].reverse().find((c) => eligible >= c.minSpend);
 
   const shown = items.filter((i) =>
-    filter === "Price drops" ? i.addedPrice > unitPrice(i.costed, i.qty, promo) : filter === "Sea items" ? shipsBySea(i.costed) : true,
+    filter === "Price drops" ? i.addedPrice > unitOf(i) : filter === "Sea items" ? i.snap.shipMode === "sea" : true,
   );
 
   if (items.length === 0) {
@@ -86,10 +101,10 @@ export function CartView() {
 
         <ul className="flex flex-col bg-white md:rounded-md md:border md:border-line">
           {shown.map((i) => {
-            const unit = unitPrice(i.costed, i.qty, promo);
+            const unit = unitOf(i);
             const drop = i.addedPrice - unit;
-            const b = priceOf(i.costed);
-            const variant = [i.option, i.color, i.size].filter(Boolean).join(" / ");
+            const b = i.snap.prices;
+            const variant = i.snap.variantLabel;
             return (
               <li key={i.key} className="flex items-start gap-2.5 border-b border-[#f2f2f2] p-3 last:border-0">
                 <button type="button" onClick={() => toggle(i.key)} aria-pressed={i.selected} aria-label={i.selected ? "Deselect item" : "Select item"} className="flex h-24 w-8 items-center justify-center">
@@ -98,13 +113,13 @@ export function CartView() {
                   </span>
                 </button>
                 <Link href={`/product/${i.slug}`} className="shrink-0">
-                  <ProductTile product={{ ...i.product, badge: undefined }} className="h-[104px] w-[84px] md:h-32 md:w-24" iconSize={44} />
+                  <ProductTile tint={i.snap.tint} icon={i.snap.icon} name={i.snap.name} image={i.snap.image} sizes="96px" className="h-[104px] w-[84px] md:h-32 md:w-24" iconSize={44} />
                 </Link>
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
-                  <span className="truncate text-[13px]">{i.product.name}</span>
+                  <span className="truncate text-[13px]">{i.snap.name}</span>
                   <span className="text-xs text-subtle">
                     {variant && `${variant} · `}
-                    {shipsBySea(i.costed) ? "Sea 90+ days" : "Air 10+ days"}
+                    {i.snap.shipMode === "sea" ? "Sea 90+ days" : "Air 10+ days"}
                   </span>
                   <div className="flex items-center justify-between">
                     <strong className="text-[17px] text-sale">{naira(unit)}</strong>
@@ -117,7 +132,7 @@ export function CartView() {
                   {drop > 0 && <span className="self-start bg-[#FFF1EC] px-1.5 py-0.5 text-xs font-bold text-orange">{naira(drop)} less than when added</span>}
                   <span className="flex items-center justify-between">
                     <span className="text-[11px] font-semibold text-night">{promo === "midnight" ? "Midnight price applied" : `${naira(b.midnight)} at midnight`}</span>
-                    <button type="button" aria-label={`Remove ${i.product.name}`} onClick={() => remove(i.key)} className="flex size-8 items-center justify-center text-subtle">
+                    <button type="button" aria-label={`Remove ${i.snap.name}`} onClick={() => remove(i.key)} className="flex size-8 items-center justify-center text-subtle">
                       <Trash2 aria-hidden size={16} />
                     </button>
                   </span>

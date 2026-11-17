@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { NAIRA_PER_CNY, PRICING } from "./config";
-import { type Coupon, type Costable, type PricePromo, priceOf, quoteCart, unitPrice } from "./engine";
+import { type Coupon, type Costable, type PricePromo, lineFromCosts, priceOf, quoteCart, unitPrice } from "./engine";
 import { COUPONS } from "@/lib/catalog/coupons";
-import { PRODUCTS } from "@/lib/catalog/products";
+import { SAMPLE_PRODUCTS as PRODUCTS } from "@/lib/catalog/sample";
 
 const dress: Costable = { cny: 28, weightKg: 0.3, category: "fashion" };
 const phone: Costable = { cny: 620, weightKg: 0.45, category: "gadgets" };
@@ -62,7 +62,7 @@ describe("quoteCart guardrails", () => {
         for (const promo of promos) {
           for (const coupon of coupons) {
             for (const pointsNaira of [0, 1_240, 50_000]) {
-              const q = quoteCart([{ product: p, qty }], { promo, coupon, pointsNaira });
+              const q = quoteCart([lineFromCosts(p, qty)], { promo, coupon, pointsNaira });
               expect(q.profitKept, `${p.slug} x${qty} ${promo} ${coupon?.id} ${pointsNaira}`).toBeGreaterThan(0);
               expect(q.profitKept).toBeGreaterThanOrEqual(0.49 * q.plannedProfit);
             }
@@ -73,7 +73,7 @@ describe("quoteCart guardrails", () => {
   });
 
   it("keeps mixed carts profitable too", () => {
-    const lines = PRODUCTS.slice(0, 8).map((product, i) => ({ product, qty: (i % 3) + 1 }));
+    const lines = PRODUCTS.slice(0, 8).map((product, i) => lineFromCosts(product, (i % 3) + 1));
     for (const coupon of coupons) {
       const q = quoteCart(lines, { promo: "flash", coupon, pointsNaira: 100_000 });
       expect(q.profitKept).toBeGreaterThanOrEqual(0.49 * q.plannedProfit);
@@ -81,23 +81,23 @@ describe("quoteCart guardrails", () => {
   });
 
   it("does not apply normal coupons to gadgets", () => {
-    const q = quoteCart([{ product: phone, qty: 1 }], { coupon: { id: "x", label: "₦1,500", amount: 1500, minSpend: 0 } });
+    const q = quoteCart([lineFromCosts(phone, 1)], { coupon: { id: "x", label: "₦1,500", amount: 1500, minSpend: 0 } });
     expect(q.coupon).toBe(0);
     expect(q.couponNote).toMatch(/eligible/);
   });
 
   it("does not apply coupons to retailer (10+) lines", () => {
-    const q = quoteCart([{ product: dress, qty: 10 }], { coupon: { id: "x", label: "₦500", amount: 500, minSpend: 0 } });
+    const q = quoteCart([lineFromCosts(dress, 10)], { coupon: { id: "x", label: "₦500", amount: 500, minSpend: 0 } });
     expect(q.coupon).toBe(0);
   });
 
   it("caps points at 10% of the order", () => {
-    const q = quoteCart([{ product: dress, qty: 1 }], { pointsNaira: 1_000_000 });
+    const q = quoteCart([lineFromCosts(dress, 1)], { pointsNaira: 1_000_000 });
     expect(q.points).toBeLessThanOrEqual(0.1 * q.subtotal + 1);
   });
 
   it("explains an unmet minimum spend", () => {
-    const q = quoteCart([{ product: dress, qty: 1 }], { coupon: { id: "x", label: "₦5,000", amount: 5000, minSpend: 60_000 } });
+    const q = quoteCart([lineFromCosts(dress, 1)], { coupon: { id: "x", label: "₦5,000", amount: 5000, minSpend: 60_000 } });
     expect(q.coupon).toBe(0);
     expect(q.couponNote).toMatch(/Spend/);
   });

@@ -1,11 +1,11 @@
-import type { Product } from "./types";
+import type { SampleProduct } from "./types";
 
 /**
  * Sample catalogue. In production this comes from the `products` table, filled by the
  * 1688 import edge function. Costs are 1688 prices in yuan; every naira price is
  * calculated by the pricing engine, never stored by hand.
  */
-export const PRODUCTS: Product[] = [
+export const SAMPLE_PRODUCTS: SampleProduct[] = [
   {
     slug: "amoled-android-phone-5g", name: '6.7" AMOLED Android phone, 5G, 50MP triple camera', category: "gadgets", cny: 620, weightKg: 0.45,
     description: "Dual nano-SIM 5G phone with a 6.7-inch 120Hz AMOLED screen, 5000mAh battery and 33W fast charging.",
@@ -105,4 +105,4 @@ export const PRODUCTS: Product[] = [
   },
 ];
 
-export const productBySlug = (slug: string) => PRODUCTS.find((p) => p.slug === slug);
+export const sampleBySlug = (slug: string) => SAMPLE_PRODUCTS.find((p) => p.slug === slug);

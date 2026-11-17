@@ -4,7 +4,7 @@ import { Heart, Lock, MapPin, MessageSquare, Moon, Plane, Ship, ShieldCheck, Tru
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useCart, withOption } from "@/components/shop/cart-provider";
+import { useCart } from "@/components/shop/cart-provider";
 import { useLivePromo } from "@/components/shop/live-price";
 import { ProductTile } from "@/components/shop/product-card";
 import { Countdown } from "@/components/ui/countdown";
@@ -13,7 +13,7 @@ import { useNow } from "@/hooks/use-now";
 import type { Product, QA } from "@/lib/catalog/types";
 import { cn, compact, naira } from "@/lib/format";
 import { PRICING } from "@/lib/pricing/config";
-import { priceOf, shipsBySea, unitPrice } from "@/lib/pricing/engine";
+import { unitFromPrices, weekly as weeklyOf } from "@/lib/pricing/prices";
 import { addDaysLabel } from "@/lib/time";
 
 type Pay = "full" | "small" | "group";
@@ -23,9 +23,9 @@ export function ProductView({ product }: { product: Product }) {
   const { add } = useCart();
   const promo = useLivePromo();
   const now = useNow(60_000);
-  const [color, setColor] = useState(product.colors?.[0]?.name);
-  const [size, setSize] = useState(product.sizes?.[Math.floor((product.sizes.length - 1) / 2)]);
-  const [option, setOption] = useState(product.options?.[1]?.label ?? product.options?.[0]?.label);
+  // Start on the first variant's choices (e.g. Colour + Size).
+  const [choice, setChoice] = useState<Record<string, string>>(() => ({ ...product.variants[0]?.props }));
+  const [image, setImage] = useState(0);
   const [qty, setQty] = useState(1);
   const [pay, setPay] = useState<Pay>("full");
   const [plan, setPlan] = useState(4);
@@ -34,17 +34,18 @@ export function ProductView({ product }: { product: Product }) {
   const [draft, setDraft] = useState("");
   const [added, setAdded] = useState(false);
 
-  const costed = withOption(product, option);
-  const b = priceOf(costed);
-  const unit = unitPrice(costed, qty, promo);
+  const variant = product.variants.find((v) => Object.entries(v.props).every(([k, val]) => choice[k] === val)) ?? product.variants[0];
+  const b = variant.prices;
+  const unit = unitFromPrices(b, qty, promo);
   const total = unit * qty;
   const retail = qty >= PRICING.retailerMinQty;
-  const sea = shipsBySea(product);
-  const weekly = Math.ceil(total / plan / 100) * 100;
+  const sea = product.shipMode === "sea";
+  const weekly = weeklyOf(total, plan);
+  const photos = [...(variant.image ? [variant.image] : []), ...product.images.filter((u) => u !== variant.image)];
   const eta = now === null ? (sea ? "in 90+ days" : "in 10–18 days") : sea ? `from ${addDaysLabel(now, 90)}` : `${addDaysLabel(now, 10)} – ${addDaysLabel(now, 18)}`;
 
   const addToCart = () => {
-    add({ slug: product.slug, qty, option, color, size, addedPrice: unit });
+    add(product, variant, qty, unit);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   };
@@ -60,13 +61,17 @@ export function ProductView({ product }: { product: Product }) {
       {/* Gallery */}
       <div className="flex flex-col gap-2 md:sticky md:top-32 md:flex-row-reverse md:self-start">
         <div className="relative md:min-w-0 md:flex-1">
-          <ProductTile product={product} className="h-[400px] w-full rounded-none md:aspect-[4/5] md:h-auto md:rounded-md" iconSize={150} />
+          <ProductTile tint={product.tint} icon={product.icon} name={product.name} image={photos[image] ?? photos[0]} badge={product.badge} priority sizes="(min-width: 768px) 45vw, 100vw" className="h-[400px] w-full rounded-none md:aspect-[4/5] md:h-auto md:rounded-md" iconSize={150} />
           <span className="absolute bottom-2.5 left-2.5 rounded-sm bg-white px-2 py-1 text-[10px] font-extrabold text-success">QC PHOTOS BEFORE DISPATCH</span>
         </div>
         <div className="no-scrollbar hidden gap-2 md:flex md:flex-col">
-          {[0, 1, 2, 3].map((i) => (
-            <span key={i} className={cn("h-20 w-16 rounded", i === 0 && "outline-2 outline-ink")} style={{ background: product.tint, opacity: 1 - i * 0.12 }} />
-          ))}
+          {photos.length > 1
+            ? photos.slice(0, 6).map((src, i) => (
+                <button key={src} type="button" aria-label={`Photo ${i + 1}`} aria-pressed={image === i} onClick={() => setImage(i)} className={cn("relative h-20 w-16 overflow-hidden rounded", image === i && "outline-2 outline-ink")}>
+                  <ProductTile tint={product.tint} icon={product.icon} name="" image={src} sizes="64px" className="size-full" iconSize={20} />
+                </button>
+              ))
+            : [0, 1, 2, 3].map((i) => <span key={i} className={cn("h-20 w-16 rounded", i === 0 && "outline-2 outline-ink")} style={{ background: product.tint, opacity: 1 - i * 0.12 }} />)}
         </div>
       </div>
 
@@ -100,47 +105,27 @@ export function ProductView({ product }: { product: Product }) {
 
         {/* Variants */}
         <section className="flex flex-col gap-2.5 bg-white p-3 md:p-0">
-          {product.colors && (
-            <>
+          {product.options.map((o) => (
+            <div key={o.name} className="flex flex-col gap-2">
               <span>
-                <strong>Colour:</strong> {color}
+                <strong>{o.name}:</strong> {choice[o.name]}
               </span>
-              <div className="flex gap-2">
-                {product.colors.map((c) => (
-                  <button
-                    key={c.name}
-                    type="button"
-                    aria-label={c.name}
-                    aria-pressed={color === c.name}
-                    onClick={() => setColor(c.name)}
-                    className={cn("size-9 rounded-full border-[3px] border-white", color === c.name ? "ring-2 ring-ink" : "ring-1 ring-black/20")}
-                    style={{ background: c.hex }}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-          {(product.options || product.sizes) && (
-            <>
-              <strong>{product.options ? "Storage" : "Size"}</strong>
               <div className="flex flex-wrap gap-1.5">
-                {(product.options?.map((o) => o.label) ?? product.sizes ?? []).map((s) => {
-                  const on = product.options ? option === s : size === s;
-                  return (
-                    <button
-                      key={s}
-                      type="button"
-                      aria-pressed={on}
-                      onClick={() => (product.options ? setOption(s) : setSize(s))}
-                      className={cn("min-h-10 min-w-12 border-[1.5px] px-3.5 text-[13px] font-bold", on ? "border-ink bg-ink text-white" : "border-black/15")}
-                    >
-                      {s}
+                {o.values.map((v) => {
+                  const on = choice[o.name] === v.label;
+                  const pick = () => setChoice({ ...choice, [o.name]: v.label });
+                  return v.hex ? (
+                    <button key={v.label} type="button" aria-label={v.label} aria-pressed={on} onClick={pick} className={cn("size-9 rounded-full border-[3px] border-white", on ? "ring-2 ring-ink" : "ring-1 ring-black/20")} style={{ background: v.hex }} />
+                  ) : (
+                    <button key={v.label} type="button" aria-pressed={on} onClick={pick} className={cn("min-h-10 min-w-12 border-[1.5px] px-3.5 text-[13px] font-bold", on ? "border-ink bg-ink text-white" : "border-black/15")}>
+                      {v.label}
                     </button>
                   );
                 })}
               </div>
-            </>
-          )}
+            </div>
+          ))}
+          {variant.stock <= 0 && <p className="font-bold text-sale">This option is out of stock. Try another.</p>}
           <div className="flex items-center gap-2">
             <span className="flex flex-1 items-center">
               <strong>Quantity</strong>

@@ -1,9 +1,13 @@
 "use client";
 
 import { Check, Heart, ShoppingCart } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import type { Product, Variant } from "@/lib/catalog/types";
 import { cn } from "@/lib/format";
+import { unitFromPrices } from "@/lib/pricing/prices";
 import { useCart } from "./cart-provider";
+import { useLivePromo } from "./live-price";
 
 export function WishlistButton({ className }: { className?: string }) {
   const [on, setOn] = useState(false);
@@ -20,15 +24,19 @@ export function WishlistButton({ className }: { className?: string }) {
   );
 }
 
-export function AddToCartIcon({ slug, price, className }: { slug: string; price: number; className?: string }) {
+/** Adds single-variant items straight to the cart; items with colours or sizes open the product page to choose. */
+export function AddToCartIcon({ product, variant, className }: { product: Product; variant: Variant | null; className?: string }) {
   const { add } = useCart();
+  const router = useRouter();
+  const promo = useLivePromo();
   const [done, setDone] = useState(false);
   return (
     <button
       type="button"
-      aria-label="Add to cart"
+      aria-label={variant ? "Add to cart" : "Choose options"}
       onClick={() => {
-        add({ slug, qty: 1, addedPrice: price });
+        if (!variant) return router.push(`/product/${product.slug}`);
+        add(product, variant, 1, unitFromPrices(variant.prices, 1, promo));
         setDone(true);
         setTimeout(() => setDone(false), 1200);
       }}

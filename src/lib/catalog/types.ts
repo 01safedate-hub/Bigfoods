@@ -1,4 +1,4 @@
-import type { Costable } from "@/lib/pricing/engine";
+import type { CategoryKey, Costable } from "@/lib/pricing/engine";
 
 export type IconKey =
   | "phone" | "laptop" | "drone" | "watch" | "audio" | "dress" | "shirt" | "wig" | "gem"
@@ -11,14 +11,63 @@ export interface QA {
   by?: string;
 }
 
-export interface Product extends Costable {
+/** Selling prices in naira. This is all the browser ever gets: no costs, margins or suppliers. */
+export interface PriceSet {
+  list: number;
+  midnight: number;
+  event: number;
+  flash: number;
+  retailer: number;
+}
+
+export interface Variant {
+  id: string;
+  /** e.g. { Colour: "Wine", Size: "M" } */
+  props: Record<string, string>;
+  image?: string | null;
+  stock: number;
+  prices: PriceSet;
+}
+
+export interface ProductOption {
+  name: string;
+  values: { label: string; hex?: string }[];
+}
+
+/** A product as the storefront sees it. */
+export interface Product {
+  slug: string;
+  name: string;
+  description: string;
+  category: CategoryKey;
+  isGadget: boolean;
+  shipMode: "air" | "sea";
+  images: string[];
+  /** Placeholder tile colour and icon until photos are synced. */
+  tint: string;
+  icon: IconKey;
+  rating: number;
+  reviews: number;
+  sold: number;
+  badge?: string;
+  isNew?: boolean;
+  specs: [string, string][];
+  options: ProductOption[];
+  variants: Variant[];
+  /** Lowest prices across variants. */
+  prices: PriceSet;
+  qa?: QA[];
+  flash?: { claimedPct: number };
+}
+
+/** Sample source data with 1688 costs (server-side only in production). */
+export interface SampleProduct extends Costable {
   slug: string;
   name: string;
   description: string;
   rating: number;
   reviews: number;
   sold: number;
-  /** Placeholder tile colour until 1688 photos are synced. */
   tint: string;
   icon: IconKey;
   badge?: string;
@@ -29,7 +78,6 @@ export interface Product extends Costable {
   options?: { label: string; cny: number }[];
   specs: [string, string][];
   qa?: QA[];
-  /** Present when the item is in today's flash sale. */
   flash?: { claimedPct: number };
 }
 

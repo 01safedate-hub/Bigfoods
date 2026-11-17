@@ -1,4 +1,6 @@
+import type { PriceSet } from "@/lib/catalog/types";
 import { NAIRA_PER_CNY, PRICING } from "./config";
+import { unitFromPrices } from "./prices";
 
 export type CategoryKey =
   | "fashion"
@@ -100,13 +102,9 @@ export function priceOf(p: Costable): PriceBreakdown {
   };
 }
 
-/** Unit price for a quantity under the active price promotion. The lowest single price wins. */
+/** Unit price for a quantity under the active price promotion (from costs; server and tests). */
 export function unitPrice(p: Costable, qty: number, promo: PricePromo): number {
-  const b = priceOf(p);
-  const options = [b.list];
-  if (promo !== "none") options.push(b[promo]);
-  if (qty >= PRICING.retailerMinQty) options.push(b.retailer);
-  return Math.min(...options);
+  return unitFromPrices(priceOf(p), qty, promo);
 }
 
 export interface Coupon {
@@ -121,9 +119,19 @@ export interface Coupon {
   gadgetOnly?: boolean;
 }
 
-export interface CartLine {
-  product: Costable;
+/** One cart line as the server prices it: selling prices plus the costs only the server knows. */
+export interface QuoteLine {
+  prices: PriceSet;
+  cost: number;
+  plannedProfit: number;
+  gadget: boolean;
   qty: number;
+}
+
+/** Build a quote line from 1688 costs (sample data, admin tools and tests). */
+export function lineFromCosts(product: Costable, qty: number): QuoteLine {
+  const b = priceOf(product);
+  return { prices: b, cost: b.cost, plannedProfit: b.plannedProfit, gadget: isGadget(product), qty };
 }
 
 export interface CartQuote {
@@ -145,7 +153,7 @@ export interface CartQuote {
  * admin profit check; the edge function runs the same code server-side.
  */
 export function quoteCart(
-  lines: CartLine[],
+  lines: QuoteLine[],
   opts: { promo?: PricePromo; coupon?: Coupon | null; pointsNaira?: number } = {},
 ): CartQuote {
   const promo = opts.promo ?? "none";
@@ -158,18 +166,18 @@ export function quoteCart(
   let eligibleProfit = 0;
   const coupon = opts.coupon ?? null;
 
-  for (const { product, qty } of lines) {
-    const b = priceOf(product);
-    const unit = unitPrice(product, qty, promo);
-    subtotalList += b.list * qty;
+  for (const line of lines) {
+    const { qty } = line;
+    const unit = unitFromPrices(line.prices, qty, promo);
+    subtotalList += line.prices.list * qty;
     subtotal += unit * qty;
-    plannedProfit += b.plannedProfit * qty;
-    cost += b.cost * qty;
+    plannedProfit += line.plannedProfit * qty;
+    cost += line.cost * qty;
     const retail = qty >= PRICING.retailerMinQty;
-    const fits = coupon ? (coupon.gadgetOnly ? isGadget(product) : !isGadget(product)) : false;
+    const fits = coupon ? (coupon.gadgetOnly ? line.gadget : !line.gadget) : false;
     if (!retail && fits) {
       eligibleSubtotal += unit * qty;
-      eligibleProfit += b.plannedProfit * qty;
+      eligibleProfit += line.plannedProfit * qty;
     }
   }
 

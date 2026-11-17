@@ -1,24 +1,26 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/shop/product-card";
-import { PRODUCTS, productBySlug } from "@/lib/catalog/products";
+import { getProduct, getProducts, getProductSlugs } from "@/lib/data/catalog";
 import { ProductView } from "./product-view";
 
-export function generateStaticParams() {
-  return PRODUCTS.map((p) => ({ slug: p.slug }));
+/** Prerender known products; new ones render on first visit. Cache Components needs at least one entry. */
+export async function generateStaticParams() {
+  const slugs = await getProductSlugs();
+  return (slugs.length ? slugs : ["coming-soon"]).map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/product/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const product = productBySlug(slug);
+  const product = await getProduct(slug);
   return product ? { title: product.name, description: product.description } : {};
 }
 
 export default async function ProductPage({ params }: PageProps<"/product/[slug]">) {
   const { slug } = await params;
-  const product = productBySlug(slug);
+  const product = await getProduct(slug);
   if (!product) notFound();
-  const related = PRODUCTS.filter((p) => p.slug !== slug && (p.category === product.category || p.flash)).slice(0, 6);
+  const related = (await getProducts()).filter((p) => p.slug !== slug && (p.category === product.category || p.flash)).slice(0, 6);
 
   return (
     <>

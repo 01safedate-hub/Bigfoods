@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { COUPONS } from "@/lib/catalog/coupons";
-import { PRODUCTS } from "@/lib/catalog/products";
+import { SAMPLE_PRODUCTS as PRODUCTS } from "@/lib/catalog/sample";
 import { cn, naira } from "@/lib/format";
 import { NAIRA_PER_CNY, PRICING } from "@/lib/pricing/config";
-import { CATEGORY_MARGIN, type PricePromo, paymentFee, priceOf, quoteCart, shipsBySea } from "@/lib/pricing/engine";
+import { CATEGORY_MARGIN, type PricePromo, lineFromCosts, paymentFee, priceOf, quoteCart, shipsBySea } from "@/lib/pricing/engine";
 
 const PICKS = ["satin-cowl-neck-midi-dress", "body-wave-lace-front-wig-22", "mens-steel-quartz-watch", "amoled-android-phone-5g", "ergonomic-mesh-office-chair"];
 const PROMOS: [PricePromo, string][] = [["none", "None"], ["midnight", "Midnight (20%)"], ["event", "Event (30%)"], ["flash", "Flash (50%)"]];
@@ -34,7 +34,7 @@ export function PricingView() {
   const product = PRODUCTS.find((p) => p.slug === slug)!;
   const b = priceOf(product);
   const coupon = COUPONS.find((c) => c.id === couponId) ?? null;
-  const q = quoteCart([{ product, qty }], { promo, coupon, pointsNaira: points ? 1_240 : 0 });
+  const q = quoteCart([lineFromCosts(product, qty)], { promo, coupon, pointsNaira: points ? 1_240 : 0 });
   const fee = paymentFee(q.total);
   const ok = q.profitKept > 0 && q.profitKept >= 0.49 * q.plannedProfit;
 
