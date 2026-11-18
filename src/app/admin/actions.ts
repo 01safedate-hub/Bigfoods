@@ -97,3 +97,50 @@ export async function retryEmail(id: unknown): Promise<Result> {
   const { error } = await secretDb().from("email_outbox").update({ status: "pending", attempts: 0, last_error: null, send_after: new Date().toISOString() }).eq("id", id).in("status", ["failed", "skipped"]);
   return error ? { ok: false, message: error.message } : { ok: true, message: "Queued again" };
 }
+
+/** Activates a paid plan (until online upgrades open) or moves a store back to Free. */
+export async function setStorePlan(storeId: unknown, plan: unknown, months: unknown): Promise<Result> {
+  await requireStaff();
+  if (typeof storeId !== "string" || !["free", "pro", "elite"].includes(plan as string)) return { ok: false, message: "Choose a plan." };
+  const m = Math.max(1, Math.min(12, Number(months) || 1));
+  if (!hasSupabase) return { ok: true, message: "Demo: not saved." };
+  const { error } = await secretDb().rpc("set_store_plan", { p_store: storeId, p_plan: plan, p_months: m });
+  if (error) return { ok: false, message: error.message };
+  updateTag("stores");
+  return { ok: true, message: plan === "free" ? "Moved to Free" : `${String(plan).replace(/^./, (c) => c.toUpperCase())} for ${m} month${m > 1 ? "s" : ""}` };
+}
+
+/** Marks a seller's own domain as checked (DNS pointing to us and HTTPS issued by hosting). */
+export async function setDomainVerified(storeId: unknown, verified: unknown): Promise<Result> {
+  await requireStaff();
+  if (typeof storeId !== "string") return { ok: false, message: "Unknown store." };
+  if (!hasSupabase) return { ok: true, message: "Demo: not saved." };
+  const { error } = await secretDb().from("stores").update({ domain_verified: verified === true }).eq("id", storeId);
+  if (error) return { ok: false, message: error.message };
+  updateTag("stores");
+  return { ok: true, message: verified ? "Domain live" : "Domain switched off" };
+}
+
+export async function setStoreStatus(storeId: unknown, status: unknown): Promise<Result> {
+  await requireStaff();
+  if (typeof storeId !== "string" || (status !== "suspended" && status !== "active")) return { ok: false, message: "Unknown action." };
+  if (!hasSupabase) return { ok: true, message: "Demo: not saved." };
+  const db = secretDb();
+  const { data: s } = await db.from("stores").select("plan, lifetime_sales_ngn").eq("id", storeId).maybeSingle();
+  // Reopening a free store that's over the limit puts it back to "needs upgrade", not fully open.
+  const next = status === "active" && s?.plan === "free" && (s?.lifetime_sales_ngn ?? 0) >= 2_000_000 ? "needs_upgrade" : status;
+  const { error } = await db.from("stores").update({ status: next }).eq("id", storeId);
+  if (error) return { ok: false, message: error.message };
+  updateTag("stores");
+  return { ok: true, message: status === "suspended" ? "Store suspended" : "Store reopened" };
+}
+
+/** Records a payout as sent (with the bank transfer reference). */
+export async function markPayoutPaid(payoutId: unknown, reference: unknown): Promise<Result> {
+  await requireStaff();
+  const ref = typeof reference === "string" ? reference.trim().slice(0, 80) : "";
+  if (typeof payoutId !== "string" || !ref) return { ok: false, message: "Add the transfer reference." };
+  if (!hasSupabase) return { ok: true, message: "Demo: not saved." };
+  const { error } = await secretDb().from("seller_payouts").update({ status: "paid", reference: ref, paid_at: new Date().toISOString() }).eq("id", payoutId).eq("status", "pending");
+  return error ? { ok: false, message: error.message } : { ok: true, message: "Marked as paid" };
+}

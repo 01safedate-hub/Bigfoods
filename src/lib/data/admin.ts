@@ -141,3 +141,26 @@ export async function getOutbox(status?: string): Promise<{ rows: OutboxRow[]; c
   if (error) throw new Error(`Outbox: ${error.message}`);
   return { rows: (data ?? []) as OutboxRow[], counts: { pending: counts[0].count ?? 0, sent: counts[1].count ?? 0, failed: counts[2].count ?? 0 } };
 }
+
+export interface AdminStore {
+  id: string; slug: string; name: string; plan: string; plan_renews_at: string | null; status: string; lifetime_sales_ngn: number;
+  custom_domain: string | null; domain_verified: boolean; created_at: string; products: number; owner: string | null;
+  payouts: { id: string; amount_ngn: number; items: number; status: string; created_at: string; bank_snapshot: { bank?: string; account?: string; name?: string } }[];
+}
+
+export async function listStores(q?: string): Promise<AdminStore[] | null> {
+  if (!hasSupabase) return null;
+  const db = secretDb();
+  let query = db.from("stores").select("id, slug, name, plan, plan_renews_at, status, lifetime_sales_ngn, custom_domain, domain_verified, created_at, owner_id, store_products(count), seller_payouts(id, amount_ngn, items, status, created_at, bank_snapshot)")
+    .order("created_at", { ascending: false }).limit(100);
+  if (q?.trim()) query = query.or(`slug.ilike.%${q.trim().replace(/[^a-z0-9-]/gi, "")}%,name.ilike.%${q.trim().replace(/[%,()]/g, "")}%`);
+  const { data, error } = await query;
+  if (error) throw new Error(`Stores: ${error.message}`);
+  const { data: users } = await db.auth.admin.listUsers({ perPage: 1000 });
+  const email = new Map((users?.users ?? []).map((u) => [u.id, u.email ?? u.phone ?? null]));
+  return (data ?? []).map((s) => ({
+    ...s, owner: email.get(s.owner_id) ?? null,
+    products: (s.store_products as unknown as { count: number }[])[0]?.count ?? 0,
+    payouts: ((s.seller_payouts ?? []) as AdminStore["payouts"]).filter((p) => p.status !== "paid"),
+  })) as AdminStore[];
+}

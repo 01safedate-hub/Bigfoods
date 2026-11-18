@@ -8,7 +8,7 @@ const NAV: { label: string; href?: string; badge?: number }[] = [
   { label: "Dashboard", href: "/admin" }, { label: "Orders", href: "/admin/orders" }, { label: "Purchasing & dispatch", href: "/admin/purchasing" },
   { label: "Q&A inbox", href: "/admin/questions" }, { label: "Emails & notifications", href: "/admin/emails" }, { label: "Coupons, events & stations", href: "/admin/settings" },
   { label: "Pricing rules & guardrails", href: "/admin/pricing" }, { label: "Staff & roles", href: "/admin/staff" },
-  { label: "Group pay & plans" }, { label: "Cart Clear-Out" }, { label: "Dropship sellers" }, { label: "Customers" },
+  { label: "Group pay & plans" }, { label: "Cart Clear-Out" }, { label: "Dropship sellers", href: "/admin/sellers" }, { label: "Customers" },
 ];
 
 export function AdminNav() {

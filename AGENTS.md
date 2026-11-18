@@ -34,3 +34,11 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `error.tsx` per section, `global-error.tsx`, `loading.tsx` skeletons, `SafeImage` for photos.
 - Rate limits: `allow()` in `src/lib/rate-limit.ts` (hashed IP or user id, fails open).
 - Security headers and CSP in `next.config.ts`. Data rights: export/delete in My account.
+
+### Dropship stores (fastchina.store)
+- Plans in `src/lib/dropship/plans.ts` mirror `public.plan_rules()` (migration 015): Free 20 products/₦2M lifetime sales/5% fee,
+  Pro ₦15k 200 products/3%, Elite ₦45k unlimited/1.5%. Themes: studio (free), noir+bloom (pro), atelier+pulse (elite).
+- Seller price = FastChina list price + markup (never below). Store orders: `place_store_order`; earnings view `store_earnings`
+  (sellers never see buyer phones); weekly payouts Fridays (`create_weekly_payouts`), marked paid in Admin → Dropship sellers.
+- Routing (`src/proxy.ts`): fastchina.store → /store (seller dashboard at /store/seller), name.fastchina.store → /s/name,
+  any other non-preview host → /s/<host> (verified own domain). Demo theme previews: /s/demo-noir|bloom|atelier|pulse.

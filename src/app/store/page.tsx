@@ -1,6 +1,7 @@
 import { Check, Lock, ShieldCheck, ShoppingCart, Truck, Wallet } from "lucide-react";
 import Link from "next/link";
 import { SeaQuote } from "./sea-quote";
+import { PLANS as SELLER_PLANS } from "@/lib/dropship/plans";
 
 /** Marketplace origin. Empty in development (same app), https://fastchina.shop in production. */
 const SHOP = (process.env.NEXT_PUBLIC_SHOP_URL ?? "").replace(/\/$/, "");
@@ -24,11 +25,14 @@ const HOW = [
   ["Your discounts, your margin", "Coupons you create come out of your margin. Our promotions never change what you pay us, so your numbers stay predictable."],
 ];
 
-const PLANS = [
-  { name: "Starter", price: "₦7,500", setup: "₦20,000 one-time setup", items: ["Up to 50 products", "yourname.fastchina.store address", "Card, transfer & USSD checkout", "Weekly payouts"], featured: false },
-  { name: "Growth", price: "₦15,000", setup: "₦45,000 setup · .com domain included", items: ["Up to 500 products", "Your own domain, bought & connected", "Branded packing slips", "Discount codes & abandoned-cart emails", "Payouts every 3 days"], featured: true },
-  { name: "Scale", price: "₦35,000", setup: "₦90,000 setup · domain + business email", items: ["Unlimited products", "Custom-branded packaging option", "Staff accounts & analytics", "Next-day payouts", "Dedicated account manager"], featured: false },
-];
+// The real plans (src/lib/dropship/plans.ts, enforced by the database).
+const PLANS = Object.values(SELLER_PLANS).map((p) => ({
+  name: p.name,
+  price: p.price ? `₦${p.price.toLocaleString("en-NG")}` : "₦0",
+  setup: p.key === "free" ? "No setup fee · upgrade any time" : "No setup fee · cancel any time",
+  items: p.perks,
+  featured: p.key === "pro",
+}));
 
 export default function StoreHome() {
   return (
@@ -53,8 +57,8 @@ export default function StoreHome() {
             <a href="#pricing">Pricing</a>
           </nav>
           <div className="flex items-center gap-2.5">
-            <Link href={`${SHOP}/account`} className="px-4 py-3 text-[15px] font-medium">Sign in</Link>
-            <a href="#pricing" className="rounded-full bg-ink px-5 py-3 text-[15px] font-semibold text-[#FBFAF6]">Start selling</a>
+            <Link href="/store/seller" className="px-4 py-3 text-[15px] font-medium">Seller sign in</Link>
+            <Link href="/store/seller" className="rounded-full bg-ink px-5 py-3 text-[15px] font-semibold text-[#FBFAF6]">Start selling</Link>
           </div>
         </div>
       </header>
@@ -189,7 +193,7 @@ export default function StoreHome() {
               <ul className="flex flex-col gap-2.5 text-[15px]">
                 {p.items.map((it) => <li key={it} className="flex gap-2"><Check aria-hidden size={18} className={p.featured ? "text-[#D9B866]" : "text-[#0F5C45]"} />{it}</li>)}
               </ul>
-              <a href="#pricing" className={`mt-auto rounded-[14px] p-3.5 text-center text-[15px] font-semibold ${p.featured ? "bg-[#D9B866] text-ink" : "border border-ink"}`}>Choose {p.name}</a>
+              <Link href="/store/seller" className={`mt-auto rounded-[14px] p-3.5 text-center text-[15px] font-semibold ${p.featured ? "bg-[#D9B866] text-ink" : "border border-ink"}`}>{p.name === "Free" ? "Start free" : `Choose ${p.name}`}</Link>
             </div>
           ))}
         </div>
