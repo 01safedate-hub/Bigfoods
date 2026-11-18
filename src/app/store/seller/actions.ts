@@ -50,7 +50,8 @@ export async function updateStore(patch: Record<string, unknown>): Promise<Resul
   const m = await myStore();
   if (!m) return { ok: false, message: "Open a store first." };
   const allowed = ["name", "tagline", "accent", "theme", "custom_domain"];
-  const clean = Object.fromEntries(Object.entries(patch).filter(([k, v]) => allowed.includes(k) && (typeof v === "string" || v === null)).map(([k, v]) => [k, typeof v === "string" ? v.trim() || null : null]));
+  const clean: Record<string, string | boolean | null> = Object.fromEntries(Object.entries(patch).filter(([k, v]) => allowed.includes(k) && (typeof v === "string" || v === null)).map(([k, v]) => [k, typeof v === "string" ? v.trim() || null : null]));
+  if (typeof patch.allow_small_small === "boolean") clean.allow_small_small = patch.allow_small_small;
   if (typeof clean.custom_domain === "string") clean.custom_domain = clean.custom_domain.toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/^www\./, "");
   const { error } = await m.db.from("stores").update(clean).eq("id", m.store.id);
   if (error) return { ok: false, message: friendly(error.message) };

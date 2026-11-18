@@ -12,12 +12,13 @@ import { btn, Card, CardTitle } from "../_ui/ui";
 
 const ACCENTS = ["#111111", "#C2410C", "#B4235A", "#7C3AED", "#1D4ED8", "#0F766E", "#15803D", "#A16207"];
 
-export function DesignEditor({ store }: { store: SellerDashboard["store"] }) {
+export function DesignEditor({ store, allowSmall: initialSmall }: { store: SellerDashboard["store"]; allowSmall: boolean }) {
+  const [allowSmall, setAllowSmall] = useState(initialSmall);
   const [f, setF] = useState({ name: store.name, tagline: store.tagline ?? "", accent: store.accent, theme: store.theme, custom_domain: store.custom_domain ?? "" });
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, start] = useTransition();
   const plan = PLANS[store.plan];
-  const save = (patch: Partial<typeof f>) =>
+  const save = (patch: Partial<typeof f> & { allow_small_small?: boolean }) =>
     start(async () => {
       const r = await call(() => updateStore(patch));
       setMsg({ ok: r.ok, text: r.message });
@@ -76,6 +77,21 @@ export function DesignEditor({ store }: { store: SellerDashboard["store"] }) {
             </fieldset>
             <button type="submit" disabled={busy} className={cn(btn.primary, "self-start")}>Save</button>
           </form>
+        </Card>
+
+        <Card>
+          <CardTitle>Checkout options</CardTitle>
+          <button type="button" role="switch" aria-checked={allowSmall} disabled={busy}
+            onClick={() => { const next = !allowSmall; setAllowSmall(next); save({ allow_small_small: next }); }}
+            className="flex w-full items-center justify-between gap-4 text-left">
+            <span>
+              <strong className="block text-[15px]">Offer Pay small small</strong>
+              <span className="text-[13px] text-[#A1A1AA]">Customers pay in 4, 8 or 12 weekly payments at 0%. FastChina handles the plan and reminders, and you’re paid when it’s fully paid and delivered. Turn it off to accept full payment only.</span>
+            </span>
+            <span className={cn("flex h-7 w-12 shrink-0 rounded-full p-1", allowSmall ? "justify-end bg-[#3DDC84]" : "justify-start bg-[#3A3A40]")}>
+              <span className="size-5 rounded-full bg-white" />
+            </span>
+          </button>
         </Card>
 
         <Card>

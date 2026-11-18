@@ -30,6 +30,7 @@ export async function placeStoreOrder(input: { store: string; items: LineRequest
   const found = await getStore(String(input.store));
   if (!found) return { ok: false, message: "This store isn’t available." };
   if (found.store.status !== "active") return { ok: false, message: "This store isn’t taking orders right now." };
+  if (input.mode === "small" && !found.store.allowSmallSmall) return { ok: false, message: "This store takes full payment only." };
   const listing = new Map(found.listings.map((l) => [l.slug, l]));
   const items = (Array.isArray(input.items) ? input.items : []).filter((i) => listing.has(i.slug)).slice(0, 50);
   if (!items.length) return { ok: false, message: "Your bag is empty." };

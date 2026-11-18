@@ -13,7 +13,7 @@ import { buildSchedule, planOptions } from "@/lib/payments/instalments";
 import { useBag } from "../../bag-provider";
 import { placeStoreOrder } from "../../actions";
 
-export function BagView({ store, storeKey, open, stations }: { store: string; storeKey: string; open: boolean; stations: Station[] }) {
+export function BagView({ store, storeKey, open, allowSmall, stations }: { store: string; storeKey: string; open: boolean; allowSmall: boolean; stations: Station[] }) {
   const { items, setQty, clear } = useBag();
   const router = useRouter();
   const online = useOnline();
@@ -23,7 +23,7 @@ export function BagView({ store, storeKey, open, stations }: { store: string; st
   const [phone, setPhone] = useState("");
   const [mode, setMode] = useState<"full" | "small">("full");
   const total = items.reduce((s, i) => s + i.price * i.qty, 0);
-  const weeksOk = planOptions(total);
+  const weeksOk = allowSmall ? planOptions(total) : [];
   const [weeks, setWeeks] = useState(4);
   const w = weeksOk.includes(weeks) ? weeks : weeksOk[0];
   const schedule = w ? buildSchedule(total, w, 0) : [];
@@ -97,9 +97,9 @@ export function BagView({ store, storeKey, open, stations }: { store: string; st
         </label>
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-1 text-[13px] font-semibold">How to pay</legend>
-          {([["full", "Pay in full"], ["small", "Pay small small · 0% weekly"]] as const).map(([k, label]) => (
+          {(allowSmall ? ([["full", "Pay in full"], ["small", "Pay small small · 0% weekly"]] as const) : ([["full", "Pay in full"]] as const)).map(([k, label]) => (
             <label key={k} className={cn("flex min-h-12 cursor-pointer items-center gap-2 rounded-[var(--st-radius)] border px-3 text-[14px]", mode === k ? "border-[var(--st-fg)] font-bold" : "border-[var(--st-line)]", k === "small" && !weeksOk.length && "opacity-40")}>
-              <input type="radio" name="mode" checked={mode === k} disabled={k === "small" && !weeksOk.length} onChange={() => setMode(k)} /> {label}
+              <input type="radio" name="mode" className="size-4 accent-[var(--st-accent)]" checked={mode === k} disabled={k === "small" && !weeksOk.length} onChange={() => setMode(k)} /> {label}
             </label>
           ))}
           {mode === "small" && weeksOk.length > 0 && (

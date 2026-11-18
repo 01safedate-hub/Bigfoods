@@ -10,5 +10,5 @@ export default async function BagPage({ params }: PageProps<"/s/[store]/bag">) {
   const key = decodeURIComponent((await params).store);
   const [found, site] = await Promise.all([getStore(key), getSiteData()]);
   if (!found) notFound();
-  return <BagView store={found.store.slug} storeKey={key} open={found.store.status === "active"} stations={site.stations} />;
+  return <BagView store={found.store.slug} storeKey={key} open={found.store.status === "active"} allowSmall={found.store.allowSmallSmall} stations={site.stations} />;
 }

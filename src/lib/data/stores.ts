@@ -16,6 +16,8 @@ export interface PublicStore {
   plan: PlanKey;
   status: "active" | "needs_upgrade" | "suspended";
   customDomain: string | null;
+  /** The seller lets customers use Pay small small (default on). */
+  allowSmallSmall: boolean;
 }
 
 export interface Listing {
@@ -26,7 +28,7 @@ export interface Listing {
 
 /** Demo store so the storefront can be seen before the database is connected. */
 const DEMO: { store: PublicStore; listings: Listing[] } = {
-  store: { id: "demo", slug: "adas-closet", name: "Ada’s Closet", tagline: "Lagos girls, Lagos prices. Delivered to your Jumia station.", accent: "#C2410C", theme: "studio", plan: "free", status: "active", customDomain: null },
+  store: { id: "demo", slug: "adas-closet", name: "Ada’s Closet", tagline: "Lagos girls, Lagos prices. Delivered to your Jumia station.", accent: "#C2410C", theme: "studio", plan: "free", status: "active", customDomain: null, allowSmallSmall: true },
   listings: ["satin-cowl-neck-midi-dress", "quilted-crossbody-chain-bag", "body-wave-lace-front-wig-22", "matte-liquid-lipstick-set", "mens-steel-quartz-watch", "chunky-platform-sneakers", "stainless-thorn-chain-necklace", "wireless-earbuds-enc"]
     .map((slug) => ({ slug, markupType: "pct" as const, markupValue: 25 })),
 };
@@ -49,12 +51,12 @@ export async function getStore(key: string): Promise<{ store: PublicStore; listi
     return look[t] ? { store: { ...DEMO.store, ...look[t], theme: t, plan: "elite", slug: key }, listings: DEMO.listings } : null;
   }
   const db = publicDb();
-  const q = db.from("stores").select("id, slug, name, tagline, accent, theme, plan, status, custom_domain, domain_verified");
+  const q = db.from("stores").select("id, slug, name, tagline, accent, theme, plan, status, custom_domain, domain_verified, allow_small_small");
   const { data: s } = await (key.includes(".") ? q.eq("custom_domain", key.toLowerCase()).eq("domain_verified", true) : q.eq("slug", key.toLowerCase())).maybeSingle();
   if (!s || s.status === "suspended") return null;
   const { data: rows } = await db.from("store_products").select("markup_type, markup_value, sort, products!inner(slug, status)").eq("store_id", s.id).eq("active", true).order("sort").order("created_at");
   return {
-    store: { id: s.id, slug: s.slug, name: s.name, tagline: s.tagline, accent: s.accent, theme: s.theme, plan: s.plan, status: s.status, customDomain: s.domain_verified ? s.custom_domain : null },
+    store: { id: s.id, slug: s.slug, name: s.name, tagline: s.tagline, accent: s.accent, theme: s.theme, plan: s.plan, status: s.status, customDomain: s.domain_verified ? s.custom_domain : null, allowSmallSmall: s.allow_small_small !== false },
     listings: (rows ?? [])
       .filter((r) => (r.products as unknown as { status: string }).status === "active")
       .map((r) => ({ slug: (r.products as unknown as { slug: string }).slug, markupType: r.markup_type, markupValue: Number(r.markup_value) })),
