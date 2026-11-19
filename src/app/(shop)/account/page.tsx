@@ -1,5 +1,5 @@
 import {
-  Bell, Box, ChevronRight, Headphones, MapPin, MessageSquareText, Package, Plane, RotateCcw, ScrollText, Settings, ShieldCheck, Star, Store, Wallet,
+  Bell, Box, ChevronRight, Headphones, MapPin, MessageSquareText, Package, Plane, RotateCcw, ScrollText, Settings, ShieldCheck, Star, Store, Wallet, Zap,
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -51,6 +51,10 @@ async function Profile() {
           <Link href="/sign-in?next=/account" className="flex min-h-12 items-center justify-center rounded-full bg-ink text-[15px] font-bold text-white">Create account</Link>
           <Link href="/sign-in?mode=signin&next=/account" className="flex min-h-12 items-center justify-center rounded-full border border-ink text-[15px] font-bold">Sign in</Link>
         </div>
+        <Link href="/deals" className="flex items-center justify-between border-t border-line pt-3 text-[14px]">
+          <span className="flex items-center gap-2 font-bold text-sale"><Zap aria-hidden size={18} className="fill-sale" /> Deals</span>
+          <ChevronRight aria-hidden size={16} className="text-muted" />
+        </Link>
         <Link href="/account/settings" className="flex items-center justify-between border-t border-line pt-3 text-[14px]">
           <span className="flex items-center gap-2"><Settings aria-hidden size={18} /> Settings</span>
           <ChevronRight aria-hidden size={16} className="text-muted" />
@@ -128,6 +132,7 @@ async function Profile() {
 
       <section className="mx-2 grid grid-cols-4 gap-y-4 rounded-2xl bg-white p-4 text-center md:mx-0 md:border md:border-line">
         {[
+          [Zap, "Deals", "/deals"],
           [Headphones, "Customer service", "/account/settings/contact"],
           [MessageSquareText, "Feedback", "/account/settings/feedback"],
           [ShieldCheck, "Why FastChina", "/why-fastchina"],
@@ -139,8 +144,8 @@ async function Profile() {
           const I = Icon as typeof Wallet;
           return (
             <Link key={label as string} href={href as string} className="flex flex-col items-center gap-1.5 text-[12px] leading-tight">
-              <I aria-hidden size={24} strokeWidth={1.5} />
-              {label as string}
+              <I aria-hidden size={24} strokeWidth={1.5} className={label === "Deals" ? "fill-sale text-sale" : undefined} />
+              <span className={label === "Deals" ? "font-bold text-sale" : undefined}>{label as string}</span>
             </Link>
           );
         })}

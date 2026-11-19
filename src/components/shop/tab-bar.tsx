@@ -21,7 +21,7 @@ export function TabBar() {
   const { count } = useCart();
   const wholesale = useWholesaleCart().length;
   // Pages with their own sticky action bar hide the tabs, like native shopping apps.
-  if (path.startsWith("/product/") || path.startsWith("/checkout") || path.startsWith("/c/")) return null;
+  if (path.startsWith("/product/") || path.startsWith("/wholesale/p/") || path.startsWith("/checkout") || path.startsWith("/c/")) return null;
   return (
     <nav aria-label="App" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line/70 bg-white/95 pt-1 pb-[max(4px,env(safe-area-inset-bottom))] backdrop-blur md:hidden">
       {TABS.map(({ href, label, icon: Icon, match }) => {

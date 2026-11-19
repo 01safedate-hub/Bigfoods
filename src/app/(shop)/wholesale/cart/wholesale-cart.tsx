@@ -75,7 +75,7 @@ export function WholesaleCart() {
               return (
                 <li key={first.slug} className="flex flex-col gap-2.5 bg-white p-3 md:rounded-2xl md:border md:border-line">
                   <div className="flex items-start gap-3">
-                    <Link href={`/product/${first.slug}`} className="size-16 shrink-0 overflow-hidden rounded-lg">
+                    <Link href={`/wholesale/p/${first.slug}`} className="size-16 shrink-0 overflow-hidden rounded-lg">
                       <ProductTile tint={first.tint} icon={first.icon} name={first.name} image={first.image} className="size-full rounded-none" iconSize={28} sizes="64px" />
                     </Link>
                     <span className="flex min-w-0 flex-1 flex-col gap-0.5">

@@ -220,7 +220,7 @@ export function ProductView({ product }: { product: Product }) {
 
         <ProductTrust sea={product.shipMode === "sea"} />
 
-        {product.wholesale && <WholesaleBar from={Number.isFinite(product.wholesaleFrom) ? product.wholesaleFrom : undefined} />}
+        {product.wholesale && <WholesaleBar slug={product.slug} from={Number.isFinite(product.wholesaleFrom) ? product.wholesaleFrom : undefined} />}
 
         <section className="bg-white p-3 md:p-0">
           <h2 className="mb-1.5 text-sm font-extrabold">Details</h2>

@@ -1,16 +1,17 @@
 "use client";
 
-import { ArrowRight, Check, Minus, PackagePlus, Plus, Search, Ship, SlidersHorizontal, X } from "lucide-react";
+import { ArrowRight, Check, PackagePlus, Plus, Search, Ship, SlidersHorizontal, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { ProductTile } from "@/components/shop/product-card";
-import type { Product, Variant } from "@/lib/catalog/types";
+import type { Product } from "@/lib/catalog/types";
 import { CATEGORY_PAGES } from "@/lib/content/category-pages";
 import { cn, naira } from "@/lib/format";
 import type { CategoryKey } from "@/lib/pricing/engine";
 import { useWholesaleCart, wcart } from "@/lib/wholesale/cart";
 import { type Kit, kitLines, matches, MIN_QTY } from "@/lib/wholesale/rules";
+import { MixRows, MixStatus, useMix } from "./mix";
 
 type Sort = "best" | "low" | "high" | "saving";
 const TONES: Record<Kit["tone"], string> = {
@@ -203,7 +204,7 @@ function WholesaleCard({ product, onChoose, inCart }: { product: Product; onChoo
   const [added, setAdded] = useState(false);
   return (
     <article className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-line bg-white">
-      <Link href={`/product/${product.slug}`} className="relative">
+      <Link href={`/wholesale/p/${product.slug}`} className="relative">
         <ProductTile tint={product.tint} icon={product.icon} name={product.name} image={product.images[0]} className="aspect-square w-full rounded-none" iconSize={48} sizes="(min-width: 1024px) 220px, 45vw" />
         {save > 0 && <span className="absolute left-0 top-2 rounded-r-full bg-sale px-2 py-0.5 text-[11px] font-extrabold text-white">−{save}% vs single</span>}
         {inCart > 0 && <span className="absolute right-2 top-2 rounded-full bg-ink px-2 py-0.5 text-[11px] font-bold text-white">{inCart} in cart</span>}
@@ -274,53 +275,34 @@ function KitCard({ kit, products }: { kit: Kit; products: Product[] }) {
 /** Pick quantities per colour/size; the product needs at least MIN_QTY units in total. */
 function VariantSheet({ product, onClose }: { product: Product; onClose: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
-  const cart = useWholesaleCart();
-  const [qty, setQty] = useState<Record<string, number>>(() => Object.fromEntries(cart.filter((l) => l.slug === product.slug).map((l) => [l.variantId, l.qty])));
+  const mix = useMix(product);
   useEffect(() => {
     ref.current?.showModal();
   }, []);
-  const total = Object.values(qty).reduce((s, n) => s + n, 0);
-  const cost = product.variants.reduce((s, v) => s + (qty[v.id] ?? 0) * v.wholesale, 0);
-  const set = (v: Variant, n: number) => setQty((q) => ({ ...q, [v.id]: Math.max(0, Math.min(9999, n)) }));
   return (
     <dialog ref={ref} onClose={onClose} aria-labelledby="vs-h" className="m-0 mt-auto max-h-[88dvh] w-full max-w-none overflow-y-auto rounded-t-3xl bg-white p-0 text-ink backdrop:bg-black/50 sm:m-auto sm:max-w-lg sm:rounded-3xl">
       <div className="flex flex-col gap-3 p-5 pb-[max(20px,env(safe-area-inset-bottom))]">
         <div className="flex items-start justify-between gap-3">
           <span className="flex flex-col gap-0.5">
             <h2 id="vs-h" className="text-[17px] font-extrabold leading-snug">{product.name}</h2>
-            <span className="text-[13px] text-muted">Mix any colours and sizes. At least {MIN_QTY} in total.</span>
+            <span className="text-[13px] text-muted">Mix any colours and sizes. At least {MIN_QTY} in total · sea only.</span>
           </span>
           <button type="button" onClick={() => ref.current?.close()} aria-label="Close" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface"><X aria-hidden size={18} /></button>
         </div>
-        <ul className="flex flex-col divide-y divide-line">
-          {product.variants.filter((v) => v.wholesale > 0).map((v) => (
-            <li key={v.id} className="flex items-center gap-3 py-2.5">
-              <span className="flex min-w-0 flex-1 flex-col">
-                <strong className="truncate text-[14px]">{Object.values(v.props).join(" / ") || "Standard"}</strong>
-                <span className="text-[12px] text-muted">{naira(v.wholesale)}/unit{v.stock < 1 ? " · out of stock" : ""}</span>
-              </span>
-              <span className="flex items-center rounded-full border border-line">
-                <button type="button" aria-label="Fewer" disabled={!qty[v.id]} onClick={() => set(v, (qty[v.id] ?? 0) - 1)} className="flex size-9 items-center justify-center disabled:opacity-30"><Minus aria-hidden size={14} /></button>
-                <input aria-label={`Units of ${Object.values(v.props).join(" ") || "this"}`} inputMode="numeric" value={qty[v.id] ?? 0} onChange={(e) => set(v, Number(e.target.value.replace(/\D/g, "")) || 0)} className="w-11 text-center text-[14px] font-bold tabular-nums outline-none" />
-                <button type="button" aria-label="More" disabled={v.stock < 1} onClick={() => set(v, (qty[v.id] ?? 0) + (qty[v.id] ? 1 : 5))} className="flex size-9 items-center justify-center disabled:opacity-30"><Plus aria-hidden size={14} /></button>
-              </span>
-            </li>
-          ))}
-        </ul>
-        <p className={cn("rounded-lg px-3 py-2 text-[13px] font-semibold", total >= MIN_QTY ? "bg-success-soft text-success" : "bg-[#FFF1F2] text-sale")}>
-          {total >= MIN_QTY ? `${total} units · ${naira(cost)}` : `${total} of ${MIN_QTY} units: add ${MIN_QTY - total} more`}
-        </p>
+        <MixRows mix={mix} />
+        <MixStatus mix={mix} />
         <button
           type="button"
-          disabled={total < MIN_QTY}
+          disabled={!mix.ok}
           onClick={() => {
-            for (const v of product.variants) wcart.add(product, v, qty[v.id] ?? 0, true);
+            mix.save();
             ref.current?.close();
           }}
           className="min-h-12 rounded-full bg-sale text-[15px] font-extrabold text-white disabled:opacity-40"
         >
           Save to wholesale cart
         </button>
+        <Link href={`/wholesale/p/${product.slug}`} className="text-center text-[13px] font-bold underline underline-offset-4">See photos and details</Link>
       </div>
     </dialog>
   );

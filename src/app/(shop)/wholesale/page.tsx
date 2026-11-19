@@ -62,7 +62,7 @@ async function Market() {
             mainEntity: {
               "@type": "ItemList",
               numberOfItems: products.length,
-              itemListElement: products.slice(0, 30).map((p, i) => ({ "@type": "ListItem", position: i + 1, url: `${SHOP_URL}/product/${p.slug}`, name: p.name })),
+              itemListElement: products.slice(0, 30).map((p, i) => ({ "@type": "ListItem", position: i + 1, url: `${SHOP_URL}/wholesale/p/${p.slug}`, name: p.name })),
             },
           },
         )}

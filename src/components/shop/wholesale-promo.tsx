@@ -3,13 +3,13 @@ import Link from "next/link";
 import { naira } from "@/lib/format";
 import { MIN_QTY } from "@/lib/wholesale/rules";
 
-/** Red bar on product pages: the same product, wholesale by sea. */
-export function WholesaleBar({ from }: { from?: number }) {
+/** Red bar on product pages: the same product, wholesale by sea (opens its wholesale page). */
+export function WholesaleBar({ from, slug }: { from?: number; slug?: string }) {
   return (
-    <Link href="/wholesale" className="flex items-center gap-3 bg-gradient-to-r from-[#E11D2E] to-[#9F0F1C] px-3.5 py-3 text-white md:rounded-lg">
+    <Link href={slug ? `/wholesale/p/${slug}` : "/wholesale"} className="flex items-center gap-3 bg-gradient-to-r from-[#E11D2E] to-[#9F0F1C] px-3.5 py-3 text-white md:rounded-lg">
       <Ship aria-hidden size={20} className="shrink-0" />
       <span className="flex min-w-0 flex-1 flex-col leading-tight">
-        <strong className="text-[14px]">Visit the wholesale market</strong>
+        <strong className="text-[14px]">{slug ? "Buy this wholesale" : "Visit the wholesale market"}</strong>
         <span className="truncate text-[12px] text-white/85">
           {from ? <>This item from <strong>{naira(from)}</strong>/unit · </> : null}{MIN_QTY}+ units · by sea
         </span>
