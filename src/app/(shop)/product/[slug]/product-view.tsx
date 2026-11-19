@@ -1,6 +1,7 @@
 "use client";
 
-import { Heart, Lock, MapPin, MessageSquare, Moon, Plane, Ship, ShieldCheck, Truck } from "lucide-react";
+import { Heart, MapPin, Moon, Plane, Ship } from "lucide-react";
+import { ProductTrust } from "@/components/shop/product-trust";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -216,19 +217,7 @@ export function ProductView({ product }: { product: Product }) {
           </div>
         </section>
 
-        <section className="grid grid-cols-4 gap-1.5 bg-white p-3 text-center text-[11px] text-[#333] md:p-0">
-          {[
-            [ShieldCheck, "Buyer protection"], [Lock, "Secure payment"], [Truck, "Delivery guarantee"], [MessageSquare, "Q&A answered"],
-          ].map(([Icon, label]) => {
-            const I = Icon as typeof ShieldCheck;
-            return (
-              <span key={label as string} className="flex flex-col items-center gap-1">
-                <I aria-hidden size={22} className="text-success" />
-                {label as string}
-              </span>
-            );
-          })}
-        </section>
+        <ProductTrust sea={product.shipMode === "sea"} />
 
         <section className="bg-white p-3 md:p-0">
           <h2 className="mb-1.5 text-sm font-extrabold">Details</h2>

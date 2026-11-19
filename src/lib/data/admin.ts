@@ -120,7 +120,7 @@ export async function getEditorData(): Promise<EditorData | null> {
   const [c, e, s] = await Promise.all([
     db.from("coupons").select("id, label, title, rule, amount_ngn, percent, max_off_ngn, min_spend_ngn, gadget_only, active, ends_at").order("sort"),
     db.from("sale_events").select("id, name, starts_on, ends_on, theme, kicker, title, sub, color, early_access_days, active").order("starts_on"),
-    db.from("pickup_stations").select("id, state, area, name, hours, active").order("state").order("sort"),
+    db.from("pickup_stations").select("id, state, area, name, address, hours, lat, lng, verified, active").order("verified").order("state").order("sort"),
   ]);
   const err = c.error ?? e.error ?? s.error;
   if (err) throw new Error(`Settings: ${err.message}`);

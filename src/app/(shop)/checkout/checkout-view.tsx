@@ -11,7 +11,9 @@ import { useClaimed } from "@/components/shop/promos";
 import { InfoButton } from "@/components/ui/info-button";
 import { Progress } from "@/components/ui/progress";
 import { useNow } from "@/hooks/use-now";
-import { statesOf } from "@/lib/catalog/stations";
+import { type Station, statesOf } from "@/lib/catalog/stations";
+import { getStationId, setStationId } from "@/lib/station-store";
+import { myProfile, setMyStation } from "../auth-actions";
 import { useSiteData } from "@/components/shop/site-data";
 import { cn, naira } from "@/lib/format";
 import { productTotals, unitFromPrices } from "@/lib/pricing/prices";
@@ -36,9 +38,37 @@ export function CheckoutView() {
   const now = useNow(60_000);
   const [claimed] = useClaimed();
   const [state, setState] = useState<string>("Lagos");
-  const { stations: STATIONS } = useSiteData();
+  const { stations: LISTED } = useSiteData();
+  // A station the customer added themselves (being checked) joins the list for them only.
+  const [own, setOwn] = useState<Station | null>(null);
+  const STATIONS = own && !LISTED.some((s) => s.id === own.id) ? [...LISTED, own] : LISTED;
   const STATES = statesOf(STATIONS);
-  const [station, setStation] = useState<string>(STATIONS[0]?.id ?? "");
+  const [station, setStationState] = useState<string>(STATIONS[0]?.id ?? "");
+  const setStation = (id: string) => {
+    setStationState(id);
+    setStationId(id);
+    void setMyStation(id).catch(() => null);
+  };
+  // Start from the customer's primary station (profile first, then this device) and their phone.
+  useEffect(() => {
+    let live = true;
+    const apply = (id: string | null, list: readonly Station[]) => {
+      const s = id ? list.find((x) => x.id === id) : null;
+      if (s) { setState(s.state); setStationState(s.id); }
+    };
+    apply(getStationId(), LISTED);
+    myProfile().then((me) => {
+      if (!live || !me) return;
+      if (me.phone) setPhone((p) => p || me.phone!.replace(/^\+234/, "0"));
+      if (me.station) {
+        const s: Station = { ...me.station, hours: "", verified: me.station.verified };
+        setOwn(LISTED.some((x) => x.id === s.id) ? null : s);
+        setState(s.state);
+        setStationState(s.id);
+      }
+    }).catch(() => null);
+    return () => { live = false; };
+  }, [LISTED]);
   const [method, setMethod] = useState("Card");
   const [plan, setPlan] = useState(4);
   const [usePoints, setUsePoints] = useState(false);
@@ -178,7 +208,7 @@ export function CheckoutView() {
                 <MapPin aria-hidden size={16} className="shrink-0" />
                 <span className="flex flex-1 flex-col">
                   <strong>{s.name}</strong>
-                  <span className="text-xs text-muted">{s.hours}</span>
+                  <span className="text-xs text-muted">{s.verified === false ? "Added by you · we check it before your order ships" : s.hours}</span>
                 </span>
                 <span className="text-xs font-bold text-success">FREE</span>
               </button>

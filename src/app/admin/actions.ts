@@ -72,7 +72,7 @@ type Table = "coupons" | "sale_events" | "pickup_stations";
 const EDITABLE: Record<Table, string[]> = {
   coupons: ["id", "label", "title", "rule", "amount_ngn", "percent", "max_off_ngn", "min_spend_ngn", "gadget_only", "active", "ends_at"],
   sale_events: ["id", "name", "starts_on", "ends_on", "theme", "kicker", "title", "sub", "color", "early_access_days", "active"],
-  pickup_stations: ["id", "state", "area", "name", "hours", "active"],
+  pickup_stations: ["id", "state", "area", "name", "address", "hours", "lat", "lng", "verified", "active"],
 };
 
 /** Create or update a coupon, sale event or pickup station. Database checks still apply (e.g. percentage coupons need a cap). */

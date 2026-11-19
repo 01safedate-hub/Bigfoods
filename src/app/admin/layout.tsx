@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BrandWordmark } from "@/components/shop/brand";
 import { Suspense } from "react";
 import { OfflineBanner } from "@/components/ui/offline-banner";
 import { AdminNav } from "./admin-nav";
@@ -12,7 +13,7 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
     <div className="flex min-h-dvh flex-col bg-[#F4F5F7] text-[13px] lg:flex-row">
       <aside className="flex flex-col gap-4 bg-[#0F1115] p-3.5 text-[#D7DAE0] lg:sticky lg:top-0 lg:h-dvh lg:w-60 lg:shrink-0 lg:overflow-y-auto lg:py-5">
         <div className="flex items-baseline gap-0.5 text-white">
-          <span className="text-lg font-extrabold tracking-[0.06em]">FASTCHINA</span>
+          <BrandWordmark className="h-5 w-auto text-white" />
           <span className="text-[11px] font-bold text-gold">admin</span>
         </div>
         <AdminNav />

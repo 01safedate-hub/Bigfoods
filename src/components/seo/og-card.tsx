@@ -1,14 +1,13 @@
+import { WORDMARK_PATH } from "@/components/shop/brand";
+
 /** The 1200×630 share card used by every Open Graph image (rendered by next/og, so inline styles only). */
 export function OgCard({ kicker, title, foot = "fastchina.shop", dark = false }: { kicker: string; title: string; foot?: string; dark?: boolean }) {
   const fg = dark ? "#FBFAF6" : "#111111";
   const accent = dark ? "#D9B866" : "#0b6b3a";
   return (
     <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 72, background: dark ? "#0D0D0B" : "#FFFFFF", color: fg }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-        <div style={{ width: 64, height: 64, borderRadius: 16, background: fg, color: dark ? "#0D0D0B" : "#F5C542", display: "flex", alignItems: "center", justifyContent: "center", }}>
-          <svg width="34" height="34" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z" fill={dark ? "#0D0D0B" : "#F5C542"} /></svg>
-        </div>
-        <div style={{ fontSize: 36, fontWeight: 800, letterSpacing: -1 }}>FastChina</div>
+      <div style={{ display: "flex" }}>
+        <svg width="330" height="78" viewBox="0 0 1168 276"><path fillRule="evenodd" d={WORDMARK_PATH} fill={fg} /></svg>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: 4, color: accent }}>{kicker.toUpperCase()}</div>

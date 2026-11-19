@@ -20,7 +20,7 @@ export function CheckInButton() {
         setMsg(call.value.message);
         if (call.value.ok) router.refresh();
       })}
-      className="flex min-h-10 items-center justify-center gap-1.5 rounded-md bg-gold px-3 text-xs font-extrabold text-ink"
+      className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-2xl bg-gold px-3 text-[13px] font-extrabold text-ink"
     >
       <CalendarCheck aria-hidden size={15} /> {msg ?? (busy ? "…" : "Check in · +5 points")}
     </button>

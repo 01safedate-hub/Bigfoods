@@ -1,4 +1,6 @@
-import { Moon } from "lucide-react";
+import { Check, ChevronRight, Moon } from "lucide-react";
+import { BestSellers } from "@/components/shop/best-sellers";
+import { categoryRanks } from "@/components/shop/spotlight-card";
 import Link from "next/link";
 import { HeroCarousel } from "@/components/shop/hero-carousel";
 import { TrustGrid } from "@/components/shop/footer";
@@ -27,6 +29,13 @@ export default async function HomePage() {
     <div className="flex flex-col gap-3 pb-6 md:gap-6 md:pt-4">
       <JsonLd data={graph(organization(), website())} />
       <h1 className="sr-only">Buy from China in Nigeria at factory prices, with free shipping to your Jumia pickup station</h1>
+      <Link href="/why-fastchina" className="no-scrollbar flex items-center gap-3 overflow-x-auto whitespace-nowrap bg-[#FBF1E6] px-3 py-2 text-[13px] font-semibold text-success md:rounded-md">
+        {["Free shipping", "Delivered or refunded", "7-day returns if damaged", "Photo check in China"].map((t, i) => (
+          <span key={t} className={i ? "flex items-center gap-1 border-l border-[#E6D6C3] pl-3" : "flex items-center gap-1"}><Check aria-hidden size={15} strokeWidth={2.6} />{t}</span>
+        ))}
+        <ChevronRight aria-hidden size={16} className="ml-auto shrink-0" />
+      </Link>
+
       <div className="md:overflow-hidden md:rounded-md">
         <MidnightStrip />
       </div>
@@ -79,6 +88,8 @@ export default async function HomePage() {
       <div className="px-3 md:px-0">
         <FlashSale products={flash} />
       </div>
+
+      <BestSellers products={[...products].sort((a, b) => b.sold - a.sold).slice(0, 6)} ranks={Object.fromEntries(categoryRanks(products))} />
 
       <div className="grid grid-cols-2 gap-2 px-3 md:hidden">
         <ClearOutTile />

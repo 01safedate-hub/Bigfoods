@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SeaQuote } from "./sea-quote";
 import { JsonLd } from "@/components/seo/json-ld";
+import { BrandWordmark } from "@/components/shop/brand";
 import { PLANS as SELLER_PLANS } from "@/lib/dropship/plans";
 import { GUIDES } from "@/lib/content/guides";
 import { breadcrumbs, faq, graph, STORE_DESCRIPTION, STORE_URL } from "@/lib/seo";
@@ -75,9 +76,9 @@ export default function StoreHome() {
 
       <header className="border-b border-[#E6E1D5]">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-8 gap-y-3 px-6 py-4">
-          <Link href="/store" className="flex items-center gap-2.5">
-            <span className="flex size-9 items-center justify-center rounded-[10px] bg-ink font-display text-2xl text-[#D9B866]">F</span>
-            <span className="font-display text-[28px]">FastChina<span className="text-[#7A5C17]">.store</span></span>
+          <Link href="/store" className="flex items-center gap-1">
+            <BrandWordmark className="h-7 w-auto text-ink" title="FastChina.store" />
+            <span aria-hidden className="mt-2 self-start text-[13px] font-semibold text-[#7A5C17]">.store</span>
           </Link>
           <nav aria-label="Main" className="flex flex-1 flex-wrap gap-x-6 gap-y-1 text-[15px] font-medium">
             <Link href={SHOP_URL}>Marketplace</Link>
@@ -286,7 +287,7 @@ export default function StoreHome() {
       <footer className="bg-ink text-[#C9C3B3]">
         <div className="mx-auto grid max-w-7xl gap-8 px-6 pt-16 pb-10 sm:grid-cols-2 lg:grid-cols-5">
           <div className="flex flex-col gap-3.5 lg:col-span-2">
-            <span className="font-display text-[34px] text-[#FBFAF6]">FastChina<span className="text-[#D9B866]">.store</span></span>
+            <span className="flex items-center gap-1.5 text-[#FBFAF6]"><BrandWordmark className="h-8 w-auto" title="FastChina.store" /><span className="mt-2 self-start text-[13px] font-semibold text-[#D9B866]">.store</span></span>
             <span className="max-w-[340px] text-sm leading-relaxed">Import from China without the stress. Shop, sell, or ship by sea.</span>
           </div>
           {[["Shop", [["Marketplace", SHOP_URL], ["Deals", `${SHOP}/deals`], ["Track order", `${SHOP}/account`]]], ["Sell", [["Dropship stores", "#dropship"], ["Plans", "#pricing"], ["Wholesale market", `${SHOP}/wholesale`], ["Sea freight", "#wholesale"]]], ["Help", [["Guides", `${SHOP}/guides`], ["How it works", "#how"], ["Returns", `${SHOP}/account`], ["Prohibited items", `${SHOP}/account`]]]].map(([h, links]) => (

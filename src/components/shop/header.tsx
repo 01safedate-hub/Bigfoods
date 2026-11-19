@@ -6,27 +6,34 @@ import { usePathname } from "next/navigation";
 import { DEPARTMENTS } from "@/lib/catalog/categories";
 import { cn } from "@/lib/format";
 import { useCart } from "./cart-provider";
+import { BrandWordmark, MARK_PATH } from "./brand";
 import { NotificationBell } from "./notification-bell";
 
-/** The bolt: FastChina's mark. Used alone on phones and as the favicon. */
+/** The app icon: the winged F on black. Used alone on phones and as the favicon. */
 export function BoltMark({ size = 32, className }: { size?: number; className?: string }) {
   return (
     <svg viewBox="0 0 64 64" width={size} height={size} aria-hidden className={className}>
       <rect width="64" height="64" rx="14" fill="#111111" />
-      <path d="M36.5 8 15 36h14l-3.5 20L49 27H35z" fill="#F5C542" />
+      <g transform="translate(6 20.3) scale(0.0881)"><path fill="#FFFFFF" fillRule="evenodd" d={MARK_PATH} /></g>
     </svg>
   );
 }
 
+/** The FastChina wordmark. On phones (compactMark) only the icon shows to save room. */
 export function Logo({ className, tld = ".shop", compactMark }: { className?: string; tld?: string; compactMark?: boolean }) {
   return (
-    <span className={cn("flex items-center gap-2", className)}>
-      <BoltMark size={compactMark ? 30 : 34} />
-      <span className={cn("flex items-baseline italic", compactMark && "sr-only")}>
-        <span className="text-[22px] font-black tracking-[-0.02em]">FAST</span>
-        <span className="text-[22px] font-black tracking-[-0.02em] text-sale">CHINA</span>
-        <span className="ml-0.5 text-[11px] font-bold not-italic text-subtle">{tld}</span>
-      </span>
+    <span className={cn("flex items-center gap-1.5", className)}>
+      {compactMark ? (
+        <>
+          <BoltMark size={30} />
+          <span className="sr-only">FastChina{tld}</span>
+        </>
+      ) : (
+        <>
+          <BrandWordmark className="h-[26px] w-auto text-ink" title={`FastChina${tld}`} />
+          <span aria-hidden className="mt-2 self-start text-[11px] font-bold text-subtle">{tld}</span>
+        </>
+      )}
     </span>
   );
 }

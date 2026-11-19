@@ -58,6 +58,7 @@ export const LEGAL: Record<string, LegalDoc> = {
     summary: "When you get your money back, and how.",
     sections: [
       { h: "Never arrived", p: ["If your order never reaches your pickup station, you get a full refund."] },
+      { h: "Wrong or damaged item", p: ["If we send the wrong item or it arrives damaged, report it from your account within 7 days of collecting it, with a photo. We refund it in full or send a replacement, your choice. Returns are dropped at your Jumia pickup station at no cost to you."] },
       { h: "Cancelled before we buy", p: ["Cancel any time before we buy from the factory and get everything you paid back."] },
       { h: "Plans and group links", p: ["A cancelled Pay small small plan returns everything paid to your wallet. Group pay leftovers go back to the people who paid them."] },
       { h: "How refunds are paid", p: ["Signed-in customers get wallet credit straight away, usable at checkout. Guests and anyone who prefers it are paid back to the original payment method within [X] working days."] },

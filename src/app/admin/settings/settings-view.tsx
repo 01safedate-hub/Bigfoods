@@ -36,12 +36,14 @@ const TABS = {
   },
   stations: {
     title: "Pickup stations", table: "pickup_stations",
-    note: "Only active stations show at checkout. Turning one off doesn’t affect orders already placed.",
+    note: "Only active, checked stations show to everyone. Stations customers add start unchecked: confirm the name and address, then tick Checked. Latitude/longitude power “nearest station”.",
     fields: [
       { key: "id", label: "Code", kind: "text" }, { key: "state", label: "State", kind: "text" }, { key: "area", label: "Area", kind: "text" },
-      { key: "name", label: "Station name", kind: "text", wide: true }, { key: "hours", label: "Opening hours", kind: "text" }, { key: "active", label: "Active", kind: "bool" },
+      { key: "name", label: "Station name", kind: "text", wide: true }, { key: "address", label: "Address", kind: "text", wide: true }, { key: "hours", label: "Opening hours", kind: "text" },
+      { key: "lat", label: "Latitude", kind: "number" }, { key: "lng", label: "Longitude", kind: "number" },
+      { key: "verified", label: "Checked", kind: "bool" }, { key: "active", label: "Active", kind: "bool" },
     ] as Field[],
-    blank: { id: "", state: "", area: "", name: "", hours: "", active: true },
+    blank: { id: "", state: "", area: "", name: "", address: "", hours: "", lat: null, lng: null, verified: true, active: true },
   },
 } as const;
 type TabKey = keyof typeof TABS;
@@ -78,6 +80,7 @@ function RowEditor({ row: initial, tab, isNew }: { row: Row; tab: TabKey; isNew?
           ) : (
             <input
               type={f.kind === "number" ? "number" : f.kind}
+              step={f.kind === "number" ? "any" : undefined}
               value={row[f.key] === null ? "" : String(row[f.key])}
               readOnly={!isNew && f.key === "id"}
               onChange={(e) => set(f.key, f.kind === "number" ? (e.target.value === "" ? null : Number(e.target.value)) : e.target.value)}
