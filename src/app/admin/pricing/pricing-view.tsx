@@ -41,7 +41,7 @@ export function PricingView() {
   const rows: [string, number, string?][] = [
     [`Goods (¥${product.cny} × ₦${NAIRA_PER_CNY}) × ${qty}`, b.goods * qty],
     [`${shipsBySea(product) ? "Sea freight" : `Air freight (${product.weightKg} kg)`} + clearing × ${qty}`, b.logistics * qty],
-    [`Jumia last-mile × ${qty}`, b.lastMile * qty],
+    [`Local delivery + weighing × ${qty}`, b.lastMile * qty],
     [`Planned profit ${product.category === "gadgets" ? "(10% + ₦50,000)" : `(${Math.round(CATEGORY_MARGIN[product.category] * 100)}% of goods)`} × ${qty}`, q.plannedProfit],
     [`List price × ${qty}`, q.subtotalList, "total"],
     ["Price promo / retailer price", -q.priceSavings],
@@ -60,11 +60,12 @@ export function PricingView() {
 
       <section className="flex flex-col gap-3 rounded-lg border border-[#E3E5EA] bg-white p-4">
         <h2 className="text-[15px] font-bold">Cost inputs</h2>
-        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
+        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-5">
           {[
             ["Naira per US$", `₦${PRICING.nairaPerUsd.toLocaleString()}`, "Your rate"], ["Yuan per US$", `¥${PRICING.cnyPerUsd}`, "Market, 16 Nov"],
-            ["Air freight", `₦${PRICING.airPerKg.toLocaleString()}/kg`, "Assumed: set yours"], ["Clearing", `₦${PRICING.clearingPerKg.toLocaleString()}/kg`, "Your figure"],
-            ["Sea freight", `₦${PRICING.seaPerCbm.toLocaleString()}/CBM`, "Assumed: set yours"], ["Jumia last-mile", `₦${PRICING.lastMilePerItem.toLocaleString()}/item`, "Assumed: set yours"],
+            ["Air freight", `₦${PRICING.airPerKg.toLocaleString()}/kg`, "Assumed: set yours"], ["Clearing (air)", `₦${PRICING.clearingPerKg.toLocaleString()}/kg`, "Your figure"],
+            ["Sea freight", `₦${PRICING.seaPerCbm.toLocaleString()}/CBM`, "Assumed: set yours"], ["Clearing (sea)", `₦${PRICING.seaClearingPerKg.toLocaleString()}/kg`, "Your figure"],
+            ["Local delivery", "₦400–₦2,000/item", "By size"], ["Weighing fee", `₦${PRICING.weighingFeePerItem}/item`, "Set yours"],
             ["Payment fee", `${PRICING.paymentFee.pct}% + ₦${PRICING.paymentFee.flat}`, `capped ₦${PRICING.paymentFee.cap.toLocaleString()}`],
           ].map(([k, v, n]) => (
             <div key={k} className="flex flex-col gap-0.5 rounded-md bg-[#F7F8FA] p-2.5">

@@ -37,7 +37,7 @@ export default function WhyPage() {
       <section className="grid gap-3 md:grid-cols-2">
         <div className="flex gap-3 rounded-2xl bg-surface p-4">
           <Percent aria-hidden size={22} className="mt-0.5 shrink-0 text-success" />
-          <span className="flex flex-col gap-1"><strong>How are prices so low?</strong><span className="text-[14px] leading-relaxed text-muted">We buy straight from 1688, where Chinese factories sell to Chinese shops, and skip the layers of importers and resellers. Our profit is on the goods only; freight and clearing pass through at cost.</span></span>
+          <span className="flex flex-col gap-1"><strong>How are prices so low?</strong><span className="text-[14px] leading-relaxed text-muted">We buy straight from Chinese factories and wholesalers at the prices they charge local shops, and skip the layers of importers and resellers. Our profit is on the goods only; freight and clearing pass through at cost.</span></span>
         </div>
         <div className="flex gap-3 rounded-2xl bg-surface p-4">
           <Factory aria-hidden size={22} className="mt-0.5 shrink-0 text-success" />

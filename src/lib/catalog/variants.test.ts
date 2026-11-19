@@ -3,7 +3,7 @@ import { choose, findVariant, initialChoice, optionStates, priceRange } from "./
 import type { Product, Variant } from "./types";
 
 const P = (list: number) => ({ list, midnight: list, event: list, flash: list, retailer: list });
-const v = (id: string, Colour: string, Size: string, stock: number, price: number, image?: string): Variant => ({ id, props: { Colour, Size }, stock, prices: P(price), image });
+const v = (id: string, Colour: string, Size: string, stock: number, price: number, image?: string): Variant => ({ id, props: { Colour, Size }, stock, prices: P(price), image, wholesale: price });
 // Wine has S/M/L; Black has only M/L; Wine L is sold out; Black L costs more.
 const product: Pick<Product, "options" | "variants"> = {
   options: [{ name: "Colour", values: [{ label: "Wine" }, { label: "Black" }] }, { name: "Size", values: [{ label: "S" }, { label: "M" }, { label: "L" }] }],

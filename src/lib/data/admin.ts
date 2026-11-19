@@ -72,20 +72,22 @@ export async function getDashboard(): Promise<Dashboard | null> {
 export interface AdminOrder {
   id: string; code: string; status: string; pay_mode: string; total_ngn: number; paid_ngn: number; state: string; phone: string | null;
   created_at: string; items: { title: string; variant_label: string | null; qty: number; unit_ngn: number }[];
+  channel?: "retail" | "wholesale"; ship_mode?: "air" | "sea";
 }
 
 /** Newest first; search by code or phone, filter by status and state. */
-export async function listOrders(f: { q?: string; status?: string; state?: string }): Promise<AdminOrder[] | null> {
+export async function listOrders(f: { q?: string; status?: string; state?: string; channel?: string }): Promise<AdminOrder[] | null> {
   if (!hasSupabase) return null;
   let query = secretDb()
     .from("orders")
-    .select("id, code, status, pay_mode, total_ngn, paid_ngn, state, phone, created_at, order_items(title, variant_label, qty, unit_ngn)")
+    .select("id, code, status, pay_mode, total_ngn, paid_ngn, state, phone, created_at, channel, ship_mode, order_items(title, variant_label, qty, unit_ngn)")
     .order("created_at", { ascending: false })
     .limit(100);
   const q = f.q?.trim().replace(/[^A-Za-z0-9+]/g, "");
   if (q) query = /^[A-Za-z0-9]{8}$/.test(q) ? query.eq("code", q.toUpperCase()) : query.ilike("phone", `%${q.replace(/^0/, "")}%`);
   if (f.status) query = query.eq("status", f.status);
   if (f.state) query = query.eq("state", f.state);
+  if (f.channel === "retail" || f.channel === "wholesale") query = query.eq("channel", f.channel);
   const { data, error } = await query;
   if (error) throw new Error(`Orders: ${error.message}`);
   return (data ?? []).map((o) => ({ ...o, items: o.order_items })) as AdminOrder[];
@@ -186,4 +188,99 @@ export async function listAdminProducts(f: { q?: string; status?: string; source
   const { data, error } = await query;
   if (error) throw new Error(`Products: ${error.message}`);
   return (data ?? []).map((p) => ({ ...p, category: (p.categories as unknown as { name: string } | null)?.name ?? null })) as AdminProduct[];
+}
+
+
+export interface WholesaleAdmin {
+  orders: { code: string; status: string; pay_mode: string; total_ngn: number; paid_ngn: number; state: string; phone: string; created_at: string; units: number; profit: number }[];
+  categories: { id: number; slug: string; name: string; wholesale_enabled: boolean; wholesale_margin: number; wholesale_sort: number }[];
+  kits: { id: number; slug: string; title: string; subtitle: string | null; tone: string; categories: string[]; max_products: number; units_each: number; sort: number; active: boolean }[];
+  costs: Record<string, unknown>;
+}
+
+/** Admin → Wholesale: its own orders, category settings, starter kits and cost inputs. */
+export async function getWholesaleAdmin(): Promise<WholesaleAdmin | null> {
+  if (!hasSupabase) return null;
+  const db = secretDb();
+  const [o, c, k, s] = await Promise.all([
+    db.from("orders").select("code, status, pay_mode, total_ngn, paid_ngn, state, phone, created_at, order_items(qty, unit_ngn, cost_ngn)").eq("channel", "wholesale").order("created_at", { ascending: false }).limit(100),
+    db.from("categories").select("id, slug, name, wholesale_enabled, wholesale_margin, wholesale_sort").order("wholesale_sort"),
+    db.from("wholesale_kits").select("id, slug, title, subtitle, tone, categories, max_products, units_each, sort, active").order("sort"),
+    db.from("pricing_settings").select("clearing_per_kg, sea_clearing_per_kg, weighing_fee_per_item, air_per_kg, sea_per_cbm, sea_kg_per_cbm, sea_buffer, wholesale_min_qty, local_delivery_tiers").eq("id", 1).maybeSingle(),
+  ]);
+  type OI = { qty: number; unit_ngn: number; cost_ngn: number };
+  return {
+    orders: (o.data ?? []).map((r) => {
+      const items = (r.order_items ?? []) as OI[];
+      return { ...r, units: items.reduce((a, i) => a + i.qty, 0), profit: items.reduce((a, i) => a + (i.unit_ngn - i.cost_ngn) * i.qty, 0) };
+    }) as WholesaleAdmin["orders"],
+    categories: (c.data ?? []) as WholesaleAdmin["categories"],
+    kits: (k.data ?? []) as WholesaleAdmin["kits"],
+    costs: (s.data ?? {}) as Record<string, unknown>,
+  };
+}
+
+export interface AdminCustomer { id: string; name: string | null; email: string | null; phone: string | null; role: string; created_at: string; orders: number; spent: number; station: string | null }
+
+/** Customers, newest first, with order counts. Search by name, email or phone. */
+export async function listCustomers(search?: string): Promise<AdminCustomer[] | null> {
+  if (!hasSupabase) return null;
+  const db = secretDb();
+  const [{ data: users }, { data: profiles }, { data: orders }] = await Promise.all([
+    db.auth.admin.listUsers({ perPage: 1000 }),
+    db.from("profiles").select("id, full_name, phone, role, created_at, station_id").order("created_at", { ascending: false }).limit(1000),
+    db.from("orders").select("customer_id, paid_ngn, status").not("customer_id", "is", null).limit(5000),
+  ]);
+  const byId = new Map((users?.users ?? []).map((u) => [u.id, u]));
+  const stats = new Map<string, { n: number; spent: number }>();
+  for (const o of orders ?? []) {
+    const s = stats.get(o.customer_id) ?? { n: 0, spent: 0 };
+    s.n += 1;
+    if (!["cancelled", "refunded"].includes(o.status)) s.spent += o.paid_ngn;
+    stats.set(o.customer_id, s);
+  }
+  const term = search?.trim().toLowerCase();
+  return (profiles ?? [])
+    .map((p) => ({
+      id: p.id, name: p.full_name, email: byId.get(p.id)?.email ?? null, phone: p.phone ?? null, role: p.role, created_at: p.created_at,
+      orders: stats.get(p.id)?.n ?? 0, spent: stats.get(p.id)?.spent ?? 0, station: p.station_id,
+    }))
+    .filter((c) => !term || `${c.name} ${c.email} ${c.phone}`.toLowerCase().includes(term))
+    .slice(0, 200);
+}
+
+export interface AdminPlan { code: string; kind: "small" | "group"; status: string; total: number; paid: number; created_at: string; detail: string }
+
+/** Pay small small plans and Group pay links, newest first. */
+export async function listPlans(): Promise<AdminPlan[] | null> {
+  if (!hasSupabase) return null;
+  const db = secretDb();
+  const [{ data: plans }, { data: links }] = await Promise.all([
+    db.from("payment_plans").select("weeks, status, started_at, orders!inner(code, total_ngn, paid_ngn)").order("started_at", { ascending: false }).limit(100),
+    db.from("group_links").select("code, created_at, expires_at, settled_at, orders!inner(code, total_ngn, paid_ngn), group_contributions(amount_ngn)").order("created_at", { ascending: false }).limit(100),
+  ]);
+  type O = { code: string; total_ngn: number; paid_ngn: number };
+  const a: AdminPlan[] = (plans ?? []).map((p) => {
+    const o = p.orders as unknown as O;
+    return { code: o.code, kind: "small", status: p.status, total: o.total_ngn, paid: o.paid_ngn, created_at: p.started_at, detail: `${p.weeks} weeks` };
+  });
+  const b: AdminPlan[] = (links ?? []).map((l) => {
+    const o = l.orders as unknown as O;
+    const n = (l.group_contributions ?? []).length;
+    return { code: o.code, kind: "group", status: l.settled_at ? "settled" : new Date(l.expires_at) < new Date() ? "expired" : "open", total: o.total_ngn, paid: o.paid_ngn, created_at: l.created_at, detail: `Link ${l.code} · ${n} contribution${n === 1 ? "" : "s"}` };
+  });
+  return [...a, ...b].sort((x, y) => y.created_at.localeCompare(x.created_at));
+}
+
+export interface AdminDraw { week_of: string; draw_at: string; status: string; budget_ngn: number; spent_ngn: number; entries: number; winners: number; commitment: string }
+
+/** Cart Clear-Out draws (seed stays secret until the draw). */
+export async function listDraws(): Promise<AdminDraw[] | null> {
+  if (!hasSupabase) return null;
+  const { data } = await secretDb().from("draws").select("week_of, draw_at, status, budget_ngn, spent_ngn, commitment, draw_entries(count), draw_winners(count)").order("week_of", { ascending: false }).limit(30);
+  return (data ?? []).map((d) => ({
+    week_of: d.week_of, draw_at: d.draw_at, status: d.status, budget_ngn: d.budget_ngn, spent_ngn: d.spent_ngn, commitment: d.commitment,
+    entries: (d.draw_entries as unknown as { count: number }[])[0]?.count ?? 0,
+    winners: (d.draw_winners as unknown as { count: number }[])[0]?.count ?? 0,
+  }));
 }

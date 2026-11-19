@@ -9,7 +9,7 @@ export const BRAND = "FastChina";
 
 /** The words people actually type. Used in page copy and metadata, never stuffed. */
 export const SHOP_DESCRIPTION =
-  "Buy from China in Nigeria at 1688 factory prices in Naira. Free shipping to your Jumia pickup station, Pay small small and wholesale prices from 10 units.";
+  "Buy from China in Nigeria at factory prices in Naira. Free shipping to your Jumia pickup station, Pay small small and wholesale prices from 10 units.";
 export const STORE_DESCRIPTION =
   "Start a dropshipping store in Nigeria for free. No stock, no upfront cost: pick products from China, set your price, and we deliver to your customers.";
 

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProductCard } from "@/components/shop/product-card";
 import { InfoButton } from "@/components/ui/info-button";
@@ -15,14 +16,20 @@ export function CategoryBrowser({ products: all }: { products: Product[] }) {
   const params = useSearchParams();
   const router = useRouter();
   const slug = params.get("c") ?? "for-you";
+  const panel = useRef<HTMLDivElement>(null);
+  // A new category starts at the top of its panel.
+  useEffect(() => {
+    panel.current?.scrollTo({ top: 0 });
+  }, [slug]);
   const cat = CATEGORIES.find((c) => c.slug === slug) ?? CATEGORIES[0];
   const products = all.filter((p) =>
-    cat.slug === "for-you" ? true : cat.slug === "women" ? ["fashion", "bags"].includes(p.category) : cat.slug === "men" ? ["fashion", "jewellery", "shoes"].includes(p.category) : cat.slug === "retailer" ? !["gadgets", "furniture", "machines"].includes(p.category) : p.category === cat.slug,
+    cat.slug === "for-you" ? true : cat.slug === "women" ? ["fashion", "bags"].includes(p.category) : cat.slug === "men" ? ["fashion", "jewellery", "shoes"].includes(p.category) : cat.slug === "retailer" ? p.wholesale : p.category === cat.slug,
   );
 
   return (
-    <div className="flex min-h-[calc(100dvh-140px)] md:min-h-0 md:gap-6 md:pt-6">
-      <nav aria-label="Categories" className="no-scrollbar w-[116px] shrink-0 overflow-y-auto bg-surface md:w-56 md:rounded-md">
+    // Phones: the category list and the panel scroll on their own, between the header and the tab bar.
+    <div data-app-panel className="flex h-[calc(100dvh-41px-59px-env(safe-area-inset-bottom))] overflow-hidden md:h-auto md:gap-6 md:overflow-visible md:pt-6">
+      <nav aria-label="Categories" className="no-scrollbar w-[116px] shrink-0 overflow-y-auto overscroll-contain bg-surface md:w-56 md:overflow-visible md:rounded-md">
         {CATEGORIES.map((c) => {
           const on = c.slug === cat.slug;
           return (
@@ -30,15 +37,15 @@ export function CategoryBrowser({ products: all }: { products: Product[] }) {
               key={c.slug}
               type="button"
               aria-current={on ? "true" : undefined}
-              onClick={() => router.replace(`/categories?c=${c.slug}`, { scroll: false })}
-              className={cn("block min-h-12 w-full border-l-[3px] px-2.5 py-3.5 text-left text-[13px] leading-tight md:text-sm", on ? "border-ink bg-white font-extrabold" : "border-transparent text-[#444]")}
+              onClick={() => (c.slug === "retailer" ? router.push("/wholesale") : router.replace(`/categories?c=${c.slug}`, { scroll: false }))}
+              className={cn("block min-h-12 w-full border-l-[3px] px-2.5 py-3.5 text-left text-[13px] leading-tight md:text-sm", on ? "border-ink bg-white font-extrabold" : c.slug === "retailer" ? "border-transparent font-extrabold text-sale" : "border-transparent text-[#444]")}
             >
               {c.name}
             </button>
           );
         })}
       </nav>
-      <div className="flex min-w-0 flex-1 flex-col gap-3.5 px-2.5 pt-3 pb-6 md:px-0 md:pt-0">
+      <div ref={panel} className="flex min-w-0 flex-1 flex-col gap-3.5 overflow-y-auto overscroll-contain px-2.5 pt-3 pb-6 md:overflow-visible md:px-0 md:pt-0">
         {cat.note && (
           <p className={cn("flex items-start gap-1 rounded-md p-2.5 text-xs leading-relaxed", NOTE_TONE[cat.note.tone])}>
             <span className="flex-1">{cat.note.text}</span>

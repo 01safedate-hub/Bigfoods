@@ -68,8 +68,10 @@ export async function setRole(userId: unknown, role: unknown): Promise<Result> {
   return error ? { ok: false, message: error.message } : { ok: true, message: "Role updated" };
 }
 
-type Table = "coupons" | "sale_events" | "pickup_stations";
+type Table = "coupons" | "sale_events" | "pickup_stations" | "categories" | "wholesale_kits";
 const EDITABLE: Record<Table, string[]> = {
+  categories: ["id", "wholesale_enabled", "wholesale_margin", "wholesale_sort"],
+  wholesale_kits: ["id", "slug", "title", "subtitle", "tone", "categories", "max_products", "units_each", "sort", "active"],
   coupons: ["id", "label", "title", "rule", "amount_ngn", "percent", "max_off_ngn", "min_spend_ngn", "gadget_only", "active", "ends_at"],
   sale_events: ["id", "name", "starts_on", "ends_on", "theme", "kicker", "title", "sub", "color", "early_access_days", "active"],
   pickup_stations: ["id", "state", "area", "name", "address", "hours", "lat", "lng", "verified", "active"],
@@ -81,12 +83,48 @@ export async function saveRow(table: unknown, row: unknown): Promise<Result> {
   if (typeof table !== "string" || !(table in EDITABLE) || typeof row !== "object" || !row) return { ok: false, message: "Nothing to save." };
   const allowed = EDITABLE[table as Table];
   const clean = Object.fromEntries(Object.entries(row).filter(([k, v]) => allowed.includes(k) && v !== undefined).map(([k, v]) => [k, v === "" ? null : v]));
-  if (table === "sale_events" && !clean.id) delete clean.id;
+  if ((table === "sale_events" || table === "wholesale_kits") && !clean.id) delete clean.id;
+  if (table === "categories" && !clean.id) return { ok: false, message: "Categories are added by the catalogue import." };
+  if (table === "wholesale_kits" && typeof clean.categories === "string") {
+    clean.categories = clean.categories.split(",").map((c) => c.trim()).filter(Boolean);
+  }
+  if (table === "wholesale_kits") clean.updated_at = new Date().toISOString();
   if (!hasSupabase) return { ok: true, message: "Demo: not saved." };
   const { error } = await secretDb().from(table as Table).upsert(clean);
   if (error) return { ok: false, message: error.message };
-  updateTag("site");
-  return { ok: true, message: "Saved" };
+  updateTag(table === "wholesale_kits" ? "kits" : table === "categories" ? "catalog" : "site");
+  return { ok: true, message: table === "categories" ? "Saved. Prices are updating." : "Saved" };
+}
+
+const COST_FIELDS = ["clearing_per_kg", "sea_clearing_per_kg", "weighing_fee_per_item", "air_per_kg", "sea_per_cbm", "sea_kg_per_cbm", "sea_buffer", "wholesale_min_qty", "local_delivery_tiers"] as const;
+
+/** Cost inputs that every price is built from. Super admin or Finance only; saving reprices every product. */
+export async function saveCosts(input: unknown): Promise<Result> {
+  const me = await requireStaff();
+  if (!hasSupabase || !me) return { ok: true, message: "Demo: not saved." };
+  const { data: prof } = await secretDb().from("profiles").select("role").eq("id", me.id).maybeSingle();
+  if (!["super_admin", "finance"].includes(prof?.role ?? "")) return { ok: false, message: "Only Super admin or Finance can change costs." };
+  if (!input || typeof input !== "object") return { ok: false, message: "Nothing to save." };
+  const r = input as Record<string, unknown>;
+  const patch: Record<string, unknown> = {};
+  for (const k of COST_FIELDS) {
+    if (r[k] === undefined) continue;
+    if (k === "local_delivery_tiers") {
+      const tiers = r[k];
+      if (!Array.isArray(tiers) || !tiers.length || tiers.some((t) => !t || typeof t.fee !== "number" || t.fee < 0 || (t.max_kg !== null && typeof t.max_kg !== "number"))) return { ok: false, message: "Check the delivery tiers." };
+      patch[k] = tiers;
+      continue;
+    }
+    const n = Number(r[k]);
+    if (!Number.isFinite(n) || n < 0) return { ok: false, message: `Check ${k.replaceAll("_", " ")}.` };
+    patch[k] = n;
+  }
+  patch.updated_at = new Date().toISOString();
+  patch.updated_by = me.id;
+  const { error } = await secretDb().from("pricing_settings").update(patch).eq("id", 1);
+  if (error) return { ok: false, message: error.message };
+  updateTag("catalog");
+  return { ok: true, message: "Saved. Every price was recalculated." };
 }
 
 /** Puts a failed email back in the queue (the sender picks it up within a minute). */

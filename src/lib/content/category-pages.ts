@@ -23,7 +23,7 @@ export const CATEGORY_PAGES: Record<CategoryKey, CategoryPage> = {
     name: "Phones & Gadgets",
     title: "Buy Phones & Gadgets from China in Nigeria",
     h1: "Phones and gadgets from China, priced in Naira",
-    description: "Android phones, laptops, tablets, drones and smart watches from China's factories at 1688 prices, with free delivery in Nigeria and Pay small small over up to 12 weeks.",
+    description: "Android phones, laptops, tablets, drones and smart watches from China's factories at factory prices, with free delivery in Nigeria and Pay small small over up to 12 weeks.",
     intro: `Phones, laptops, tablets, drones and smart watches bought straight from Chinese suppliers. Gadget prices carry a fixed 10% margin plus a flat fee instead of a percentage mark-up, so expensive devices stay close to their factory price. ${AIR} Spread the cost with Pay small small over 4, 8 or 12 weeks at 0% interest.`,
     faqs: [
       { q: "Are the phones new and original?", a: "Every listing states the brand, model and condition from the supplier. Each order is photographed at our China warehouse before it ships, so you can see your exact item first." },
@@ -36,7 +36,7 @@ export const CATEGORY_PAGES: Record<CategoryKey, CategoryPage> = {
     name: "Fashion",
     title: "Women & Men Clothing from China, Delivered in Nigeria",
     h1: "Clothes from China at factory prices",
-    description: "Dresses, two-piece sets, tops, tees and menswear from 1688 factories. Prices in Naira, free shipping to your Jumia pickup station, retailer prices from 10 pieces.",
+    description: "Dresses, two-piece sets, tops, tees and menswear from China’s factories. Prices in Naira, free shipping to your Jumia pickup station, retailer prices from 10 pieces.",
     intro: `Dresses, sets, tops and menswear from the same Guangzhou and Hangzhou factories that supply market traders. Pick your colour and size on each product. ${AIR} Buying for resale? Order 10 or more of any item and the retailer price applies automatically.`,
     faqs: [
       { q: "How do I choose the right size?", a: "Each product lists its sizes and measurements from the supplier. Chinese sizes often run one size small, so compare the measurements with a piece you own." },
@@ -49,20 +49,20 @@ export const CATEGORY_PAGES: Record<CategoryKey, CategoryPage> = {
     name: "Hair & Wigs",
     title: "Buy Wigs & Human Hair from China in Nigeria",
     h1: "Wigs, bundles and bone straight hair from China",
-    description: "Lace front wigs, bone straight, curly wigs and bundles from Chinese hair factories at 1688 prices. Free delivery to your Jumia pickup station anywhere in Nigeria.",
+    description: "Lace front wigs, bone straight, curly wigs and bundles from Chinese hair factories at factory prices. Free delivery to your Jumia pickup station anywhere in Nigeria.",
     intro: `Lace fronts, closures, bone straight and curly units from the hair factories in Xuchang and Guangzhou that supply salons worldwide. Each listing gives the hair type, length and lace size from the supplier. ${AIR} Salon owners get the retailer price from 10 units.`,
     faqs: [
       { q: "Is the hair human hair or synthetic?", a: "Each wig states its hair type from the supplier: human, human-blend or heat-resistant fibre. If it isn't clear, ask on the product page and our team answers." },
       { q: "Can salons buy wigs wholesale?", a: "Yes. Order 10 or more of any wig or bundle and the retailer price applies automatically." },
       { q: "How long does hair take to deliver?", a: "Hair ships by air and usually arrives in 10–18 days." },
     ],
-    guides: ["best-products-to-import-from-china-to-nigeria", "how-to-buy-from-1688-in-nigeria"],
+    guides: ["best-products-to-import-from-china-to-nigeria", "how-to-import-from-china-to-nigeria"],
   },
   beauty: {
     name: "Beauty",
     title: "Beauty & Makeup from China, Shipped Free in Nigeria",
     h1: "Beauty and makeup from China's factories",
-    description: "Lipsticks, lashes, nails, skincare tools and beauty accessories from 1688 at Naira prices with free delivery to Jumia pickup stations.",
+    description: "Lipsticks, lashes, nails, skincare tools and beauty accessories from Chinese manufacturers at Naira prices with free delivery to Jumia pickup stations.",
     intro: `Makeup, lashes, press-on nails and beauty tools from Chinese manufacturers. ${AIR}`,
     faqs: [
       { q: "How long does makeup take to arrive?", a: "Beauty items ship by air and usually reach your Jumia pickup station 10–18 days after full payment." },
@@ -74,7 +74,7 @@ export const CATEGORY_PAGES: Record<CategoryKey, CategoryPage> = {
     name: "Jewellery & Watches",
     title: "Watches & Jewellery from China in Nigeria",
     h1: "Watches and jewellery from China",
-    description: "Quartz watches, chains, necklaces, rings and earrings from Yiwu and Guangzhou suppliers at 1688 prices, delivered free across Nigeria.",
+    description: "Quartz watches, chains, necklaces, rings and earrings from Yiwu and Guangzhou suppliers at factory prices, delivered free across Nigeria.",
     intro: `Men's and women's watches, chains, rings and earrings from the Yiwu and Guangzhou markets. Small, light items like these are the cheapest to ship, so prices stay low. ${AIR}`,
     faqs: [
       { q: "Is the jewellery gold?", a: "Listings state the material from the supplier, such as stainless steel, alloy or gold-plated. Solid gold is rarely sold this way." },
@@ -86,13 +86,13 @@ export const CATEGORY_PAGES: Record<CategoryKey, CategoryPage> = {
     name: "Phone accessories & Audio",
     title: "Earbuds, Chargers & Phone Accessories from China",
     h1: "Earbuds, chargers and phone accessories",
-    description: "Wireless earbuds, chargers, cables, power banks and phone cases from Shenzhen factories at 1688 prices with free delivery in Nigeria.",
+    description: "Wireless earbuds, chargers, cables, power banks and phone cases from Shenzhen factories at factory prices with free delivery in Nigeria.",
     intro: `Earbuds, speakers, chargers, cables and cases from Shenzhen, the world's electronics market. ${AIR}`,
     faqs: [
       { q: "How long do accessories take to arrive?", a: "They ship by air and usually arrive in 10–18 days, free to your Jumia pickup station." },
       { q: "Do accessories come with a warranty?", a: "Every item is checked and photographed at our warehouse. If it arrives faulty or wrong, our refund policy covers it." },
     ],
-    guides: ["how-to-import-from-china-to-nigeria", "1688-vs-alibaba-vs-aliexpress"],
+    guides: ["how-to-import-from-china-to-nigeria", "shipping-from-china-to-nigeria-cost"],
   },
   shoes: {
     name: "Shoes",
@@ -110,7 +110,7 @@ export const CATEGORY_PAGES: Record<CategoryKey, CategoryPage> = {
     name: "Bags",
     title: "Handbags & Bags from China, Delivered in Nigeria",
     h1: "Handbags, crossbody bags and backpacks",
-    description: "Handbags, crossbody bags, totes and backpacks from Guangzhou's Baiyun leather market at 1688 prices, free shipping in Nigeria.",
+    description: "Handbags, crossbody bags, totes and backpacks from Guangzhou's Baiyun leather market at factory prices, free shipping in Nigeria.",
     intro: `Handbags, totes, crossbody bags and backpacks from the leather goods suppliers around Guangzhou. ${AIR}`,
     faqs: [
       { q: "Are the bags leather?", a: "Each listing states the material from the supplier, usually PU leather, genuine leather or canvas." },
@@ -122,7 +122,7 @@ export const CATEGORY_PAGES: Record<CategoryKey, CategoryPage> = {
     name: "Home & Kitchen",
     title: "Home & Kitchen Items from China in Nigeria",
     h1: "Home and kitchen essentials from China",
-    description: "Kitchen tools, small appliances, storage, décor and bedding from Chinese factories at 1688 prices, delivered free to your Jumia pickup station.",
+    description: "Kitchen tools, small appliances, storage, décor and bedding from Chinese factories at factory prices, delivered free to your Jumia pickup station.",
     intro: `Kitchen tools, storage, décor, bedding and small appliances from Yiwu and Guangdong. ${AIR}`,
     faqs: [
       { q: "Will appliances work with Nigerian power?", a: "Check the voltage on the product page. Most appliances we list are 220–240V. Plugs may need an adapter." },

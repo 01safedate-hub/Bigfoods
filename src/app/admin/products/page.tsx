@@ -35,7 +35,7 @@ export default async function ProductsPage({ searchParams }: PageProps<"/admin/p
         </select>
         <select name="source" defaultValue={f.source} aria-label="Source" className="min-h-10 rounded-md border border-[#D0D4DB] bg-white px-2">
           <option value="">Any source</option>
-          <option value="1688">1688 imports</option>
+          <option value="1688">Supplier imports</option>
           <option value="custom">Custom</option>
         </select>
         <button type="submit" className="min-h-10 rounded-md bg-ink px-4 font-bold text-white">Search</button>
@@ -49,7 +49,7 @@ export default async function ProductsPage({ searchParams }: PageProps<"/admin/p
             </span>
             <span className="flex min-w-0 flex-1 flex-col">
               <Link href={`/product/${p.slug}`} className="truncate font-bold hover:underline">{p.title}</Link>
-              <span className="text-xs text-[#5B6170]">{p.category ?? "No category"} · {p.source === "custom" ? "Custom" : "1688"} · from {p.price_list_min ? naira(p.price_list_min) : "—"}</span>
+              <span className="text-xs text-[#5B6170]">{p.category ?? "No category"} · {p.source === "custom" ? "Custom" : "Imported"} · from {p.price_list_min ? naira(p.price_list_min) : "—"}</span>
             </span>
             <StatusSelect slug={p.slug} status={p.status} />
           </li>

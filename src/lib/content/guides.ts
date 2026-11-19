@@ -131,13 +131,13 @@ export const GUIDES: Guide[] = [
     topic: "Importing",
     published: "2026-11-18",
     updated: "2026-11-18",
-    summary: "To import from China you choose a supplier (1688, Alibaba or a market agent), pay in yuan or dollars, ship to a China warehouse, send it by air or sea, clear customs and deliver it locally. A consolidator can do every step for you in naira.",
+    summary: "To import from China you choose a supplier (a wholesale platform or a market agent), pay in yuan or dollars, ship to a China warehouse, send it by air or sea, clear customs and deliver it locally. A consolidator can do every step for you in naira.",
     sections: [
       {
         h: "The five steps of importing from China",
         blocks: [
           { steps: [
-            ["Find a supplier", "1688.com is China's domestic wholesale site with the lowest prices. Alibaba.com is for export orders with higher minimums. AliExpress is retail. Market agents in Guangzhou and Yiwu buy for you in person."],
+            ["Find a supplier", "China's domestic wholesale platforms have the lowest prices but sell only inside China. Export platforms such as Alibaba.com have higher minimums, and AliExpress is retail. Market agents in Guangzhou and Yiwu buy for you in person."],
             ["Pay the supplier", "Chinese suppliers want yuan (Alipay, WeChat Pay, bank transfer) or dollars. This is the hardest part from Nigeria, which is why most importers use an agent or a platform that accepts naira."],
             ["Receive the goods in China", "Suppliers ship inside China to a warehouse address, usually in Guangzhou. The warehouse checks, photographs and repacks your goods."],
             ["Ship to Nigeria", "Air freight is charged per kilogram and takes about 10–18 days. Sea freight is charged per cubic metre (CBM) and takes 90 days or more for consolidated cargo."],
@@ -148,7 +148,7 @@ export const GUIDES: Guide[] = [
       {
         h: "The easiest way: buy in naira from a platform",
         blocks: [
-          "If you don't want to handle yuan, freight and clearing, buy from a platform that does it all. On [FastChina.shop](/) every 1688 product is priced in naira with the shipping and clearing already inside the price. You pay once, and the item arrives at your nearest Jumia pickup station.",
+          "If you don't want to handle yuan, freight and clearing, buy from a platform that does it all. On [FastChina.shop](/) every product is priced in naira with the shipping and clearing already inside the price. You pay once, and the item arrives at your nearest Jumia pickup station.",
           "For goods you've sourced yourself, [wholesale sea freight](/wholesale) gives you a China receiving address and ships your cargo by the cubic metre.",
         ],
       },
@@ -186,71 +186,12 @@ export const GUIDES: Guide[] = [
       },
     ],
     faqs: [
-      { q: "Can I import from China without travelling?", a: "Yes. Most importers never visit China. You buy online (1688, Alibaba or a platform like FastChina), and a warehouse in China receives, checks and ships your goods." },
+      { q: "Can I import from China without travelling?", a: "Yes. Most importers never visit China. You buy online (from a wholesale platform or through a service like FastChina), and a warehouse in China receives, checks and ships your goods." },
       { q: "How long does shipping from China to Nigeria take?", a: "Air freight takes about 10–18 days door to pickup station. Sea freight for consolidated cargo takes 90 days or more." },
       { q: "Do I need to pay customs duty?", a: "Imports are subject to Nigerian customs duty and charges. When you buy through FastChina, clearing is already included in the price." },
       { q: "What is the minimum I can import?", a: "Through FastChina you can buy a single item. Buying 10 or more of one item gets the retailer price." },
     ],
-    cta: { title: "Shop China in naira", text: "1688 products with shipping and clearing already included.", label: "Browse the marketplace", href: "/" },
-  },
-
-  {
-    slug: "how-to-buy-from-1688-in-nigeria",
-    title: "How to Buy from 1688 in Nigeria (No Agent Needed)",
-    h1: "How to buy from 1688.com in Nigeria",
-    description: "1688 has China's lowest wholesale prices but only accepts Chinese payment and addresses. Here's how Nigerians buy from 1688, what it costs and how to read listings.",
-    keywords: ["how to buy from 1688 in Nigeria", "1688 Nigeria", "1688 agent Nigeria", "buy from 1688", "1688 shipping to Nigeria"],
-    topic: "Importing",
-    published: "2026-11-18",
-    updated: "2026-11-18",
-    summary: "1688.com is Alibaba's site for Chinese domestic buyers, so it needs a Chinese address and payment. Nigerians buy through an agent or a platform that lists 1688 products in naira and handles payment, shipping and clearing.",
-    sections: [
-      {
-        h: "What is 1688?",
-        blocks: [
-          "1688.com is owned by Alibaba Group and serves buyers inside China. Factories and wholesalers list there at the prices they charge Chinese shops, which is usually far cheaper than Alibaba.com (export) or AliExpress (retail). The catch: the site is in Chinese, prices are in yuan, payment needs Alipay, and sellers only deliver inside China.",
-        ],
-      },
-      {
-        h: "Three ways to buy from 1688 from Nigeria",
-        blocks: [
-          { table: {
-            head: ["Option", "How it works", "Good for"],
-            rows: [
-              ["Platform in naira", "Products from 1688 listed in naira with freight and clearing included. You pay once.", "Single items, resellers, anyone who wants a fixed price"],
-              ["Buying agent", "You send links; the agent pays, collects and ships, adding a service fee.", "Custom orders and mixed cartons"],
-              ["Do it yourself", "Chinese bank or Alipay account, Chinese warehouse address, your own freight forwarder.", "Experienced importers with large volumes"],
-            ],
-          } },
-          "On [FastChina](/), you can also paste a 1688 link into search to find that product.",
-        ],
-      },
-      {
-        h: "How to read a 1688 listing",
-        blocks: [
-          { list: [
-            "**Tiered prices.** 1688 shows a price for 1+, 50+, 200+ pieces. The lowest tier only applies to big orders.",
-            "**SKU options.** Colour and size choices can change the price. Check the variant you want.",
-            "**起批 (minimum order).** Some sellers set a minimum quantity.",
-            "**Weight.** Listings often include a weight. It decides your air freight cost.",
-            "**Seller age and rating.** Prefer verified factories (实力商家) with several years on the platform.",
-          ] },
-        ],
-      },
-      {
-        h: "What 1688 products really cost in Nigeria",
-        blocks: [
-          "A ¥50 item does not cost ¥50 delivered. Add the exchange rate, freight by weight, clearing and local delivery, then the seller's profit. A light item (under 300g) usually lands at 2–3 times the yuan price converted to naira; a heavy item much more. That's why light, high-value products are the best to import by air.",
-          { tip: "Compare the delivered price, not the 1688 price. A cheaper listing that weighs twice as much can end up costing more." },
-        ],
-      },
-    ],
-    faqs: [
-      { q: "Can I pay 1688 sellers with a Nigerian card?", a: "Usually not. 1688 expects Alipay or a Chinese bank. That's why Nigerians use agents or platforms that accept naira." },
-      { q: "Does 1688 ship to Nigeria?", a: "No. 1688 sellers deliver within China. A warehouse or forwarder in China receives your items and ships them on." },
-      { q: "Is 1688 cheaper than AliExpress?", a: "Usually, yes, because 1688 prices are domestic wholesale prices. But you have to add international shipping yourself, which AliExpress often includes." },
-    ],
-    cta: { title: "1688 prices, in naira", text: "Free shipping to your Jumia pickup station. No Alipay, no agent.", label: "Shop 1688 products", href: "/" },
+    cta: { title: "Shop China in naira", text: "Factory-priced products with shipping and clearing already included.", label: "Browse the marketplace", href: "/" },
   },
 
   {
@@ -327,13 +268,13 @@ export const GUIDES: Guide[] = [
       {
         h: "What counts as wholesale?",
         blocks: [
-          "Chinese suppliers lower the unit price as quantity rises. On 1688 you'll see tiers like 1–49, 50–199 and 200+ pieces. For a Nigerian shop owner, the sweet spot is usually a mixed order: 10–50 pieces each of several products, so you test more items without tying up all your money in one.",
+          "Chinese suppliers lower the unit price as quantity rises. Factory price lists usually have tiers like 1–49, 50–199 and 200+ pieces. For a Nigerian shop owner, the sweet spot is usually a mixed order: 10–50 pieces each of several products, so you test more items without tying up all your money in one.",
         ],
       },
       {
-        h: "Retailer prices from 10 units",
+        h: "Wholesale prices from 10 units, by sea",
         blocks: [
-          "On the [FastChina wholesale market](/wholesale), any item bought 10 or more at a time gets the retailer price automatically, up to 40% off our profit. You can mix colours and sizes of the same product to reach 10, and it still ships free to your pickup station.",
+          "On the [FastChina wholesale market](/wholesale), every product has a wholesale price from 10 units (mix colours and sizes of the same product to reach 10). Wholesale ships by sea, so it takes about 90 days, but the unit price already includes sea freight, customs clearing, weighing and delivery to your Jumia pickup station. New to selling? Starter kits fill a cart with best sellers for a fashion store, a phone business or a hair and beauty shop in one tap.",
         ],
       },
       {
@@ -357,57 +298,11 @@ export const GUIDES: Guide[] = [
       },
     ],
     faqs: [
-      { q: "What's the minimum order for wholesale prices?", a: "On FastChina, 10 units of an item unlock the retailer price. For your own goods by sea, the minimum is 0.5 CBM." },
-      { q: "Can I mix products in one wholesale order?", a: "Yes. Retailer pricing applies per product at 10+ units, and you can buy as many different products as you like in one order." },
+      { q: "What's the minimum order for wholesale prices?", a: "On FastChina, 10 units of each product (colours and sizes can be mixed). For your own goods by sea, the minimum is 0.5 CBM." },
+      { q: "Can I mix products in one wholesale order?", a: "Yes. Each product needs 10 units, and you can add as many different products as you like to one wholesale order." },
       { q: "Which is the biggest wholesale market in China?", a: "Yiwu International Trade City in Zhejiang is the largest small-goods market. Guangzhou is the hub for clothing, hair, leather and electronics, and Foshan for furniture." },
     ],
-    cta: { title: "Wholesale market", text: "Retailer prices from 10 units, free shipping, mix colours and sizes.", label: "Open the wholesale market", href: "/wholesale" },
-  },
-
-  {
-    slug: "1688-vs-alibaba-vs-aliexpress",
-    title: "1688 vs Alibaba vs AliExpress: Which Is Best for Nigerians?",
-    h1: "1688 vs Alibaba vs AliExpress: which should you buy from?",
-    description: "The real differences between 1688, Alibaba and AliExpress for buyers in Nigeria: prices, minimum orders, payment, shipping and which one suits retail, reselling or bulk.",
-    keywords: ["1688 vs Alibaba", "1688 vs AliExpress", "Alibaba vs AliExpress Nigeria", "cheapest Chinese website", "which China website is best"],
-    topic: "Buying guides",
-    published: "2026-11-18",
-    updated: "2026-11-18",
-    summary: "1688 is cheapest but domestic-only; Alibaba is for export bulk orders with minimums; AliExpress ships single items internationally at higher prices. Platforms like FastChina bring 1688 prices to Nigeria in naira.",
-    sections: [
-      {
-        h: "The quick comparison",
-        blocks: [
-          { table: {
-            head: ["", "1688", "Alibaba.com", "AliExpress"],
-            rows: [
-              ["Who it's for", "Buyers inside China", "International bulk buyers", "International shoppers"],
-              ["Prices", "Lowest (domestic wholesale)", "Export wholesale", "Retail"],
-              ["Minimum order", "Often 1–2 pieces", "Often 50–1,000 pieces", "1 piece"],
-              ["Language", "Chinese", "English", "English"],
-              ["Ships to Nigeria", "No", "Via your forwarder", "Yes, slow and costly"],
-              ["Payment", "Alipay / Chinese bank", "Card, transfer", "Card"],
-            ],
-          } },
-        ],
-      },
-      {
-        h: "Which should you choose?",
-        blocks: [
-          { list: [
-            "**Buying for yourself:** a naira platform with free shipping saves the most hassle. AliExpress works but delivery to Nigeria is unreliable.",
-            "**Reselling in small quantities:** 1688 prices through a platform or agent give you the most margin.",
-            "**Private label or custom products:** Alibaba.com suppliers are set up for logos, custom packaging and big runs.",
-          ] },
-          "Read [how to buy from 1688 in Nigeria](/guides/how-to-buy-from-1688-in-nigeria) for the practical steps.",
-        ],
-      },
-    ],
-    faqs: [
-      { q: "Is 1688 the same company as Alibaba?", a: "Yes. 1688.com, Alibaba.com and AliExpress are all owned by Alibaba Group, but each serves a different kind of buyer." },
-      { q: "Why is 1688 cheaper than Alibaba?", a: "1688 sellers price for Chinese domestic buyers and don't pay for export services, English support or international marketing." },
-    ],
-    cta: { title: "Get 1688 prices without the hassle", text: "Pay in naira. Free delivery to your Jumia pickup station.", label: "Browse products", href: "/" },
+    cta: { title: "Wholesale market", text: "Factory stock by sea from 10 units per product, delivery included. Starter kits for new shops.", label: "Open the wholesale market", href: "/wholesale" },
   },
 
   {
@@ -460,7 +355,7 @@ export const GUIDES: Guide[] = [
       { q: "What is the most profitable thing to import from China?", a: "It changes with trends, but light, high-value items such as wigs, beauty tools, watches and phone accessories consistently leave good margins after air freight." },
       { q: "What should I avoid importing?", a: "Counterfeit brands, anything on the Nigeria Customs prohibition list, fragile glass and very heavy low-value items that cost more to ship than they're worth." },
     ],
-    cta: { title: "Find your next best-seller", text: "See what's trending and buy 10+ at the retailer price.", label: "Open the wholesale market", href: "/wholesale" },
+    cta: { title: "Find your next best-seller", text: "Stock up from 10 units per product at wholesale prices, by sea.", label: "Open the wholesale market", href: "/wholesale" },
   },
 
   {

@@ -126,7 +126,7 @@ export function ProductForm() {
     <form className="flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); submit("active"); }}>
       <Link href="/admin/products" className="flex items-center gap-1 self-start text-[13px] font-bold text-[#5B6170]"><ArrowLeft aria-hidden size={14} /> Products</Link>
       <h1 className="text-2xl font-extrabold">Add a custom product</h1>
-      <p className="-mt-2 max-w-2xl text-[#5B6170]">For products that don’t come from a 1688 import. Enter what it costs us; the pricing engine sets every price (list, Midnight, event, flash, retailer) with the same profit guardrails as imports.</p>
+      <p className="-mt-2 max-w-2xl text-[#5B6170]">For products you add by hand (not from the supplier import). Enter what it costs us; the pricing engine sets every price (list, Midnight, event, flash, retailer) with the same profit guardrails as imports.</p>
 
       <section aria-labelledby="ph" className="flex flex-col gap-3 rounded-lg border border-[#E3E5EA] bg-white p-4">
         <div className="flex items-center justify-between gap-2">

@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   description: SHOP_DESCRIPTION,
   metadataBase: new URL(SHOP_URL),
   applicationName: BRAND,
-  keywords: ["buy from China in Nigeria", "1688 Nigeria", "import from China to Nigeria", "China wholesale Nigeria", "free shipping Nigeria", "pay small small"],
+  keywords: ["buy from China in Nigeria", "China factory prices Nigeria", "import from China to Nigeria", "China wholesale Nigeria", "free shipping Nigeria", "pay small small"],
   alternates: { canonical: "/", languages: { "en-NG": "/" } },
   openGraph: { type: "website", siteName: BRAND, locale: "en_NG", url: "/", title: "FastChina — China’s factories, delivered free in Nigeria", description: SHOP_DESCRIPTION },
   twitter: { card: "summary_large_image", title: "FastChina — China’s factories, delivered free in Nigeria", description: SHOP_DESCRIPTION },

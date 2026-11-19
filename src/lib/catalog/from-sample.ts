@@ -18,7 +18,10 @@ export const variantKey = (props: Record<string, string>) => Object.entries(prop
 export function sampleVariants(s: SampleProduct): Variant[] {
   let combos: Record<string, string>[] = [{}];
   for (const o of sampleOptions(s)) combos = combos.flatMap((c) => o.values.map((v) => ({ ...c, [o.name]: v.label })));
-  return combos.map((props) => ({ id: variantKey(props), props, stock: 500, prices: pick(priceOf(withVariantCost(s, props))) }));
+  return combos.map((props) => {
+    const b = priceOf(withVariantCost(s, props));
+    return { id: variantKey(props), props, stock: 500, prices: pick(b), wholesale: b.wholesale };
+  });
 }
 
 /** Public shape for a sample product. Costs stay on the server. */
@@ -44,6 +47,8 @@ export function sampleToProduct(s: SampleProduct): Product {
     options: sampleOptions(s),
     variants,
     prices: { list: min("list"), midnight: min("midnight"), event: min("event"), flash: min("flash"), retailer: min("retailer") },
+    wholesaleFrom: Math.min(...variants.map((v) => v.wholesale)),
+    wholesale: true,
     qa: s.qa,
     flash: s.flash,
   };

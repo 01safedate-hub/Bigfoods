@@ -2,6 +2,7 @@
 
 import { Heart, MapPin, Moon, Plane, Ship } from "lucide-react";
 import { ProductTrust } from "@/components/shop/product-trust";
+import { WholesaleBar } from "@/components/shop/wholesale-promo";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -218,6 +219,8 @@ export function ProductView({ product }: { product: Product }) {
         </section>
 
         <ProductTrust sea={product.shipMode === "sea"} />
+
+        {product.wholesale && <WholesaleBar from={Number.isFinite(product.wholesaleFrom) ? product.wholesaleFrom : undefined} />}
 
         <section className="bg-white p-3 md:p-0">
           <h2 className="mb-1.5 text-sm font-extrabold">Details</h2>

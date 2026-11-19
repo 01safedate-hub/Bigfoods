@@ -97,7 +97,7 @@ export default function StoreHome() {
 
       <section className="mx-auto grid max-w-7xl items-center gap-12 px-6 pt-16 pb-14 lg:grid-cols-2 [&>*]:min-w-0">
         <div className="flex flex-col gap-7">
-          <span className="self-start rounded-full border border-[#D9C89A] px-3.5 py-2 text-xs font-semibold tracking-[0.14em] text-[#7A5C17]">FREE DROPSHIPPING STORES · DIRECT FROM 1688</span>
+          <span className="self-start rounded-full border border-[#D9C89A] px-3.5 py-2 text-xs font-semibold tracking-[0.14em] text-[#7A5C17]">FREE DROPSHIPPING STORES · DIRECT FROM THE FACTORY</span>
           <h1 className="font-display text-[clamp(48px,6vw,84px)] leading-[0.98] tracking-tight">
             China’s factory floor,
             <br />
@@ -105,8 +105,8 @@ export default function StoreHome() {
           </h1>
           <p className="max-w-[520px] text-lg leading-relaxed text-[#4A4740]">Start a dropshipping store in Nigeria for free, buy at factory prices with free shipping, or move containers by sea. One account, three ways to import from China.</p>
           <form action={`${SHOP}/search`} role="search" className="flex flex-wrap gap-2 rounded-[18px] border border-[#E6E1D5] bg-white p-2 shadow-[0_20px_40px_-24px_rgba(13,13,11,0.25)]">
-            <label htmlFor="hero-q" className="sr-only">Search products or paste a 1688 link</label>
-            <input id="hero-q" name="q" type="search" placeholder="Search products or paste a 1688 link" className="min-h-12 min-w-0 flex-[1_1_240px] bg-transparent px-3.5 text-base outline-none" />
+            <label htmlFor="hero-q" className="sr-only">Search products</label>
+            <input id="hero-q" name="q" type="search" placeholder="Search products" className="min-h-12 min-w-0 flex-[1_1_240px] bg-transparent px-3.5 text-base outline-none" />
             <button type="submit" className="min-h-12 rounded-xl bg-ink px-6 text-[15px] font-semibold text-white">Search</button>
           </form>
           <ul className="flex flex-wrap gap-x-8 gap-y-3 text-sm text-[#4A4740]">
@@ -142,7 +142,7 @@ export default function StoreHome() {
 
       <section className="border-y border-[#E6E1D5] bg-white">
         <div className="mx-auto grid max-w-7xl px-6 md:grid-cols-3">
-          {[["01", "Marketplace", "Retail buyers. Thousands of 1688 products, Naira prices, free shipping to your pickup station."], ["02", "Dropship stores", "Entrepreneurs. Pick products, set your prices, we host, fulfil and ship under your brand."], ["03", "Wholesale · Sea", "Business owners. Your own China receiving address, consolidated, shipped by sea."]].map(([n, t, d], i) => (
+          {[["01", "Marketplace", "Retail buyers. Factory-priced products in Naira, free shipping to your pickup station."], ["02", "Dropship stores", "Entrepreneurs. Pick products, set your prices, we host, fulfil and ship under your brand."], ["03", "Wholesale · Sea", "Business owners. Your own China receiving address, consolidated, shipped by sea."]].map(([n, t, d], i) => (
             <div key={n} className={`flex items-start gap-4 py-9 ${i ? "md:border-l md:border-[#E6E1D5] md:pl-7" : ""} md:pr-7`}>
               <span className="font-display text-[40px] leading-none text-[#7A5C17]">{n}</span>
               <span className="flex flex-col gap-1.5"><strong className="text-[17px]">{t}</strong><span className="text-[15px] leading-relaxed text-[#4A4740]">{d}</span></span>

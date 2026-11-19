@@ -10,9 +10,9 @@ import { publicDb, secretDb } from "@/lib/supabase/server";
 
 /** Only columns customers are allowed to read (see the column grants in the migrations). */
 const PRODUCT_COLUMNS =
-  "slug, title, description, main_images, sale_count, rating, reviews, badge, is_new, tint, icon, flash_claimed_pct, specs, options, " +
-  "categories(slug, is_gadget, ship_mode), " +
-  "product_skus(id, props, image_url, stock, price_list, price_midnight, price_event, price_flash, price_retailer, active, sort, promo_paused)";
+  "slug, title, description, main_images, sale_count, rating, reviews, badge, is_new, tint, icon, flash_claimed_pct, specs, options, wholesale, " +
+  "categories(slug, is_gadget, ship_mode, wholesale_enabled), " +
+  "product_skus(id, props, image_url, stock, price_list, price_midnight, price_event, price_flash, price_retailer, price_wholesale, active, sort, promo_paused)";
 
 interface Row {
   slug: string;
@@ -29,10 +29,11 @@ interface Row {
   flash_claimed_pct: number | null;
   specs: [string, string][];
   options: Product["options"];
-  categories: { slug: string; is_gadget: boolean; ship_mode: "air" | "sea" } | null;
+  wholesale: boolean;
+  categories: { slug: string; is_gadget: boolean; ship_mode: "air" | "sea"; wholesale_enabled: boolean } | null;
   product_skus: {
     id: string; props: Record<string, string>; image_url: string | null; stock: number; active: boolean; sort: number; promo_paused: boolean;
-    price_list: number; price_midnight: number; price_event: number; price_flash: number; price_retailer: number;
+    price_list: number; price_midnight: number; price_event: number; price_flash: number; price_retailer: number; price_wholesale: number | null;
   }[];
 }
 
@@ -47,6 +48,7 @@ function rowToProduct(r: Row): Product | null {
       id: s.id, props: s.props, image: s.image_url, stock: s.stock,
       // The profit guard paused discounts on this variant: it sells at list price only.
       prices: guard(s.promo_paused, { list: s.price_list, midnight: s.price_midnight, event: s.price_event, flash: s.price_flash, retailer: s.price_retailer }),
+      wholesale: s.price_wholesale ?? 0,
     }));
   if (!variants.length) return null;
   const min = (k: keyof PriceSet) => Math.min(...variants.map((v) => v.prices[k]));
@@ -69,6 +71,8 @@ function rowToProduct(r: Row): Product | null {
     options: r.options ?? [],
     variants,
     prices: { list: min("list"), midnight: min("midnight"), event: min("event"), flash: min("flash"), retailer: min("retailer") },
+    wholesaleFrom: Math.min(...variants.map((v) => v.wholesale || Infinity)),
+    wholesale: r.wholesale !== false && r.categories?.wholesale_enabled !== false && variants.some((v) => v.wholesale > 0),
     flash: r.flash_claimed_pct === null ? undefined : { claimedPct: r.flash_claimed_pct },
   };
 }
@@ -187,4 +191,59 @@ export async function insertQuestion(slug: string, question: string, name: strin
   const { error } = await db.from("product_questions").insert({ product_id: p.id, question, asker_name: name });
   if (error) throw new Error(`Ask: ${error.message}`);
   return "ok";
+}
+
+/** Server-only: wholesale prices and costs for a wholesale cart (sea only). */
+export interface WholesaleServerLine extends LineRequest {
+  unit: number;
+  cost: number;
+  title: string;
+  variantLabel: string;
+}
+
+export async function getWholesaleLines(items: LineRequest[]): Promise<WholesaleServerLine[]> {
+  if (!hasSupabase) {
+    return items.flatMap((it) => {
+      const s = sampleBySlug(it.slug);
+      if (!s) return [];
+      const p = sampleToProduct(s);
+      const v = p.variants.find((x) => x.id === it.variantId);
+      return v ? [{ ...it, unit: v.wholesale, cost: Math.round(v.wholesale * 0.85), title: p.name, variantLabel: Object.values(v.props).join(" / ") }] : [];
+    });
+  }
+  const { data, error } = await secretDb()
+    .from("product_skus")
+    .select("id, active, props_text, price_wholesale, wholesale_cost_ngn, products!inner(slug, title, status, wholesale, categories(wholesale_enabled))")
+    .in("id", items.map((i) => i.variantId));
+  if (error) throw new Error(`Wholesale quote: ${error.message}`);
+  type R = {
+    id: string; active: boolean; props_text: string | null; price_wholesale: number | null; wholesale_cost_ngn: number | null;
+    products: { slug: string; title: string; status: string; wholesale: boolean; categories: { wholesale_enabled: boolean } | null };
+  };
+  const byId = new Map(((data ?? []) as unknown as R[]).map((r) => [r.id, r]));
+  return items.flatMap((it) => {
+    const r = byId.get(it.variantId);
+    if (!r || !r.active || !r.price_wholesale || r.products.status !== "active" || r.products.slug !== it.slug) return [];
+    if (!r.products.wholesale || r.products.categories?.wholesale_enabled === false) return [];
+    return [{
+      ...it,
+      unit: r.price_wholesale,
+      cost: Number(r.wholesale_cost_ngn ?? 0),
+      title: r.products.title,
+      variantLabel: (r.props_text ?? "").split(";").map((kv) => kv.split(":")[1] ?? kv).filter(Boolean).join(" / "),
+    }];
+  });
+}
+
+export interface KitRow { slug: string; title: string; subtitle: string | null; tone: string; categories: string[]; max_products: number; units_each: number }
+
+/** Wholesale starter kits (Admin → Wholesale). Tag "kits". */
+export async function getKitRows(): Promise<KitRow[] | null> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("kits");
+  if (!hasSupabase) return null;
+  const { data, error } = await publicDb().from("wholesale_kits").select("slug, title, subtitle, tone, categories, max_products, units_each").eq("active", true).order("sort");
+  if (error) return null;
+  return data as KitRow[];
 }

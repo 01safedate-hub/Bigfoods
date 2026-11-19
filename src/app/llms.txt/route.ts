@@ -16,14 +16,14 @@ FastChina is a Nigerian platform for buying from China. Prices are in Naira and 
 Key facts:
 - Air delivery: about 10–18 days. Big items (furniture, machines) ship by sea: 90 days or more.
 - Payment: in full, Pay small small (weekly over 4, 8 or 12 weeks, 0% interest) or Group pay.
-- Wholesale: 10 or more of one item gets the retailer price automatically.
+- Wholesale market: stock for shops from 10 units per product, shipped by sea (about 90 days) with clearing and delivery included. Starter kits for new businesses (fashion, phones, hair & beauty and more).
 - Midnight Drop: lower prices every night from 12am to 4am (Lagos time).
 - Every order is photographed at our China warehouse before it ships.
 - Dropshipping: ${STORE_DESCRIPTION} Plans: Free (₦0, 20 products, up to ₦2,000,000 in sales), Pro (₦15,000/month), Elite (₦45,000/month).
 
 ## Shop
-- [Marketplace](${SHOP_URL}/): products from 1688 factories in Naira
-- [Wholesale market](${SHOP_URL}/wholesale): retailer prices from 10 units, sea freight for your own goods
+- [Marketplace](${SHOP_URL}/): products from China’s factories in Naira
+- [Wholesale market](${SHOP_URL}/wholesale): factory stock by sea from 10 units per product, starter kits
 ${CATEGORY_KEYS.map((k) => `- [${CATEGORY_PAGES[k].name}](${SHOP_URL}/category/${k}): ${CATEGORY_PAGES[k].description}`).join("\n")}
 
 ## Sell

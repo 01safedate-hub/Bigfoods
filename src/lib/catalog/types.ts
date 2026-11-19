@@ -27,6 +27,8 @@ export interface Variant {
   image?: string | null;
   stock: number;
   prices: PriceSet;
+  /** Wholesale unit price (sea, 90+ days, minimum per product). */
+  wholesale: number;
 }
 
 export interface ProductOption {
@@ -56,11 +58,14 @@ export interface Product {
   variants: Variant[];
   /** Lowest prices across variants. */
   prices: PriceSet;
+  /** Lowest wholesale price; listed in the wholesale market when `wholesale` is true. */
+  wholesaleFrom: number;
+  wholesale: boolean;
   qa?: QA[];
   flash?: { claimedPct: number };
 }
 
-/** Sample source data with 1688 costs (server-side only in production). */
+/** Sample source data with factory costs (server-side only in production). */
 export interface SampleProduct extends Costable {
   slug: string;
   name: string;
@@ -74,7 +79,7 @@ export interface SampleProduct extends Costable {
   isNew?: boolean;
   colors?: { name: string; hex: string }[];
   sizes?: string[];
-  /** Variants that change the 1688 cost (e.g. phone storage). */
+  /** Variants that change the factory cost (e.g. phone storage). */
   options?: { label: string; cny: number }[];
   specs: [string, string][];
   qa?: QA[];

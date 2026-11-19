@@ -17,7 +17,7 @@ const PAY = { full: "Paid in full", small: "Small small", group: "Group pay" } a
 export default async function OrdersPage({ searchParams }: PageProps<"/admin/orders">) {
   const sp = await searchParams;
   const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
-  const f = { q: one(sp.q), status: one(sp.status), state: one(sp.state) };
+  const f = { q: one(sp.q), status: one(sp.status), state: one(sp.state), channel: one(sp.channel) };
   const s = await checkStaff();
   const orders = (s.ok && !s.demo ? await listOrders(f) : null) ?? SAMPLE.filter((o) => (!f.status || o.status === f.status) && (!f.q || o.code.includes(f.q.toUpperCase()) || o.phone?.includes(f.q)));
   return (
@@ -32,6 +32,11 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
           {STATUSES.map((st) => <option key={st} value={st}>{st.replace("_", " ")}</option>)}
         </select>
         <input name="state" defaultValue={f.state} placeholder="State" aria-label="State" className="min-h-10 w-32 rounded-md border border-[#D0D4DB] bg-white px-3" />
+        <select name="channel" defaultValue={f.channel} aria-label="Channel" className="min-h-10 rounded-md border border-[#D0D4DB] bg-white px-2">
+          <option value="">Retail &amp; wholesale</option>
+          <option value="retail">Retail only</option>
+          <option value="wholesale">Wholesale only</option>
+        </select>
         <button type="submit" className="min-h-10 rounded-md bg-ink px-4 font-bold text-white">Search</button>
       </form>
       <p className="text-xs text-[#5B6170]">{orders.length} orders{orders.length === 100 ? " (newest 100)" : ""}</p>
@@ -41,6 +46,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
             <summary className="flex cursor-pointer flex-wrap items-center gap-x-4 gap-y-1 p-3.5">
               <strong className="font-mono">#{o.code}</strong>
               <span className="rounded-full bg-[#F4F5F7] px-2 py-0.5 text-xs font-bold">{o.status.replace("_", " ")}</span>
+              {o.channel === "wholesale" && <span className="rounded-full bg-sale px-2 py-0.5 text-xs font-bold text-white">Wholesale · sea</span>}
               <span className="text-[#5B6170]">{PAY[o.pay_mode]} · {o.state}</span>
               <span className="ml-auto tabular-nums"><strong>{naira(o.total_ngn)}</strong>{o.paid_ngn < o.total_ngn && <span className="text-xs text-[#5B6170]"> · {naira(o.paid_ngn)} paid</span>}</span>
             </summary>

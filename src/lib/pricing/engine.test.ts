@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { NAIRA_PER_CNY, PRICING } from "./config";
-import { type Coupon, type Costable, type PricePromo, lineFromCosts, priceOf, quoteCart, unitPrice } from "./engine";
+import { type Coupon, type Costable, type PricePromo, lineFromCosts, localDeliveryFee, priceOf, quoteCart, unitPrice, WHOLESALE_MARGIN } from "./engine";
 import { COUPONS } from "@/lib/catalog/coupons";
 import { SAMPLE_PRODUCTS as PRODUCTS } from "@/lib/catalog/sample";
 
@@ -31,7 +31,25 @@ describe("priceOf", () => {
 
   it("sends furniture by sea and charges per CBM", () => {
     const b = priceOf(chair);
-    expect(b.logistics).toBeCloseTo(0.25 * PRICING.seaPerCbm + 18 * PRICING.clearingPerKg);
+    expect(b.logistics).toBeCloseTo(0.25 * PRICING.seaPerCbm + 18 * PRICING.seaClearingPerKg);
+  });
+
+  it("adds local delivery by size and the weighing fee", () => {
+    expect(localDeliveryFee(0.1)).toBe(400);
+    expect(localDeliveryFee(0.8)).toBe(700);
+    expect(localDeliveryFee(25)).toBe(2_000);
+    expect(localDeliveryFee(1, 0.3)).toBe(2_000);
+    expect(priceOf(dress).lastMile).toBe(localDeliveryFee(dress.weightKg) + PRICING.weighingFeePerItem);
+  });
+
+  it("prices wholesale by sea, never below cost", () => {
+    for (const p of [dress, chair]) {
+      const b = priceOf(p);
+      expect(b.wholesale).toBeGreaterThanOrEqual(b.wholesaleCost + b.wholesaleProfit);
+      expect(b.wholesaleProfit).toBeCloseTo(b.goods * WHOLESALE_MARGIN[p.category]);
+    }
+    // Light air goods are much cheaper wholesale (sea) than single (air).
+    expect(priceOf(dress).wholesale).toBeLessThan(priceOf(dress).retailer);
   });
 
   it("orders promo prices from cheapest to list", () => {

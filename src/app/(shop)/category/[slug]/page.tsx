@@ -72,7 +72,7 @@ export default async function CategoryPage({ params }: PageProps<"/category/[slu
           {products.map((p) => <li key={p.slug} className="min-w-0"><ProductCard product={p} /></li>)}
         </ul>
       ) : (
-        <p className="rounded-md bg-surface p-6 text-center text-[14px]">New {c.name.toLowerCase()} are being added. <Link href="/search" className="font-bold underline">Search the catalogue</Link> or paste a 1688 link.</p>
+        <p className="rounded-md bg-surface p-6 text-center text-[14px]">New {c.name.toLowerCase()} are being added. <Link href="/search" className="font-bold underline">Search the catalogue</Link>.</p>
       )}
 
       <div className="grid gap-6 border-t border-line pt-6 md:grid-cols-2">

@@ -1,13 +1,14 @@
 "use client";
 
-import { Camera, Heart, MapPin, Search, ShoppingCart, User } from "lucide-react";
+import { MapPin, Search, ShoppingCart, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { DEPARTMENTS } from "@/lib/catalog/categories";
 import { cn } from "@/lib/format";
 import { useCart } from "./cart-provider";
 import { BrandWordmark, MARK_PATH } from "./brand";
-import { NotificationBell } from "./notification-bell";
+import { useStationId } from "@/lib/station-store";
+import { useSiteData } from "./site-data";
 
 /** The app icon: the winged F on black. Used alone on phones and as the favicon. */
 export function BoltMark({ size = 32, className }: { size?: number; className?: string }) {
@@ -52,6 +53,22 @@ const DESKTOP_NAV = [
   { href: "/guides", label: "Guides" },
 ];
 
+/** The customer's pickup station (desktop header). */
+function StationChip() {
+  const id = useStationId();
+  const { stations } = useSiteData();
+  const s = stations.find((x) => x.id === id);
+  return (
+    <Link href="/account/settings/station" className="hidden min-h-11 items-center gap-2 rounded-lg border border-line px-3 lg:flex">
+      <MapPin aria-hidden size={18} />
+      <span className="flex flex-col leading-tight">
+        <span className="text-[11px] text-muted">Pickup station</span>
+        <strong className="max-w-40 truncate text-[13px]">{s ? `${s.area}, ${s.state}` : "Choose station"}</strong>
+      </span>
+    </Link>
+  );
+}
+
 export function ShopHeader() {
   const { count } = useCart();
   const path = usePathname();
@@ -62,22 +79,17 @@ export function ShopHeader() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-white">
-      {/* Phones */}
-      <div className={cn("flex items-center gap-2 px-3 pt-2.5 pb-2 md:hidden", ownBar && "hidden")}>
-        <Link href="/" aria-label="FastChina home" className="flex h-11 items-center">
-          <Logo compactMark />
+      {/* Phones: one slim row, full wordmark and search */}
+      <div className={cn("flex items-center gap-2.5 px-3 py-1 md:hidden", ownBar && "hidden")}>
+        <Link href="/" aria-label="FastChina home" className="flex h-8 shrink-0 items-center">
+          <BrandWordmark className="h-[17px] w-auto text-ink" />
         </Link>
-        <Link href="/search" className="flex h-10 min-w-0 flex-1 items-center overflow-hidden rounded-md border-2 border-ink">
-          <span className="flex-1 truncate px-2.5 text-sm text-muted">Lace front wig</span>
-          <Camera aria-hidden size={20} strokeWidth={1.6} className="mr-2 text-subtle" />
-          <span className="flex h-full w-12 items-center justify-center bg-ink">
-            <Search aria-hidden size={18} strokeWidth={2.2} className="text-white" />
+        <Link href="/search" className="flex h-8 min-w-0 flex-1 items-center overflow-hidden rounded-full border-[1.5px] border-ink">
+          <span className="flex-1 truncate pl-3.5 text-[13px] text-muted">Lace front wig</span>
+          <span className="m-[3px] flex h-6 w-10 items-center justify-center rounded-full bg-ink">
+            <Search aria-hidden size={15} strokeWidth={2.4} className="text-white" />
           </span>
           <span className="sr-only">Search</span>
-        </Link>
-        <NotificationBell className="h-11 w-9" />
-        <Link href="/wishlist" aria-label="Wishlist" className="flex h-11 w-9 items-center justify-center">
-          <Heart aria-hidden size={24} strokeWidth={1.6} />
         </Link>
       </div>
       {showDepts && (
@@ -86,7 +98,7 @@ export function ShopHeader() {
             <Link
               key={d}
               href={i === 0 ? "/" : `/categories`}
-              className={cn("border-b-[3px] px-2.5 pt-2 pb-2 text-[15px]", i === 0 ? "border-ink font-extrabold" : "border-transparent font-semibold text-subtle")}
+              className={cn("border-b-[2.5px] px-2.5 pt-0.5 pb-1 text-[14px]", i === 0 ? "border-ink font-extrabold" : "border-transparent font-semibold text-subtle")}
             >
               {d}
             </Link>
@@ -95,7 +107,7 @@ export function ShopHeader() {
       )}
 
       {/* Tablets and desktops */}
-      <div className="mx-auto hidden max-w-[1360px] items-center gap-6 px-6 py-3 md:flex">
+      <div className="mx-auto hidden max-w-[1360px] items-center gap-6 px-6 py-2 md:flex">
         <Link href="/" aria-label="FastChina home">
           <Logo />
         </Link>
@@ -103,25 +115,15 @@ export function ShopHeader() {
           <label htmlFor="q" className="sr-only">
             Search FastChina
           </label>
-          <input id="q" name="q" type="search" placeholder="Search phones, wigs, chairs, or paste a 1688 link" className="h-full min-w-0 flex-1 bg-transparent px-4 text-sm outline-none" />
+          <input id="q" name="q" type="search" placeholder="Search phones, wigs, dresses, chairs…" className="h-full min-w-0 flex-1 bg-transparent px-4 text-sm outline-none" />
           <button type="submit" aria-label="Search" className="flex h-full w-14 items-center justify-center bg-ink text-white">
             <Search aria-hidden size={18} />
           </button>
         </form>
-        <Link href="/checkout" className="hidden min-h-11 items-center gap-2 rounded-lg border border-line px-3 lg:flex">
-          <MapPin aria-hidden size={18} />
-          <span className="flex flex-col leading-tight">
-            <span className="text-[11px] text-muted">Pickup station</span>
-            <strong className="text-[13px]">Ikeja, Lagos</strong>
-          </span>
-        </Link>
+        <StationChip />
         <div className="flex items-center">
           <Link href="/account" aria-label="Account" className="flex size-11 items-center justify-center">
             <User aria-hidden size={22} strokeWidth={1.6} />
-          </Link>
-          <NotificationBell className="size-11" />
-          <Link href="/wishlist" aria-label="Wishlist" className="flex size-11 items-center justify-center">
-            <Heart aria-hidden size={22} strokeWidth={1.6} />
           </Link>
           <Link href="/cart" aria-label={`Cart, ${count} items`} className="relative flex size-11 items-center justify-center">
             <ShoppingCart aria-hidden size={22} strokeWidth={1.6} />

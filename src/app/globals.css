@@ -147,3 +147,13 @@ input[type="search"]::-webkit-search-cancel-button,
 input[type="search"]::-webkit-search-decoration {
   appearance: none;
 }
+
+/* Phones: screens that scroll inside their own panels (Categories) don't show the page footer. */
+@media (max-width: 767px) {
+  body:has([data-app-panel]) footer {
+    display: none;
+  }
+  body:has([data-app-panel]) main {
+    padding-bottom: 0;
+  }
+}

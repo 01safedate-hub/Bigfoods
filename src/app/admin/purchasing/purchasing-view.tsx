@@ -77,7 +77,7 @@ export function PurchasingView({ live }: { live?: LivePurchasing | null }) {
         </div>
         <div className="flex flex-wrap gap-2 text-xs">
           <span className="rounded-md border border-[#E3E5EA] bg-white px-2.5 py-2">Rate: <strong>₦{NAIRA_PER_CNY} / ¥1</strong></span>
-          <span className="rounded-md bg-[#ECFDF3] px-2.5 py-2 text-success">● 1688 prices synced 12 min ago</span>
+          <span className="rounded-md bg-[#ECFDF3] px-2.5 py-2 text-success">● Supplier prices synced 12 min ago</span>
         </div>
       </div>
 
@@ -119,7 +119,7 @@ export function PurchasingView({ live }: { live?: LivePurchasing | null }) {
             <table className="w-full min-w-[860px] border-collapse">
               <thead>
                 <tr className="text-left text-xs text-[#5B6170]">
-                  {["Product", "1688 supplier", "Ship", "Unit ¥", "Needed", "Bought", "Spend ¥", "Status"].map((h) => <th key={h} className="px-3 py-2.5 font-semibold">{h}</th>)}
+                  {["Product", "Supplier", "Ship", "Unit ¥", "Needed", "Bought", "Spend ¥", "Status"].map((h) => <th key={h} className="px-3 py-2.5 font-semibold">{h}</th>)}
                 </tr>
               </thead>
               <tbody>

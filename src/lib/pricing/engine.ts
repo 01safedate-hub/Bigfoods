@@ -32,6 +32,12 @@ export const CATEGORY_MARGIN: Record<CategoryKey, number> = {
   gadgets: 0,
 };
 
+/** Wholesale profit on the goods cost, by category: 10–40%, bigger items take more. */
+export const WHOLESALE_MARGIN: Record<CategoryKey, number> = {
+  gadgets: 0.1, audio: 0.15, fashion: 0.25, shoes: 0.25, bags: 0.25, hair: 0.2, beauty: 0.25,
+  jewellery: 0.3, kids: 0.25, home: 0.3, furniture: 0.4, machines: 0.4,
+};
+
 /** Categories that may only travel by sea. */
 export const SEA_ONLY: ReadonlySet<CategoryKey> = new Set(["furniture", "machines"]);
 
@@ -56,9 +62,17 @@ export function paymentFee(amount: number): number {
 export const isGadget = (p: Costable) => p.category === "gadgets";
 export const shipsBySea = (p: Costable) => SEA_ONLY.has(p.category);
 
+/** Local delivery to the pickup station by size: ₦400 (tiny) to ₦2,000 (bulky). */
+export function localDeliveryFee(weightKg: number, cbm = 0): number {
+  const tiers = PRICING.localDeliveryTiers;
+  if (cbm >= 0.1) return Math.max(...tiers.map((t) => t.fee));
+  return (tiers.find((t) => t.maxKg === null || weightKg <= t.maxKg) ?? tiers[tiers.length - 1]).fee;
+}
+
 export interface PriceBreakdown {
   goods: number;
   logistics: number;
+  /** Local delivery to the pickup station plus the weighing fee. */
   lastMile: number;
   plannedProfit: number;
   /** Everything we pay out per item, before the payment fee. */
@@ -68,6 +82,10 @@ export interface PriceBreakdown {
   event: number;
   flash: number;
   retailer: number;
+  /** Wholesale: sea freight and clearing (with buffer), local delivery, weighing fee, 10–40% profit. */
+  wholesale: number;
+  wholesaleCost: number;
+  wholesaleProfit: number;
 }
 
 /**
@@ -77,9 +95,9 @@ export interface PriceBreakdown {
 export function priceOf(p: Costable): PriceBreakdown {
   const goods = p.cny * NAIRA_PER_CNY;
   const logistics = shipsBySea(p)
-    ? (p.cbm ?? 0) * PRICING.seaPerCbm + p.weightKg * PRICING.clearingPerKg
+    ? (p.cbm ?? 0) * PRICING.seaPerCbm + p.weightKg * PRICING.seaClearingPerKg
     : p.weightKg * (PRICING.airPerKg + PRICING.clearingPerKg);
-  const lastMile = PRICING.lastMilePerItem;
+  const lastMile = localDeliveryFee(p.weightKg, p.cbm ?? 0) + PRICING.weighingFeePerItem;
   const plannedProfit = isGadget(p)
     ? goods * PRICING.gadget.pct + PRICING.gadget.flat
     : goods * CATEGORY_MARGIN[p.category];
@@ -88,12 +106,21 @@ export function priceOf(p: Costable): PriceBreakdown {
     const preFee = cost + plannedProfit * (1 - share);
     return roundUp100(preFee + paymentFee(preFee));
   };
+  // Wholesale always goes by sea, so freight is by volume (at least weight ÷ kg-per-CBM).
+  const seaCbm = Math.max(p.cbm ?? 0, p.weightKg / PRICING.seaKgPerCbm);
+  const wholesaleLogistics = (seaCbm * PRICING.seaPerCbm + p.weightKg * PRICING.seaClearingPerKg) * (1 + PRICING.seaBuffer);
+  const wholesaleProfit = goods * WHOLESALE_MARGIN[p.category];
+  const wholesaleCost = goods + wholesaleLogistics + lastMile;
+  const wPre = wholesaleCost + wholesaleProfit;
   return {
     goods,
     logistics,
     lastMile,
     plannedProfit,
     cost,
+    wholesale: roundUp100(wPre + paymentFee(wPre)),
+    wholesaleCost,
+    wholesaleProfit,
     list: at(0),
     midnight: at(PRICING.promos.midnight),
     event: at(PRICING.promos.event),
@@ -132,7 +159,7 @@ export interface QuoteLine {
   noDiscounts?: boolean;
 }
 
-/** Build a quote line from 1688 costs (sample data, admin tools and tests). */
+/** Build a quote line from factory costs (sample data, admin tools and tests). */
 export function lineFromCosts(product: Costable, qty: number): QuoteLine {
   const b = priceOf(product);
   return { prices: b, cost: b.cost, plannedProfit: b.plannedProfit, gadget: isGadget(product), qty };

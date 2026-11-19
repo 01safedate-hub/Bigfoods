@@ -63,8 +63,8 @@ export const CATEGORIES: Category[] = [
     tiles: [{ name: "Sewing machines", icon: "machine", tint: "#E9ECEF" }, { name: "Generators", icon: "machine", tint: "#ECECEC" }],
   },
   {
-    slug: "retailer", name: "Retailer Hub", icon: "gift", tint: "#F6F1E4",
-    note: { text: "Buy 10 or more of one product for retailer prices, up to 40% off our margin.", tone: "retail" },
+    slug: "retailer", name: "Wholesale market", icon: "gift", tint: "#F6F1E4",
+    note: { text: "Stock for your shop from 10 units per product, shipped by sea with delivery included. Open the wholesale market for starter kits and wholesale prices.", tone: "retail" },
     tiles: [
       { name: "Phone accessories", icon: "audio", tint: "#E7E6F3" }, { name: "Watches", icon: "watch", tint: "#E3EEE8" },
       { name: "Wigs", icon: "wig", tint: "#F3E9DC" }, { name: "Cosmetics", icon: "lipstick", tint: "#F8E1E7" },

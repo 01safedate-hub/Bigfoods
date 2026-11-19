@@ -2,7 +2,7 @@ import type { SampleProduct } from "./types";
 
 /**
  * Sample catalogue. In production this comes from the `products` table, filled by the
- * 1688 import edge function. Costs are 1688 prices in yuan; every naira price is
+ * supplier import. Costs are factory prices in yuan; every naira price is
  * calculated by the pricing engine, never stored by hand.
  */
 export const SAMPLE_PRODUCTS: SampleProduct[] = [

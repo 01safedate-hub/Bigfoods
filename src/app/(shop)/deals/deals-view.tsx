@@ -1,5 +1,6 @@
 "use client";
 
+import { WholesaleDealsCard } from "@/components/shop/wholesale-promo";
 import { Check, Moon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -33,6 +34,10 @@ export function DealsView({ flash }: { flash: Product[] }) {
         Deals &amp; Rewards
         <span className="rounded-full bg-[#FFF6DA] px-2.5 py-1.5 text-xs font-extrabold text-gold-ink">{points.toLocaleString("en-NG")} pts</span>
       </h1>
+
+      <div className="md:col-span-2 lg:col-span-3">
+        <WholesaleDealsCard />
+      </div>
 
       <section className="flex flex-col gap-2.5 rounded-lg bg-white p-3.5 md:border md:border-line">
         <div className="flex items-center justify-between">

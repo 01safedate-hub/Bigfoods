@@ -21,7 +21,7 @@ export interface SaleEvent {
 }
 
 export const THEMES: Record<ThemeKey, EventTheme> = {
-  everyday: { key: "everyday", kicker: "NEW THIS WEEK", title: "Fresh from\n1688 factories", sub: "Shipping is always free to your pickup station" },
+  everyday: { key: "everyday", kicker: "NEW THIS WEEK", title: "Fresh from\nthe factory floor", sub: "Shipping is always free to your pickup station" },
   "black-friday": { key: "black-friday", kicker: "BLACK FRIDAY", title: "UP TO\n50% OFF", sub: "Midnight Drop prices on top, every night" },
   "gadget-hunt": { key: "gadget-hunt", kicker: "GADGET HUNT · 4–10 DEC", title: "Phones, laptops\n& drones", sub: "New gadget deals drop every 3 hours" },
   christmas: { key: "christmas", kicker: "CHRISTMAS · ORDER BY 10 DEC FOR AIR", title: "Gifts for\neveryone", sub: "Group pay the family wish list" },

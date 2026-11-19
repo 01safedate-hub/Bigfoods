@@ -7,7 +7,7 @@ import { breadcrumbs, graph, SHOP_URL } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Guides: Importing from China & Dropshipping in Nigeria",
-  description: "Free, practical guides on importing from China to Nigeria, buying from 1688, shipping costs, wholesale buying and starting a dropshipping business for free.",
+  description: "Free, practical guides on importing from China to Nigeria, shipping costs, wholesale buying and starting a dropshipping business for free.",
   alternates: { canonical: "/guides" },
   openGraph: { type: "website", url: "/guides", title: "FastChina Guides: import from China, start dropshipping" },
 };

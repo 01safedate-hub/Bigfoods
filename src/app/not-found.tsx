@@ -5,7 +5,7 @@ export default function NotFound() {
     <main className="flex min-h-dvh flex-col items-center justify-center gap-3 p-6 text-center">
       <span className="text-2xl font-extrabold tracking-[0.06em]">FASTCHINA</span>
       <h1 className="text-lg font-bold">We couldn’t find that page</h1>
-      <p className="max-w-sm text-sm text-muted">It may have sold out or moved. Search for it, or paste the 1688 link and we’ll price it for you.</p>
+      <p className="max-w-sm text-sm text-muted">It may have sold out or moved. Search for it, or ask us to find it for you.</p>
       <Link href="/search" className="bg-ink px-5 py-3 text-sm font-extrabold text-white">SEARCH FASTCHINA</Link>
     </main>
   );

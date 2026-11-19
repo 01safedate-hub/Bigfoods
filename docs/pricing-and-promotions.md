@@ -7,7 +7,7 @@ Source of truth: `src/lib/pricing/config.ts` and `src/lib/pricing/engine.ts`.
 | Part | Rule |
 | --- | --- |
 | Exchange rate | ₦2,100 per US$ ÷ ¥6.6664 per US$ (16 Nov 2026) → **₦315 per ¥1** |
-| Goods | 1688 price in ¥ × ₦315 |
+| Goods | Factory price in ¥ × ₦315 |
 | Air freight | ₦/kg × weight (*assumed ₦15,000/kg until confirmed*) |
 | Clearing | ₦1,800 per kg, on every item |
 | Sea freight | ₦/CBM × volume (*assumed ₦420,000/CBM*). Furniture and machines only, 90+ days |

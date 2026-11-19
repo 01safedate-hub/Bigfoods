@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, ChevronLeft, Link2, Search, Trash2, X } from "lucide-react";
+import { ChevronLeft, Search, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -84,7 +84,7 @@ export function SearchView({ products }: { products: Product[] }) {
             autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search or paste a 1688 link"
+            placeholder="Search phones, wigs, dresses…"
             className="h-full min-w-0 flex-1 bg-transparent px-2.5 text-[15px] outline-none"
           />
           {q && (
@@ -92,9 +92,6 @@ export function SearchView({ products }: { products: Product[] }) {
               <X aria-hidden size={18} />
             </button>
           )}
-          <button type="button" aria-label="Search by photo" className="flex h-full w-9 items-center justify-center text-subtle">
-            <Camera aria-hidden size={20} strokeWidth={1.6} />
-          </button>
           <button type="submit" aria-label="Search" className="flex h-full w-12 items-center justify-center bg-ink text-white">
             <Search aria-hidden size={18} />
           </button>
@@ -121,13 +118,6 @@ export function SearchView({ products }: { products: Product[] }) {
                 </div>
               </section>
             )}
-            <div className="flex items-center gap-2.5 rounded-md border border-dashed border-black/25 p-3">
-              <Link2 aria-hidden size={24} />
-              <span>
-                <strong className="block text-[13px]">Found it on 1688? Paste the link above</strong>
-                <span className="text-muted">We’ll price it in Naira with free shipping in seconds.</span>
-              </span>
-            </div>
             <section className="flex flex-col gap-2.5">
               <h2 className="text-base font-extrabold">Search discovery</h2>
               <div className="flex flex-wrap gap-2">
@@ -184,8 +174,8 @@ export function SearchView({ products }: { products: Product[] }) {
           ) : (
             <div className="flex flex-col items-center gap-2 px-4 py-6 text-center">
               <strong className="text-[15px]">Not on FastChina yet</strong>
-              <span className="leading-relaxed text-muted">Paste the 1688 link and we’ll add it, or ask our team to find it for you.</span>
-              <Link href="/account" className="bg-ink px-4 py-3 font-extrabold text-white">
+              <span className="leading-relaxed text-muted">Tell our team what you’re looking for and we’ll find it for you.</span>
+              <Link href="/account/settings/contact" className="bg-ink px-4 py-3 font-extrabold text-white">
                 REQUEST THIS PRODUCT
               </Link>
             </div>

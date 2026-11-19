@@ -7,7 +7,7 @@
  *          └───────────────┴──────────┴──────────┴──▶ cancelled                             └──▶ refunded
  *
  * Rules:
- * - Nothing is bought from 1688 until the order is fully paid (Pay small small and Group pay included).
+ * - Nothing is bought from the supplier until the order is fully paid (Pay small small and Group pay included).
  * - Cancelling is allowed until we have bought the item; after that the money is committed.
  * - "Shipped" flips to "delivered" automatically 10 days later (the scheduled job in migration 008).
  * - A shipped order that never reaches the pickup station is refunded in full.
