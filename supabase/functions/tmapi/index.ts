@@ -169,7 +169,7 @@ async function checkImages(db: SupabaseClient, d: Detail, mirror: boolean) {
     if (mirror && i === 0 && plain.ok && plain.buf) {
       const ext = (plain.type ?? "image/jpeg").split("/")[1].replace("jpeg", "jpg");
       const path = `1688/${d.item_id}/main-0.${ext}`;
-      const { error } = await db.storage.from("product-images").upload(path, plain.buf, { contentType: plain.type ?? "image/jpeg", upsert: true });
+      const { error } = await db.storage.from("product-images").upload(path, plain.buf, { contentType: plain.type ?? "image/jpeg", upsert: true, cacheControl: "31536000" });
       mirrored = error ? `upload failed: ${error.message}` : db.storage.from("product-images").getPublicUrl(path).data.publicUrl;
     }
     results.push({

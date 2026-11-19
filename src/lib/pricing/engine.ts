@@ -126,6 +126,8 @@ export interface QuoteLine {
   plannedProfit: number;
   gadget: boolean;
   qty: number;
+  /** Units of the same product across its variants (retailer threshold). Defaults to qty. */
+  productQty?: number;
   /** Set by the profit guard: this variant sells at list price only (no promotions, coupons or points drawn from it). */
   noDiscounts?: boolean;
 }
@@ -170,13 +172,13 @@ export function quoteCart(
 
   for (const line of lines) {
     const { qty } = line;
-    const unit = line.noDiscounts ? line.prices.list : unitFromPrices(line.prices, qty, promo);
+    const unit = line.noDiscounts ? line.prices.list : unitFromPrices(line.prices, qty, promo, line.productQty);
     subtotalList += line.prices.list * qty;
     subtotal += unit * qty;
     // A guarded line keeps all its profit: it adds nothing to the room other discounts can use.
     if (!line.noDiscounts) plannedProfit += line.plannedProfit * qty;
     cost += line.cost * qty;
-    const retail = qty >= PRICING.retailerMinQty;
+    const retail = Math.max(qty, line.productQty ?? 0) >= PRICING.retailerMinQty;
     const fits = coupon && !line.noDiscounts ? (coupon.gadgetOnly ? line.gadget : !line.gadget) : false;
     if (!retail && fits) {
       eligibleSubtotal += unit * qty;

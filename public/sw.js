@@ -1,12 +1,12 @@
 /* FastChina service worker. Keeps public pages, app files and product photos for offline browsing.
    Never caches account, admin, checkout, API calls or anything personal. */
-const VERSION = "fc-v1";
+const VERSION = "fc-v2";
 const SHELL = `${VERSION}-shell`;
 const PAGES = `${VERSION}-pages`;
 const ASSETS = `${VERSION}-assets`;
 const IMAGES = `${VERSION}-images`;
 const OFFLINE_URL = "/offline";
-const PUBLIC_PAGE = /^\/($|deals|categories|search|legal\/|product\/)/;
+const PUBLIC_PAGE = /^\/($|deals|categories|category\/|wholesale|guides|search|legal\/|product\/)/;
 const PRIVATE = /^\/(admin|account|checkout|cart|track|sign-in|notifications|wishlist|c\/|api\/|unsubscribe)/;
 
 self.addEventListener("install", (event) => {
@@ -40,16 +40,16 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Product photos: show the saved copy straight away, refresh it in the background.
+  // Product photos never change at the same address: keep them (up to 600) and skip the network.
   if (url.pathname.startsWith("/_next/image")) {
     event.respondWith(
       caches.open(IMAGES).then(async (c) => {
         const hit = await c.match(req);
-        const net = fetch(req).then((res) => {
-          if (res.ok) c.put(req, res.clone()).then(() => trim(IMAGES, 300));
+        if (hit) return hit;
+        return fetch(req).then((res) => {
+          if (res.ok) c.put(req, res.clone()).then(() => trim(IMAGES, 600));
           return res;
-        }).catch(() => hit);
-        return hit || net;
+        });
       }),
     );
     return;

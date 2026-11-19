@@ -128,7 +128,7 @@ export function ClearOutTile() {
 export function RetailerTile() {
   return (
     <div className="relative flex">
-      <Link href="/categories?c=retailer" className="flex flex-1 flex-col gap-1 rounded-md bg-gold-soft p-3 pr-8 md:p-4">
+      <Link href="/wholesale" className="flex flex-1 flex-col gap-1 rounded-md bg-gold-soft p-3 pr-8 md:p-4">
         <span className="text-[10px] font-extrabold tracking-[0.12em] text-[#7A5C17]">RETAILER HUB</span>
         <strong className="text-sm leading-tight md:text-base">Buy 10+, get retailer prices</strong>
         <span className="text-[11px] text-gold-ink">Up to 40% off our margin</span>

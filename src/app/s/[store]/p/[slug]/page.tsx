@@ -20,7 +20,14 @@ async function load(params: PageProps<"/s/[store]/p/[slug]">["params"]) {
 
 export async function generateMetadata({ params }: PageProps<"/s/[store]/p/[slug]">): Promise<Metadata> {
   const d = await load(params);
-  return d ? { title: d.product.name, description: d.product.description, openGraph: { title: d.product.name, images: d.product.images.slice(0, 1) } } : {};
+  if (!d) return {};
+  const { slug } = await params;
+  return {
+    title: d.product.name,
+    description: d.product.description,
+    alternates: { canonical: `/p/${slug}` },
+    openGraph: { title: d.product.name, url: `/p/${slug}`, images: d.product.images.slice(0, 1) },
+  };
 }
 
 export default async function StoreProductPage({ params }: PageProps<"/s/[store]/p/[slug]">) {

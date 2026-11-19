@@ -1,7 +1,13 @@
 import { Check, Lock, ShieldCheck, ShoppingCart, Truck, Wallet } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { SeaQuote } from "./sea-quote";
+import { JsonLd } from "@/components/seo/json-ld";
 import { PLANS as SELLER_PLANS } from "@/lib/dropship/plans";
+import { GUIDES } from "@/lib/content/guides";
+import { breadcrumbs, faq, graph, STORE_DESCRIPTION, STORE_URL } from "@/lib/seo";
+
+export const metadata: Metadata = { title: { absolute: "Start Dropshipping in Nigeria for Free · FastChina.store" } };
 
 /** Marketplace origin. Empty in development (same app), https://fastchina.shop in production. */
 const SHOP = (process.env.NEXT_PUBLIC_SHOP_URL ?? "").replace(/\/$/, "");
@@ -25,6 +31,15 @@ const HOW = [
   ["Your discounts, your margin", "Coupons you create come out of your margin. Our promotions never change what you pay us, so your numbers stay predictable."],
 ];
 
+const STORE_FAQ = [
+  { q: "Can I start dropshipping in Nigeria for free?", a: "Yes. The Free plan costs ₦0 a month: 20 products, your own link (yourname.fastchina.store) and up to ₦2,000,000 in total sales before you need to upgrade. You never buy stock." },
+  { q: "How do I get paid?", a: "Your selling price is our price plus your markup. After your customer collects the order, your markup minus a small plan fee (5% Free, 3% Pro, 1.5% Elite) is paid to your Nigerian bank account weekly." },
+  { q: "Who delivers to my customers?", a: "We do. We buy the item in China, photograph it, ship it and deliver it to your customer's nearest Jumia pickup station, with your store name on the order." },
+  { q: "Can my customers pay in instalments?", a: "Yes. Pay small small is on by default, and you can switch it off to accept full payment only." },
+  { q: "Can I use my own domain?", a: "Pro and Elite stores can connect their own domain, such as yourbrand.com.ng." },
+  { q: "What is wholesale sea freight?", a: "Verified businesses get a China receiving address. Suppliers deliver your goods there, we consolidate them and ship to Lagos by sea, priced per cubic metre (CBM)." },
+];
+
 // The real plans (src/lib/dropship/plans.ts, enforced by the database).
 const PLANS = Object.values(SELLER_PLANS).map((p) => ({
   name: p.name,
@@ -37,6 +52,21 @@ const PLANS = Object.values(SELLER_PLANS).map((p) => ({
 export default function StoreHome() {
   return (
     <>
+      <JsonLd
+        data={graph(
+          { "@type": "WebSite", "@id": `${STORE_URL}/#website`, url: STORE_URL, name: "FastChina.store", inLanguage: "en-NG", description: STORE_DESCRIPTION, publisher: { "@id": "https://fastchina.shop/#org" } },
+          {
+            "@type": "Service",
+            name: "Dropshipping stores for Nigerian sellers",
+            serviceType: "Dropshipping platform",
+            provider: { "@id": "https://fastchina.shop/#org" },
+            areaServed: { "@type": "Country", name: "Nigeria" },
+            offers: Object.values(SELLER_PLANS).map((p) => ({ "@type": "Offer", name: `${p.name} plan`, price: p.price, priceCurrency: "NGN", description: p.perks.join(", ") })),
+          },
+          breadcrumbs([["FastChina.store", "/"]], STORE_URL),
+          faq(STORE_FAQ),
+        )}
+      />
       <div className="flex flex-wrap justify-center gap-x-8 gap-y-1 bg-ink px-4 py-2.5 text-center text-[13px] text-[#EDE6D3]">
         <span><strong className="font-semibold text-[#D9B866]">Free shipping</strong> on every marketplace item</span>
         <span>Black Friday early access is live</span>
@@ -54,6 +84,7 @@ export default function StoreHome() {
             <a href="#dropship">Dropship stores</a>
             <a href="#how">How it works</a>
             <a href="#wholesale">Wholesale · Sea</a>
+            <a href={`${SHOP}/guides`}>Guides</a>
             <a href="#pricing">Pricing</a>
           </nav>
           <div className="flex items-center gap-2.5">
@@ -65,13 +96,13 @@ export default function StoreHome() {
 
       <section className="mx-auto grid max-w-7xl items-center gap-12 px-6 pt-16 pb-14 lg:grid-cols-2 [&>*]:min-w-0">
         <div className="flex flex-col gap-7">
-          <span className="self-start rounded-full border border-[#D9C89A] px-3.5 py-2 text-xs font-semibold tracking-[0.14em] text-[#7A5C17]">DIRECT FROM 1688 FACTORIES</span>
+          <span className="self-start rounded-full border border-[#D9C89A] px-3.5 py-2 text-xs font-semibold tracking-[0.14em] text-[#7A5C17]">FREE DROPSHIPPING STORES · DIRECT FROM 1688</span>
           <h1 className="font-display text-[clamp(48px,6vw,84px)] leading-[0.98] tracking-tight">
             China’s factory floor,
             <br />
             <em className="text-[#7A5C17]">delivered to your door.</em>
           </h1>
-          <p className="max-w-[520px] text-lg leading-relaxed text-[#4A4740]">Buy at source prices with free shipping, launch your own branded store in a day, or move containers by sea. One account, three ways to import.</p>
+          <p className="max-w-[520px] text-lg leading-relaxed text-[#4A4740]">Start a dropshipping store in Nigeria for free, buy at factory prices with free shipping, or move containers by sea. One account, three ways to import from China.</p>
           <form action={`${SHOP}/search`} role="search" className="flex flex-wrap gap-2 rounded-[18px] border border-[#E6E1D5] bg-white p-2 shadow-[0_20px_40px_-24px_rgba(13,13,11,0.25)]">
             <label htmlFor="hero-q" className="sr-only">Search products or paste a 1688 link</label>
             <input id="hero-q" name="q" type="search" placeholder="Search products or paste a 1688 link" className="min-h-12 min-w-0 flex-[1_1_240px] bg-transparent px-3.5 text-base outline-none" />
@@ -180,8 +211,8 @@ export default function StoreHome() {
       <section id="pricing" className="mx-auto flex max-w-7xl flex-col gap-10 px-6 pb-24">
         <div className="flex flex-col items-center gap-3 text-center">
           <span className="text-xs font-semibold tracking-[0.14em] text-[#7A5C17]">STORE PLANS</span>
-          <h2 className="font-display text-[clamp(36px,4vw,56px)] leading-[1.02]">Pick a plan. Keep 100% of your margin.</h2>
-          <p className="text-[#4A4740]">No commission on your sales. You pay the item cost, we handle the rest.</p>
+          <h2 className="font-display text-[clamp(36px,4vw,56px)] leading-[1.02]">Start free. Upgrade when you’re selling.</h2>
+          <p className="text-[#4A4740]">A small fee on your profit only, never on the item price. Pay nothing until you’re ready to grow.</p>
         </div>
         <div className="grid gap-5 md:grid-cols-3">
           {PLANS.map((p) => (
@@ -219,6 +250,26 @@ export default function StoreHome() {
         </div>
       </section>
 
+      <section aria-labelledby="faq-h" className="mx-auto grid max-w-7xl gap-10 px-6 py-20 lg:grid-cols-[1fr_1.3fr]">
+        <div className="flex flex-col gap-4">
+          <span className="text-xs font-semibold tracking-[0.14em] text-[#7A5C17]">LEARN</span>
+          <h2 id="faq-h" className="font-display text-[clamp(34px,3.6vw,50px)] leading-[1.02]">Dropshipping in Nigeria, answered</h2>
+          <ul className="flex flex-col gap-2">
+            {GUIDES.filter((g) => g.topic !== "Buying guides").slice(0, 5).map((g) => (
+              <li key={g.slug}><a href={`${SHOP}/guides/${g.slug}`} className="block rounded-2xl border border-[#E6E1D5] bg-white px-5 py-4 text-[15px] font-semibold hover:border-ink">{g.h1} →</a></li>
+            ))}
+          </ul>
+        </div>
+        <div className="flex flex-col gap-2.5">
+          {STORE_FAQ.map((f) => (
+            <details key={f.q} className="rounded-2xl border border-[#E6E1D5] bg-white px-5 py-4 open:shadow-[0_12px_30px_-20px_rgba(13,13,11,0.3)]">
+              <summary className="cursor-pointer text-[16px] font-semibold">{f.q}</summary>
+              <p className="pt-2 text-[15px] leading-relaxed text-[#4A4740]">{f.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
       <section className="mx-auto grid max-w-7xl gap-8 px-6 py-20 sm:grid-cols-2 lg:grid-cols-4">
         {[[ShieldCheck, "Buyer protection", "Your payment is held until the item is delivered as described."], [Truck, "Photo QC", "See your goods in our China warehouse before they ship."], [Wallet, "Pay your way", "Card, bank transfer or USSD, always in Naira."], [ShoppingCart, "Live tracking", "From the factory gate to the pickup station, every step."]].map(([Icon, t, d]) => {
           const I = Icon as typeof ShieldCheck;
@@ -238,7 +289,7 @@ export default function StoreHome() {
             <span className="font-display text-[34px] text-[#FBFAF6]">FastChina<span className="text-[#D9B866]">.store</span></span>
             <span className="max-w-[340px] text-sm leading-relaxed">Import from China without the stress. Shop, sell, or ship by sea.</span>
           </div>
-          {[["Shop", [["Marketplace", SHOP_URL], ["Deals", `${SHOP}/deals`], ["Track order", `${SHOP}/account`]]], ["Sell", [["Dropship stores", "#dropship"], ["Plans", "#pricing"], ["Wholesale", "#wholesale"]]], ["Help", [["How it works", "#how"], ["Returns", `${SHOP}/account`], ["Prohibited items", `${SHOP}/account`]]]].map(([h, links]) => (
+          {[["Shop", [["Marketplace", SHOP_URL], ["Deals", `${SHOP}/deals`], ["Track order", `${SHOP}/account`]]], ["Sell", [["Dropship stores", "#dropship"], ["Plans", "#pricing"], ["Wholesale market", `${SHOP}/wholesale`], ["Sea freight", "#wholesale"]]], ["Help", [["Guides", `${SHOP}/guides`], ["How it works", "#how"], ["Returns", `${SHOP}/account`], ["Prohibited items", `${SHOP}/account`]]]].map(([h, links]) => (
             <div key={h as string} className="flex flex-col gap-2.5 text-sm">
               <strong className="text-[#FBFAF6]">{h as string}</strong>
               {(links as string[][]).map(([l, href]) => <a key={l} href={href}>{l}</a>)}

@@ -6,14 +6,15 @@ import { PRICING } from "@/lib/pricing/config";
 
 const HANDLING = 35_000;
 
-export function SeaQuote() {
+/** `cta`: where the button goes. Without it the button is the wholesale application on fastchina.store. */
+export function SeaQuote({ cta }: { cta?: { label: string; href: string } } = {}) {
   const [cbm, setCbm] = useState(2);
   const freight = cbm * PRICING.seaPerCbm;
   const set = (v: number) => setCbm(Math.max(0.5, Math.round(v * 2) / 2));
   return (
     <form className="flex flex-col gap-5 self-start rounded-[28px] bg-[#FBFAF6] p-6 text-ink md:p-8" onSubmit={(e) => e.preventDefault()}>
       <div className="flex items-center justify-between gap-3">
-        <h3 className="font-display text-[32px] leading-none">Sea freight estimate</h3>
+        <h3 className="font-display text-[28px] leading-none sm:text-[32px]">Sea freight estimate</h3>
         <span className="rounded-full bg-[#E9EFEA] px-2.5 py-1.5 text-xs font-semibold text-[#0F5C45]">90+ days</span>
       </div>
       <div className="grid gap-3.5 sm:grid-cols-2">
@@ -41,7 +42,11 @@ export function SeaQuote() {
         <div className="flex items-baseline justify-between pt-2"><dt className="font-semibold">Estimated total</dt><dd className="font-display text-[40px] leading-none">{naira(freight + HANDLING)}</dd></div>
       </dl>
       <span className="text-xs text-[#6B675D]">Sample rates. The final price is confirmed after your cargo is measured at our warehouse.</span>
-      <button type="submit" className="min-h-[52px] rounded-[14px] bg-ink text-base font-semibold text-white">Apply for a wholesale account</button>
+      {cta ? (
+        <a href={cta.href} className="flex min-h-[52px] items-center justify-center rounded-[14px] bg-ink text-base font-semibold text-white">{cta.label}</a>
+      ) : (
+        <button type="submit" className="min-h-[52px] rounded-[14px] bg-ink text-base font-semibold text-white">Apply for a wholesale account</button>
+      )}
     </form>
   );
 }

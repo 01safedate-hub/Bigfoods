@@ -164,3 +164,26 @@ export async function listStores(q?: string): Promise<AdminStore[] | null> {
     payouts: ((s.seller_payouts ?? []) as AdminStore["payouts"]).filter((p) => p.status !== "paid"),
   })) as AdminStore[];
 }
+
+export interface AdminProduct {
+  slug: string; title: string; status: string; source: string; price_list_min: number | null; main_images: string[]; created_at: string;
+  category: string | null;
+}
+
+/** Catalogue for staff: newest first, any status, searchable by name. */
+export async function listAdminProducts(f: { q?: string; status?: string; source?: string }): Promise<AdminProduct[] | null> {
+  if (!hasSupabase) return null;
+  let query = secretDb()
+    .from("products")
+    .select("slug, title, status, source, price_list_min, main_images, created_at, categories(name)")
+    .eq("is_demo", false)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  const q = f.q?.trim().replace(/[%_,()]/g, " ");
+  if (q) query = query.ilike("title", `%${q}%`);
+  if (f.status) query = query.eq("status", f.status);
+  if (f.source) query = query.eq("source", f.source);
+  const { data, error } = await query;
+  if (error) throw new Error(`Products: ${error.message}`);
+  return (data ?? []).map((p) => ({ ...p, category: (p.categories as unknown as { name: string } | null)?.name ?? null })) as AdminProduct[];
+}

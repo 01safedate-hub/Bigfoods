@@ -12,7 +12,7 @@ import { publicDb, secretDb } from "@/lib/supabase/server";
 import type { PriceSet } from "@/lib/catalog/types";
 import { getQuoteLines, insertQuestion, type LineRequest, searchSlugs } from "@/lib/data/catalog";
 import { quoteCart } from "@/lib/pricing/engine";
-import { unitFromPrices } from "@/lib/pricing/prices";
+import { productTotals, unitFromPrices } from "@/lib/pricing/prices";
 import { midnightDrop } from "@/lib/time";
 
 /** Demo balance until accounts are connected. */
@@ -40,7 +40,8 @@ export interface PricedLine extends LineRequest {
 export async function priceLines(items: LineRequest[]): Promise<PricedLine[]> {
   const promo = activePromo();
   const lines = await getQuoteLines(clean(items));
-  return lines.map((l) => ({ slug: l.slug, variantId: l.variantId, qty: l.qty, prices: l.prices, unit: unitFromPrices(l.prices, l.qty, promo) }));
+  const totals = productTotals(lines);
+  return lines.map((l) => ({ slug: l.slug, variantId: l.variantId, qty: l.qty, prices: l.prices, unit: unitFromPrices(l.prices, l.qty, promo, totals.get(l.slug)) }));
 }
 
 export interface CheckoutQuote {
@@ -78,7 +79,10 @@ async function computeQuote(items: LineRequest[], claimedIds: unknown, usePoints
   const promo = activePromo();
   const requested = clean(items);
   const user = hasSupabase ? await getSessionUser() : null;
-  const [lines, { coupons }, balance] = await Promise.all([getQuoteLines(requested), getSiteData(), pointsBalance(user?.id ?? null)]);
+  const [raw, { coupons }, balance] = await Promise.all([getQuoteLines(requested), getSiteData(), pointsBalance(user?.id ?? null)]);
+  // Retailer prices count every variant of a product together.
+  const totals = productTotals(raw);
+  const lines = raw.map((l) => ({ ...l, productQty: totals.get(l.slug) }));
   const claimed = Array.isArray(claimedIds) ? claimedIds.filter((x): x is string => typeof x === "string") : [];
   let pool = coupons.filter((c) => claimed.length === 0 || claimed.includes(c.id));
 
@@ -108,7 +112,7 @@ export async function quoteCheckout(items: LineRequest[], opts: { claimedCouponI
   const { promo, requested, lines, best, q, balance, couponHint } = await computeQuote(items, opts.claimedCouponIds, Boolean(opts.usePoints));
   return {
     promo,
-    lines: lines.map((l) => ({ slug: l.slug, variantId: l.variantId, qty: l.qty, prices: l.prices, unit: unitFromPrices(l.prices, l.qty, promo) })),
+    lines: lines.map((l) => ({ slug: l.slug, variantId: l.variantId, qty: l.qty, prices: l.prices, unit: unitFromPrices(l.prices, l.qty, promo, l.productQty) })),
     missing: requested.length - lines.length,
     subtotalList: q.subtotalList,
     subtotal: q.subtotal,
@@ -191,7 +195,7 @@ export async function placeOrder(input: {
     p_points: q.points,
     p_weeks: weeks,
     p_items: lines.map((l) => ({
-      sku_id: l.variantId, qty: l.qty, unit: l.noDiscounts ? l.prices.list : unitFromPrices(l.prices, l.qty, promo),
+      sku_id: l.variantId, qty: l.qty, unit: l.noDiscounts ? l.prices.list : unitFromPrices(l.prices, l.qty, promo, l.productQty),
       cost: Math.round(l.cost), title: l.title ?? l.slug, variant: l.variantLabel ?? "", ship: l.shipMode ?? "air",
     })),
   });

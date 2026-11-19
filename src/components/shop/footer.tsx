@@ -48,8 +48,9 @@ export function ShopFooter() {
         <div className="flex flex-col gap-1.5">
           <strong>Business</strong>
           <Link href="/store" className="text-[#444]">Dropship stores</Link>
-          <Link href="/store#wholesale" className="text-[#444]">Wholesale by sea</Link>
-          <Link href="/categories?c=retailer" className="text-[#444]">Retailer Hub</Link>
+          <Link href="/wholesale#sea" className="text-[#444]">Wholesale by sea</Link>
+          <Link href="/wholesale" className="text-[#444]">Wholesale market</Link>
+          <Link href="/guides" className="text-[#444]">Import &amp; dropshipping guides</Link>
         </div>
       </div>
       <div className="mx-auto flex max-w-[1360px] flex-wrap justify-between gap-2 border-t border-[#e2e2e2] px-4 pt-3.5 pb-6 text-xs text-muted md:px-6">

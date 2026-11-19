@@ -33,15 +33,16 @@ export function Logo({ className, tld = ".shop", compactMark }: { className?: st
 
 const DESKTOP_NAV = [
   { href: "/deals", label: "Deals", strong: true },
-  { href: "/categories?c=gadgets", label: "Phones & Gadgets" },
+  { href: "/category/gadgets", label: "Phones & Gadgets" },
   { href: "/categories?c=women", label: "Women" },
   { href: "/categories?c=men", label: "Men" },
-  { href: "/categories?c=hair", label: "Hair & Wigs" },
-  { href: "/categories?c=beauty", label: "Beauty" },
-  { href: "/categories?c=home", label: "Home" },
-  { href: "/categories?c=furniture", label: "Furniture · Sea" },
-  { href: "/categories?c=machines", label: "Machines · Sea" },
-  { href: "/categories?c=retailer", label: "Retailer Hub" },
+  { href: "/category/hair", label: "Hair & Wigs" },
+  { href: "/category/beauty", label: "Beauty" },
+  { href: "/category/home", label: "Home" },
+  { href: "/category/furniture", label: "Furniture · Sea" },
+  { href: "/category/machines", label: "Machines · Sea" },
+  { href: "/wholesale", label: "Wholesale" },
+  { href: "/guides", label: "Guides" },
 ];
 
 export function ShopHeader() {

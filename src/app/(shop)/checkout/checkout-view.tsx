@@ -14,7 +14,7 @@ import { useNow } from "@/hooks/use-now";
 import { statesOf } from "@/lib/catalog/stations";
 import { useSiteData } from "@/components/shop/site-data";
 import { cn, naira } from "@/lib/format";
-import { unitFromPrices } from "@/lib/pricing/prices";
+import { productTotals, unitFromPrices } from "@/lib/pricing/prices";
 import { buildSchedule, planOptions, SMALL_SMALL } from "@/lib/payments/instalments";
 import { type CheckoutQuote, placeOrder, quoteCheckout } from "../actions";
 import { addDaysLabel } from "@/lib/time";
@@ -48,7 +48,8 @@ export function CheckoutView() {
   const [copied, setCopied] = useState(false);
 
   const selected = items.filter((i) => i.selected);
-  const unitOf = (i: (typeof selected)[number]) => unitFromPrices(i.snap.prices, i.qty, promo);
+  const totals = productTotals(selected);
+  const unitOf = (i: (typeof selected)[number]) => unitFromPrices(i.snap.prices, i.qty, promo, totals.get(i.slug));
 
   // The total, coupon and points are worked out on the server with the guardrails; the browser never sees costs.
   const [serverQuote, setServerQuote] = useState<CheckoutQuote | null>(null);

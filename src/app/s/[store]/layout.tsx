@@ -18,10 +18,17 @@ export async function generateMetadata({ params }: LayoutProps<"/s/[store]">): P
   const found = await getStore(decodeURIComponent((await params).store));
   if (!found) return { title: "Store not found" };
   const { store } = found;
+  // Each store is its own site to search engines: its own address, its own canonical URLs.
+  const origin = store.customDomain ? `https://${store.customDomain}` : `https://${store.slug}.${process.env.STORE_ROOT_DOMAIN ?? "fastchina.store"}`;
+  const description = store.tagline ?? `${store.name}: shop online in Nigeria, delivered free to your Jumia pickup station.`;
   return {
+    metadataBase: new URL(origin),
     title: { default: store.name, template: `%s · ${store.name}` },
-    description: store.tagline ?? `${store.name}: delivered free to your Jumia pickup station.`,
-    openGraph: { title: store.name, description: store.tagline ?? undefined },
+    description,
+    alternates: { canonical: "/" },
+    openGraph: { type: "website", siteName: store.name, locale: "en_NG", url: "/", title: store.name, description },
+    // Sample stores and closed stores stay out of search results.
+    robots: store.id === "demo" || store.slug.startsWith("demo-") || store.status !== "active" ? { index: false, follow: false } : undefined,
     icons: { icon: "/icon.svg" },
   };
 }

@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { OfflineBanner } from "@/components/ui/offline-banner";
 import { SellerNav } from "./_ui/nav";
 
-export const metadata: Metadata = { title: { default: "Seller dashboard", template: "%s · Seller · FastChina" }, robots: { index: false } };
+export const metadata: Metadata = { title: { default: "Seller dashboard", template: "%s · Seller · FastChina" }, robots: { index: false, follow: false }, alternates: { canonical: null } };
 
 /** Seller dashboard shell: dark, focused, quick. Sidebar on desktop, tab bar on phones. */
 export default function SellerLayout({ children }: LayoutProps<"/store/seller">) {

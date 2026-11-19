@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { ServiceWorker } from "@/components/ui/service-worker";
+import { BRAND, SHOP_DESCRIPTION, SHOP_URL } from "@/lib/seo";
 import "./globals.css";
 
 /** Self-hosted (OFL) so pages never call Google Fonts. */
@@ -15,11 +16,22 @@ const instrument = localFont({
 });
 
 export const metadata: Metadata = {
-  title: { default: "FastChina — China’s factories, delivered", template: "%s · FastChina" },
-  description: "Shop 1688 factory prices in Naira with free shipping to your Jumia pickup station. Pay small small, group pay and Midnight Drop prices every night.",
-  metadataBase: new URL("https://fastchina.shop"),
-  applicationName: "FastChina",
-  appleWebApp: { capable: true, title: "FastChina", statusBarStyle: "black-translucent" },
+  title: { default: "FastChina — Buy from China in Nigeria, Free Shipping", template: "%s · FastChina" },
+  description: SHOP_DESCRIPTION,
+  metadataBase: new URL(SHOP_URL),
+  applicationName: BRAND,
+  keywords: ["buy from China in Nigeria", "1688 Nigeria", "import from China to Nigeria", "China wholesale Nigeria", "free shipping Nigeria", "pay small small"],
+  alternates: { canonical: "/", languages: { "en-NG": "/" } },
+  openGraph: { type: "website", siteName: BRAND, locale: "en_NG", url: "/", title: "FastChina — China’s factories, delivered free in Nigeria", description: SHOP_DESCRIPTION },
+  twitter: { card: "summary_large_image", title: "FastChina — China’s factories, delivered free in Nigeria", description: SHOP_DESCRIPTION },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 } },
+  // Search Console / Bing Webmaster verification: set these in the hosting environment.
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
+    other: process.env.BING_SITE_VERIFICATION ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION } : undefined,
+  },
+  category: "shopping",
+  appleWebApp: { capable: true, title: BRAND, statusBarStyle: "black-translucent" },
   icons: { apple: "/apple-touch-icon.png" },
   formatDetection: { telephone: false },
 };
@@ -33,7 +45,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" data-theme="everyday" className={`${inter.variable} ${instrument.variable} h-full antialiased`}>
+    <html lang="en-NG" data-theme="everyday" className={`${inter.variable} ${instrument.variable} h-full antialiased`}>
       <body className="min-h-full">
         {children}
         <ServiceWorker />

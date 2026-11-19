@@ -12,7 +12,7 @@ import { InfoButton } from "@/components/ui/info-button";
 import { Progress } from "@/components/ui/progress";
 import { useSiteData } from "@/components/shop/site-data";
 import { cn, naira } from "@/lib/format";
-import { unitFromPrices } from "@/lib/pricing/prices";
+import { productTotals, unitFromPrices } from "@/lib/pricing/prices";
 
 const FILTERS = ["All", "Price drops", "Sea items"] as const;
 
@@ -33,8 +33,10 @@ export function CartView() {
       .catch(() => {});
   }, [requestKey, items, refresh]);
 
-  const unitOf = (i: (typeof items)[number], p: "none" | "midnight" = promo) => unitFromPrices(i.snap.prices, i.qty, p);
   const selected = items.filter((i) => i.selected);
+  // Retailer prices count every selected variant of the same product together.
+  const totals = productTotals(selected);
+  const unitOf = (i: (typeof items)[number], p: "none" | "midnight" = promo) => unitFromPrices(i.snap.prices, i.qty, p, i.selected ? totals.get(i.slug) : i.qty);
   const subtotalList = selected.reduce((s, i) => s + i.snap.prices.list * i.qty, 0);
   const subtotal = selected.reduce((s, i) => s + unitOf(i) * i.qty, 0);
   const midnightTotal = selected.reduce((s, i) => s + unitOf(i, "midnight") * i.qty, 0);
@@ -44,7 +46,7 @@ export function CartView() {
   const allOn = items.length > 0 && items.every((i) => i.selected);
 
   // Next coupon tier, counted on items coupons can apply to.
-  const eligible = selected.filter((i) => !i.snap.isGadget && i.qty < 10).reduce((s, i) => s + unitOf(i) * i.qty, 0);
+  const eligible = selected.filter((i) => !i.snap.isGadget && (totals.get(i.slug) ?? i.qty) < 10).reduce((s, i) => s + unitOf(i) * i.qty, 0);
   const tiers = coupons.filter((c) => !c.gadgetOnly && c.amount).sort((a, b) => a.minSpend - b.minSpend);
   const next = tiers.find((c) => eligible < c.minSpend);
   const best = [...tiers].reverse().find((c) => eligible >= c.minSpend);
