@@ -76,7 +76,8 @@ export async function getPayouts(): Promise<{ payouts: Payout[]; bank: { bank_na
   const db = await userDb();
   const [{ data: payouts }, { data: bank }] = await Promise.all([
     db.from("seller_payouts").select("id, amount_ngn, items, status, created_at, paid_at").order("created_at", { ascending: false }).limit(50),
-    db.from("stores").select("bank_name, account_number, account_name").eq("owner_id", user.id).maybeSingle(),
+    // Bank columns aren't readable through the table (migration 023); the owner gets them from this function.
+    db.rpc("my_payout_account").maybeSingle<{ bank_name: string | null; account_number: string | null; account_name: string | null }>(),
   ]);
   return { payouts: (payouts ?? []) as Payout[], bank: bank ?? { bank_name: null, account_number: null, account_name: null } };
 }
