@@ -56,9 +56,9 @@ export function Onboarding() {
         <label className="flex flex-col gap-1.5 text-[13px] font-bold">
           Store address
           <span className="flex items-center overflow-hidden rounded-md border border-white/10 bg-[#0E0E10] focus-within:border-[#F5C542]">
+            <span className="pl-3 text-[14px] text-[#6B6B73]">fastchina.store/</span>
             <input value={address} onChange={(e) => { setTouched(true); setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "")); }} maxLength={30}
-              className="min-h-11 min-w-0 flex-1 bg-transparent px-3 text-[15px] focus:outline-none" aria-describedby="slug-status" />
-            <span className="pr-3 text-[14px] text-[#6B6B73]">.fastchina.store</span>
+              className="min-h-11 min-w-0 flex-1 bg-transparent pr-3 pl-0.5 text-[15px] focus:outline-none" aria-describedby="slug-status" />
           </span>
           <span id="slug-status" aria-live="polite" className={`flex items-center gap-1 text-[12px] font-semibold ${shownAvail?.ok ? "text-[#3DDC84]" : "text-[#FF8A8A]"}`}>
             {shownAvail && (shownAvail.ok ? <Check aria-hidden size={13} /> : <X aria-hidden size={13} />)} {shownAvail?.message}

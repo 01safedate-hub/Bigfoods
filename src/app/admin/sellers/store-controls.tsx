@@ -5,12 +5,14 @@ import { useState, useTransition } from "react";
 import type { AdminStore } from "@/lib/data/admin";
 import { naira } from "@/lib/format";
 import { call } from "@/lib/net";
-import { markPayoutPaid, setDomainVerified, setStorePlan, setStoreStatus } from "../actions";
+import { storeAddress } from "@/lib/dropship/plans";
+import { markPayoutPaid, setDomainVerified, setStoreAlias, setStorePlan, setStoreStatus } from "../actions";
 
 export function StoreControls({ store }: { store: AdminStore }) {
   const router = useRouter();
   const [plan, setPlan] = useState(store.plan);
   const [months, setMonths] = useState(1);
+  const [alias, setAlias] = useState(store.alias ?? "");
   const [refs, setRefs] = useState<Record<string, string>>({});
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, start] = useTransition();
@@ -27,7 +29,17 @@ export function StoreControls({ store }: { store: AdminStore }) {
         <span>Owner: {store.owner ?? "—"}</span>
         <span>Opened {new Date(store.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
         {store.plan_renews_at && <span>Renews {new Date(store.plan_renews_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>}
-        <a href={`/s/${store.slug}`} target="_blank" rel="noreferrer" className="font-bold text-[#2563EB] underline">Open store</a>
+        <a href={`/s/${store.alias || store.slug}`} target="_blank" rel="noreferrer" className="font-bold text-[#2563EB] underline">Open store</a>
+      </div>
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="flex flex-col gap-1 text-xs font-semibold text-[#5B6170]">Store address (alias)
+          <span className="flex items-center rounded-md border border-[#D0D4DB] bg-white pl-2 text-sm">
+            <span className="text-[#5B6170]">fastchina.store/</span>
+            <input value={alias} onChange={(e) => setAlias(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} placeholder={store.slug} maxLength={40} className="min-h-9 w-40 bg-transparent px-1 outline-none" />
+          </span>
+        </label>
+        <button type="button" disabled={busy || alias === (store.alias ?? "")} onClick={() => run(() => setStoreAlias(store.id, alias))} className={btn}>Save address</button>
+        <span className="text-xs text-[#5B6170]">Live at {storeAddress({ slug: store.slug, alias: store.alias })}. Leave empty to use the store name.</span>
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <label className="sr-only" htmlFor={`plan-${store.id}`}>Plan</label>

@@ -1,3 +1,4 @@
+import { storePublicUrl } from "@/lib/dropship/plans";
 import { ShoppingBag } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -19,17 +20,19 @@ export async function generateMetadata({ params }: LayoutProps<"/s/[store]">): P
   if (!found) return { title: "Store not found" };
   const { store } = found;
   // Each store is its own site to search engines: its own address, its own canonical URLs.
-  const origin = store.customDomain ? `https://${store.customDomain}` : `https://${store.slug}.${process.env.STORE_ROOT_DOMAIN ?? "fastchina.store"}`;
+  const origin = storePublicUrl(store);
   const description = store.tagline ?? `${store.name}: shop online in Nigeria, delivered free to your Jumia pickup station.`;
   return {
-    metadataBase: new URL(origin),
+    metadataBase: new URL(`${origin}/`),
     title: { default: store.name, template: `%s · ${store.name}` },
     description,
-    alternates: { canonical: "/" },
-    openGraph: { type: "website", siteName: store.name, locale: "en_NG", url: "/", title: store.name, description },
+    alternates: { canonical: origin },
+    manifest: `/pwa/storefront?s=${encodeURIComponent(store.slug)}`,
+    appleWebApp: { capable: true, title: store.name, statusBarStyle: "default" },
+    openGraph: { type: "website", siteName: store.name, locale: "en_NG", url: origin, title: store.name, description },
     // Sample stores and closed stores stay out of search results.
     robots: store.id === "demo" || store.slug.startsWith("demo-") || store.status !== "active" ? { index: false, follow: false } : undefined,
-    icons: { icon: "/icon.svg" },
+    icons: { icon: `/pwa/icon?s=${encodeURIComponent(store.slug)}&size=192`, apple: `/pwa/icon?s=${encodeURIComponent(store.slug)}&size=180` },
   };
 }
 

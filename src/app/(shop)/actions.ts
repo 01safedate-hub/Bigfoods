@@ -207,7 +207,8 @@ export async function placeOrder(input: {
 export interface TrackedOrder {
   code: string; status: OrderStatus; pay_mode: string; total: number; paid: number; created_at: string; paid_at: string | null;
   shipped_at: string | null; delivered_at: string | null; station: string; state: string;
-  items: { title: string; variant: string | null; qty: number; unit: number; ship: "air" | "sea"; funded: boolean; removed: boolean }[];
+  items: { title: string; variant: string | null; qty: number; unit: number; ship: "air" | "sea"; funded: boolean; removed: boolean; photos?: string[] }[];
+  channel?: "retail" | "wholesale";
   events: { to: string; at: string }[];
   plan: { status: string; instalments: { n: number; due: string; amount: number }[] } | null;
   link: { code: string; expires_at: string } | null;

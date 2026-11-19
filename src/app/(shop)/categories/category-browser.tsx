@@ -28,7 +28,7 @@ export function CategoryBrowser({ products: all }: { products: Product[] }) {
 
   return (
     // Phones: the category list and the panel scroll on their own, between the header and the tab bar.
-    <div data-app-panel className="flex h-[calc(100dvh-41px-59px-env(safe-area-inset-bottom))] overflow-hidden md:h-auto md:gap-6 md:overflow-visible md:pt-6">
+    <div data-app-panel className="flex h-[calc(100dvh-41px-49px-env(safe-area-inset-bottom))] overflow-hidden md:h-auto md:gap-6 md:overflow-visible md:pt-6">
       <nav aria-label="Categories" className="no-scrollbar w-[116px] shrink-0 overflow-y-auto overscroll-contain bg-surface md:w-56 md:overflow-visible md:rounded-md">
         {CATEGORIES.map((c) => {
           const on = c.slug === cat.slug;

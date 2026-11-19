@@ -9,6 +9,8 @@ import { publicDb } from "@/lib/supabase/server";
 export interface PublicStore {
   id: string;
   slug: string;
+  /** Short address set by staff (fastchina.store/<alias>). */
+  alias?: string | null;
   name: string;
   tagline: string | null;
   accent: string;
@@ -33,7 +35,7 @@ const DEMO: { store: PublicStore; listings: Listing[] } = {
     .map((slug) => ({ slug, markupType: "pct" as const, markupValue: 25 })),
 };
 
-/** A storefront by its address (name.fastchina.store) or its verified own domain. */
+/** A storefront by its name or alias (fastchina.store/<name>), subdomain, or verified own domain. */
 export async function getStore(key: string): Promise<{ store: PublicStore; listings: Listing[] } | null> {
   "use cache";
   cacheLife("minutes");
@@ -51,12 +53,13 @@ export async function getStore(key: string): Promise<{ store: PublicStore; listi
     return look[t] ? { store: { ...DEMO.store, ...look[t], theme: t, plan: "elite", slug: key }, listings: DEMO.listings } : null;
   }
   const db = publicDb();
-  const q = db.from("stores").select("id, slug, name, tagline, accent, theme, plan, status, custom_domain, domain_verified, allow_small_small");
-  const { data: s } = await (key.includes(".") ? q.eq("custom_domain", key.toLowerCase()).eq("domain_verified", true) : q.eq("slug", key.toLowerCase())).maybeSingle();
+  const q = db.from("stores").select("id, slug, alias, name, tagline, accent, theme, plan, status, custom_domain, domain_verified, allow_small_small");
+  const k = key.toLowerCase();
+  const { data: s } = await (k.includes(".") ? q.eq("custom_domain", k).eq("domain_verified", true) : /^[a-z0-9-]{3,40}$/.test(k) ? q.or(`slug.eq.${k},alias.eq.${k}`) : q.eq("slug", "-")).maybeSingle();
   if (!s || s.status === "suspended") return null;
   const { data: rows } = await db.from("store_products").select("markup_type, markup_value, sort, products!inner(slug, status)").eq("store_id", s.id).eq("active", true).order("sort").order("created_at");
   return {
-    store: { id: s.id, slug: s.slug, name: s.name, tagline: s.tagline, accent: s.accent, theme: s.theme, plan: s.plan, status: s.status, customDomain: s.domain_verified ? s.custom_domain : null, allowSmallSmall: s.allow_small_small !== false },
+    store: { id: s.id, slug: s.slug, alias: s.alias ?? null, name: s.name, tagline: s.tagline, accent: s.accent, theme: s.theme, plan: s.plan, status: s.status, customDomain: s.domain_verified ? s.custom_domain : null, allowSmallSmall: s.allow_small_small !== false },
     listings: (rows ?? [])
       .filter((r) => (r.products as unknown as { status: string }).status === "active")
       .map((r) => ({ slug: (r.products as unknown as { slug: string }).slug, markupType: r.markup_type, markupValue: Number(r.markup_value) })),

@@ -11,7 +11,7 @@ import { useSiteData } from "./site-data";
 import { StationPicker } from "./station-picker";
 
 type Step = "station" | "account";
-const QUIET = /^\/(sign-in|checkout|legal|unsubscribe|offline|track|wholesale\/(cart|checkout))/;
+const QUIET = /^\/(sign-in|checkout|legal|unsubscribe|offline|track|wholesale)/;
 
 /**
  * First visit: pick your Jumia pickup station (nearest from your location, search, or add it),

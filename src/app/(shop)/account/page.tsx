@@ -19,10 +19,13 @@ const ORDER_ICONS: Record<OrderGroup, typeof Wallet> = { unpaid: Wallet, process
 
 export default function AccountPage() {
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-2.5 bg-surface pb-8 md:bg-transparent md:pt-6">
-      <Suspense fallback={<div className="m-3 h-64 animate-pulse rounded-2xl bg-white md:m-0" />}>
-        <Profile />
-      </Suspense>
+    // Phones: one column. Desktop: the profile on the left (sticky), picks fill the rest.
+    <div className="flex w-full flex-col gap-2.5 bg-surface pb-8 md:bg-transparent md:pt-6 lg:grid lg:grid-cols-[400px_minmax(0,1fr)] lg:items-start lg:gap-6">
+      <div className="flex flex-col gap-2.5 lg:sticky lg:top-28">
+        <Suspense fallback={<div className="m-3 h-64 animate-pulse rounded-2xl bg-white md:m-0" />}>
+          <Profile />
+        </Suspense>
+      </div>
       <Suspense fallback={null}>
         <Picks />
       </Suspense>
@@ -154,9 +157,9 @@ async function Picks() {
   const products = (await getProducts()).slice(0, 12);
   if (!products.length) return null;
   return (
-    <section aria-labelledby="picks-h" className="flex flex-col gap-2 px-2 pt-2 md:px-0">
+    <section aria-labelledby="picks-h" className="flex flex-col gap-2 px-2 pt-2 md:px-0 lg:pt-0">
       <h2 id="picks-h" className="text-[15px] font-extrabold">Picked for you</h2>
-      <div className="grid grid-cols-2 gap-x-1.5 gap-y-3 sm:grid-cols-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-x-1.5 gap-y-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4">
         {products.map((p) => <ProductCard key={p.slug} product={p} />)}
       </div>
     </section>

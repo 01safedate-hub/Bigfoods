@@ -1,3 +1,4 @@
+import { storePublicUrl } from "@/lib/dropship/plans";
 import { ArrowUpRight, Package, Paintbrush, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { connection } from "next/server";
@@ -22,7 +23,7 @@ export default async function SellerHome() {
   const conversion = d.visits_30d ? ((d.orders_30d / d.visits_30d) * 100).toFixed(1) : "0.0";
   const free = d.store.plan === "free";
   const used = d.store.lifetime_sales / FREE_SALES_LIMIT;
-  const storeUrl = d.store.custom_domain && d.store.domain_verified ? `https://${d.store.custom_domain}` : `https://${d.store.slug}.fastchina.store`;
+  const storeUrl = storePublicUrl({ slug: d.store.slug, customDomain: d.store.custom_domain && d.store.domain_verified ? d.store.custom_domain : null });
 
   return (
     <Page

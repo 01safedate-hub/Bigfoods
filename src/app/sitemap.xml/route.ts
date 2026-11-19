@@ -4,6 +4,8 @@ import { LEGAL } from "@/lib/content/legal";
 import { getProducts } from "@/lib/data/catalog";
 import { getStore, getStoreProducts } from "@/lib/data/stores";
 import { siteFor } from "@/lib/hosts";
+import { hasSupabase } from "@/lib/supabase/env";
+import { publicDb } from "@/lib/supabase/server";
 import { SHOP_URL, STORE_URL } from "@/lib/seo";
 import { type SitemapEntry, sitemapXml } from "@/lib/sitemap-xml";
 
@@ -34,12 +36,23 @@ async function sellerEntries(key: string, origin: string): Promise<SitemapEntry[
   ];
 }
 
+/** fastchina.store: the dropship site plus every live store at fastchina.store/<name>. */
+async function storeEntries(): Promise<SitemapEntry[]> {
+  const base: SitemapEntry[] = [{ url: `${STORE_URL}/`, changeFrequency: "weekly", priority: 1 }];
+  if (!hasSupabase) return base;
+  const { data } = await publicDb().from("stores").select("slug, alias, custom_domain, domain_verified").eq("status", "active").limit(5000);
+  return [
+    ...base,
+    ...(data ?? []).filter((s) => !(s.custom_domain && s.domain_verified)).map((s): SitemapEntry => ({ url: `${STORE_URL}/${s.alias || s.slug}`, changeFrequency: "daily", priority: 0.6 })),
+  ];
+}
+
 /** One sitemap per domain: the marketplace, fastchina.store, and every seller's store. */
 export async function GET(request: Request) {
   const site = siteFor(request.headers.get("host"));
   const entries =
     site.kind === "shop" ? await shopEntries()
-    : site.kind === "store" ? [{ url: `${STORE_URL}/`, changeFrequency: "weekly", priority: 1 } satisfies SitemapEntry]
+    : site.kind === "store" ? await storeEntries()
     : await sellerEntries(site.key, site.origin);
   return new Response(sitemapXml(entries), { headers: { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600, s-maxage=3600" } });
 }

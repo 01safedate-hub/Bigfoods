@@ -247,3 +247,21 @@ export async function getKitRows(): Promise<KitRow[] | null> {
   if (error) return null;
   return data as KitRow[];
 }
+
+export interface Review { id: number; author: string; variant: string | null; rating: number; body: string | null; photos: string[]; at: string }
+
+/** Published reviews for a product, newest first (tag "reviews"). */
+export async function getReviews(slug: string): Promise<Review[]> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("reviews", `reviews:${slug}`);
+  if (!hasSupabase) return [];
+  const { data } = await publicDb()
+    .from("product_reviews")
+    .select("id, author, variant_label, rating, body, photos, created_at, products!inner(slug)")
+    .eq("products.slug", slug)
+    .eq("status", "published")
+    .order("created_at", { ascending: false })
+    .limit(20);
+  return (data ?? []).map((r) => ({ id: r.id, author: r.author, variant: r.variant_label, rating: r.rating, body: r.body, photos: r.photos ?? [], at: r.created_at }));
+}

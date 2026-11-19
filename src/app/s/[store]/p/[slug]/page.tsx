@@ -1,3 +1,4 @@
+import { storePublicUrl } from "@/lib/dropship/plans";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getStore, getStoreProducts } from "@/lib/data/stores";
@@ -25,8 +26,8 @@ export async function generateMetadata({ params }: PageProps<"/s/[store]/p/[slug
   return {
     title: d.product.name,
     description: d.product.description,
-    alternates: { canonical: `/p/${slug}` },
-    openGraph: { title: d.product.name, url: `/p/${slug}`, images: d.product.images.slice(0, 1) },
+    alternates: { canonical: `${storePublicUrl(d.store)}/p/${slug}` },
+    openGraph: { title: d.product.name, url: `${storePublicUrl(d.store)}/p/${slug}`, images: d.product.images.slice(0, 1) },
   };
 }
 

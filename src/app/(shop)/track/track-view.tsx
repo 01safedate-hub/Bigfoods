@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, Copy, PackageSearch } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -53,7 +54,7 @@ export function TrackView() {
   const plan = order?.plan ? planStatus(order.plan.instalments.map((i) => ({ n: i.n, dueMs: Date.parse(i.due), amount: i.amount })), order.paid, now ?? 0) : null;
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-3 py-6 md:px-0">
+    <div className="flex w-full max-w-3xl flex-col gap-4 px-3 py-6 md:px-0">
       <h1 className="flex items-center gap-2 text-2xl font-extrabold"><PackageSearch aria-hidden size={26} /> Track an order</h1>
       <form
         onSubmit={(e) => {
@@ -134,12 +135,22 @@ export function TrackView() {
 
           <section className="flex flex-col rounded-lg border border-line bg-white">
             {order.items.map((i, k) => (
-              <div key={k} className={cn("flex items-center justify-between gap-3 border-t border-line p-3 first:border-0", i.removed && "opacity-50")}>
+              <div key={k} className={cn("flex flex-wrap items-center justify-between gap-3 border-t border-line p-3 first:border-0", i.removed && "opacity-50")}>
                 <span className="min-w-0">
                   <strong className="block truncate text-[13px] font-semibold">{i.title}</strong>
                   <span className="text-xs text-muted">{[i.variant, `×${i.qty}`, i.ship === "sea" ? "Sea" : "Air"].filter(Boolean).join(" · ")}{i.removed ? " · removed, refunded" : order.pay_mode === "group" && i.funded ? " · paid" : ""}</span>
                 </span>
                 <strong className="shrink-0">{naira(i.unit * i.qty)}</strong>
+                {i.photos && i.photos.length > 0 && (
+                  <span className="flex basis-full gap-1.5 overflow-x-auto pt-1" aria-label="Photos from our China warehouse">
+                    {i.photos.map((u) => (
+                      <a key={u} href={u} target="_blank" rel="noreferrer" className="relative size-16 shrink-0 overflow-hidden rounded-md bg-surface">
+                        <Image src={u} alt="Your item at our China warehouse" fill sizes="64px" className="object-cover" />
+                      </a>
+                    ))}
+                    <span className="self-center text-[11px] text-success">Photo checked in China</span>
+                  </span>
+                )}
               </div>
             ))}
             <div className="flex justify-between border-t border-line p-3"><strong>Total</strong><strong>{naira(order.total)}</strong></div>

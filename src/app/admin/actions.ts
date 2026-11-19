@@ -1,5 +1,6 @@
 "use server";
 
+import { RESERVED } from "@/lib/dropship/plans";
 import { updateTag } from "next/cache";
 import { hasSupabase } from "@/lib/supabase/env";
 import { requireStaff } from "@/lib/supabase/auth";
@@ -136,6 +137,19 @@ export async function retryEmail(id: unknown): Promise<Result> {
   return error ? { ok: false, message: error.message } : { ok: true, message: "Queued again" };
 }
 
+/** Staff-set short address: fastchina.store/<alias>. Empty clears it (the store name is used). */
+export async function setStoreAlias(storeId: unknown, alias: unknown): Promise<Result> {
+  await requireStaff();
+  if (typeof storeId !== "string" || typeof alias !== "string") return { ok: false, message: "Nothing to save." };
+  const a = alias.trim().toLowerCase();
+  if (a && (!/^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/.test(a) || RESERVED.has(a))) return { ok: false, message: "Use 3–40 letters, numbers or dashes, not a site word." };
+  if (!hasSupabase) return { ok: true, message: "Demo: not saved." };
+  const { error } = await secretDb().from("stores").update({ alias: a || null }).eq("id", storeId);
+  if (error) return { ok: false, message: /unique|duplicate/i.test(error.message) ? "Another store already uses that address." : error.message };
+  updateTag("stores");
+  return { ok: true, message: a ? `Store is now at fastchina.store/${a}` : "Address reset to the store name" };
+}
+
 /** Activates a paid plan (until online upgrades open) or moves a store back to Free. */
 export async function setStorePlan(storeId: unknown, plan: unknown, months: unknown): Promise<Result> {
   await requireStaff();
@@ -181,4 +195,43 @@ export async function markPayoutPaid(payoutId: unknown, reference: unknown): Pro
   if (!hasSupabase) return { ok: true, message: "Demo: not saved." };
   const { error } = await secretDb().from("seller_payouts").update({ status: "paid", reference: ref, paid_at: new Date().toISOString() }).eq("id", payoutId).eq("status", "pending");
   return error ? { ok: false, message: error.message } : { ok: true, message: "Marked as paid" };
+}
+
+/** Warehouse photo check: a one-time upload address for a photo of an order item (photo already shrunk in the browser). */
+export async function createWarehouseUpload(hash: unknown, ext: unknown): Promise<{ ok: true; path: string; token: string; publicUrl: string } | { ok: true; demo: true } | { ok: false; message: string }> {
+  const me = await requireStaff();
+  if (typeof hash !== "string" || !/^[a-f0-9]{16,64}$/.test(hash) || (ext !== "webp" && ext !== "jpg")) return { ok: false, message: "Bad photo." };
+  if (!hasSupabase || !me) return { ok: true, demo: true };
+  const path = `warehouse/${hash}.${ext}`;
+  const storage = secretDb().storage.from("product-images");
+  const { data, error } = await storage.createSignedUploadUrl(path, { upsert: true });
+  if (error || !data) return { ok: false, message: error?.message ?? "Upload unavailable." };
+  return { ok: true, path, token: data.token, publicUrl: storage.getPublicUrl(path).data.publicUrl };
+}
+
+/** Attach a warehouse photo to an order item; the customer sees it on their tracking page. */
+export async function addItemPhoto(itemId: unknown, url: unknown): Promise<Result> {
+  const me = await requireStaff();
+  if (typeof itemId !== "string" || typeof url !== "string" || !url.startsWith("https://")) return { ok: false, message: "Bad photo." };
+  if (!hasSupabase || !me) return { ok: true, message: "Demo: not saved." };
+  const { error } = await secretDb().from("order_item_photos").insert({ order_item_id: itemId, url, added_by: me.id });
+  return error ? { ok: false, message: error.message } : { ok: true, message: "Photo added" };
+}
+
+/** Publish or hide a customer review. Publishing a photo review gives the customer 20 points (once). */
+export async function moderateReview(id: unknown, status: unknown): Promise<Result> {
+  const me = await requireStaff();
+  if (typeof id !== "number" || !["published", "hidden"].includes(status as string)) return { ok: false, message: "Nothing to save." };
+  if (!hasSupabase || !me) return { ok: true, message: "Demo: not saved." };
+  const db = secretDb();
+  const { data: r, error } = await db.from("product_reviews").update({ status }).eq("id", id).select("customer_id, order_item_id, photos, products(slug)").maybeSingle();
+  if (error || !r) return { ok: false, message: error?.message ?? "Review not found." };
+  if (status === "published" && r.customer_id && r.order_item_id && (r.photos ?? []).length > 0) {
+    const { data: had } = await db.from("points_ledger").select("id").eq("reason", "review").eq("ref_id", r.order_item_id).maybeSingle();
+    if (!had) await db.from("points_ledger").insert({ customer_id: r.customer_id, points: 20, reason: "review", ref_id: r.order_item_id });
+  }
+  updateTag("reviews");
+  const slug = (r.products as unknown as { slug: string } | null)?.slug;
+  if (slug) updateTag(`product:${slug}`);
+  return { ok: true, message: status === "published" ? "Published" : "Hidden" };
 }

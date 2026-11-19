@@ -26,15 +26,15 @@ const SECURITY = [
 
 export default function WhyPage() {
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6 md:py-10">
+    <div className="flex w-full flex-col gap-6 px-4 py-6 md:px-0 md:py-10 lg:grid lg:grid-cols-2 lg:gap-x-12 lg:gap-y-8">
       <JsonLd data={graph(organization(), breadcrumbs([["Home", "/"], ["Why FastChina", "/why-fastchina"]]))} />
-      <header className="flex flex-col items-center gap-3 text-center">
+      <header className="flex flex-col items-center gap-3 text-center lg:col-span-2 lg:flex-row lg:items-center lg:gap-5 lg:text-left">
         <ShieldCheck aria-hidden size={56} strokeWidth={1.4} className="text-success" />
         <h1 className="text-[28px] font-extrabold leading-tight md:text-[38px]">Why choose FastChina</h1>
         <p className="max-w-xl text-[15px] text-muted">China’s factory prices, with the protections you’d expect from a shop down the road.</p>
       </header>
 
-      <section className="grid gap-3 md:grid-cols-2">
+      <section className="grid gap-3 md:grid-cols-2 lg:col-span-2">
         <div className="flex gap-3 rounded-2xl bg-surface p-4">
           <Percent aria-hidden size={22} className="mt-0.5 shrink-0 text-success" />
           <span className="flex flex-col gap-1"><strong>How are prices so low?</strong><span className="text-[14px] leading-relaxed text-muted">We buy straight from Chinese factories and wholesalers at the prices they charge local shops, and skip the layers of importers and resellers. Our profit is on the goods only; freight and clearing pass through at cost.</span></span>
@@ -45,13 +45,13 @@ export default function WhyPage() {
         </div>
       </section>
 
-      <nav aria-label="Sections" className="sticky top-2 z-10 grid grid-cols-2 rounded-full border-2 border-success bg-white p-1 text-center text-[14px] font-bold">
+      <nav aria-label="Sections" className="sticky top-2 z-10 grid grid-cols-2 rounded-full border-2 border-success bg-white p-1 text-center text-[14px] font-bold lg:hidden">
         <a href="#guarantee" className="rounded-full py-2.5 text-success hover:bg-success-soft">Order guarantee</a>
         <a href="#security" className="rounded-full py-2.5 text-success hover:bg-success-soft">Security &amp; privacy</a>
       </nav>
 
       <section id="guarantee" aria-labelledby="g-h" className="flex scroll-mt-20 flex-col gap-4">
-        <h2 id="g-h" className="text-center text-[22px] font-extrabold">Order guarantee</h2>
+        <h2 id="g-h" className="text-center text-[22px] font-extrabold lg:text-left">Order guarantee</h2>
         <ol className="flex flex-col gap-5">
           {GUARANTEE.map(([Icon, t, d], i) => (
             <li key={t} className="flex gap-3">
@@ -66,8 +66,8 @@ export default function WhyPage() {
         <Link href="/legal/refunds" className="self-start text-[14px] font-bold underline">Read the refund policy</Link>
       </section>
 
-      <section id="security" aria-labelledby="s-h" className="flex scroll-mt-20 flex-col gap-4 border-t border-line pt-6">
-        <h2 id="s-h" className="text-center text-[22px] font-extrabold">Security &amp; privacy</h2>
+      <section id="security" aria-labelledby="s-h" className="flex scroll-mt-20 flex-col gap-4 border-t border-line pt-6 lg:border-0 lg:pt-0">
+        <h2 id="s-h" className="text-center text-[22px] font-extrabold lg:text-left">Security &amp; privacy</h2>
         {SECURITY.map(([Icon, t, points], i) => (
           <div key={t} className="flex gap-3">
             <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-success text-[14px] font-extrabold text-white">{i + 1}</span>

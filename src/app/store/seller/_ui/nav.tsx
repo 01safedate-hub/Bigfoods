@@ -3,7 +3,7 @@
 import { BarChart3, Home, Package, Paintbrush, ReceiptText, Sparkles, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BoltMark } from "@/components/shop/header";
+import { BrandWordmark } from "@/components/shop/brand";
 import { cn } from "@/lib/format";
 
 const BASE = "/store/seller";
@@ -27,8 +27,8 @@ export function SellerNav() {
     <>
       <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-1 bg-black p-3 md:flex">
         <Link href={BASE} className="mb-4 flex items-center gap-2 px-2 pt-2">
-          <BoltMark size={30} />
-          <span className="text-[15px] font-black italic tracking-tight">FASTCHINA<span className="ml-1 text-[11px] font-bold not-italic text-[#A1A1AA]">seller</span></span>
+          <BrandWordmark className="h-[22px] w-auto text-white" />
+          <span className="mt-1.5 text-[11px] font-bold text-[#A1A1AA]">seller</span>
         </Link>
         {ITEMS.map(({ href, label, icon: Icon }) => (
           <Link key={href} href={href} aria-current={active(href) ? "page" : undefined}

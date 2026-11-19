@@ -28,7 +28,7 @@ export function WholesaleDealsCard() {
       <span className="flex w-fit items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[11px] font-extrabold tracking-[0.14em]"><Ship aria-hidden size={13} /> WHOLESALE · SEA FREIGHT</span>
       <span className="flex flex-col gap-1">
         <strong className="text-[26px] font-extrabold leading-[1.05] md:text-[34px]">Stock your shop at factory prices</strong>
-        <span className="max-w-md text-[14px] text-white/90">From {MIN_QTY} units per product, delivered to your pickup station in about 90 days. Starter kits for new businesses inside.</span>
+        <span className="max-w-md text-[14px] text-white/90">From {MIN_QTY} units per product, by sea in about 90 days, delivered to your state. Starter kits for new businesses inside.</span>
       </span>
       <span className="flex flex-wrap gap-2 text-[12px] font-bold">
         {["Fashion store kit", "Phone business kit", "Hair & beauty kit"].map((k) => <span key={k} className="flex items-center gap-1 rounded-full bg-black/20 px-2.5 py-1"><PackagePlus aria-hidden size={13} /> {k}</span>)}

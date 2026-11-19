@@ -57,7 +57,7 @@ export function NotificationsView() {
     );
   }
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-3 py-6 md:px-0">
+    <div className="flex w-full max-w-3xl flex-col gap-4 px-3 py-6 md:px-0">
       <h1 className="text-2xl font-extrabold">Notifications</h1>
       <section className="flex flex-col rounded-lg border border-line bg-white">
         {data.items.length === 0 && <p className="p-6 text-center text-muted">Nothing yet. Updates about your orders will appear here.</p>}

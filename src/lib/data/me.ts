@@ -18,7 +18,7 @@ export interface MyOrder {
   total_ngn: number;
   paid_ngn: number;
   created_at: string;
-  items: { title: string; variant_label: string | null; qty: number }[];
+  items: { id: string; title: string; variant_label: string | null; qty: number }[];
 }
 
 export interface Me {
@@ -45,7 +45,7 @@ export async function getMe(): Promise<Me | null> {
     db.from("profiles").select("full_name, phone, role, station_id").eq("id", user.id).maybeSingle(),
     db.from("my_balances").select("wallet_ngn, points").maybeSingle(),
     db.from("wishlists").select("product_id", { count: "exact", head: true }),
-    db.from("orders").select("code, status, pay_mode, total_ngn, paid_ngn, created_at, order_items(title, variant_label, qty)").order("created_at", { ascending: false }).limit(50),
+    db.from("orders").select("code, status, pay_mode, total_ngn, paid_ngn, created_at, order_items(id, title, variant_label, qty)").order("created_at", { ascending: false }).limit(50),
   ]);
   const p = profile.data;
   let station: Me["station"] = null;

@@ -4,15 +4,20 @@ import { type NextRequest, NextResponse } from "next/server";
 /**
  * One app, several kinds of address:
  *  - fastchina.shop            → marketplace (app/(shop))
- *  - fastchina.store           → dropship & wholesale site and the seller dashboard (app/store)
- *  - name.fastchina.store      → a seller's storefront (app/s/[store])
+ *  - fastchina.store           → dropship site (/) and the seller dashboard (/seller) (app/store)
+ *  - fastchina.store/<name>    → a seller's storefront, by store name or staff-set alias (app/s/[store])
+ *  - name.fastchina.store      → the same storefront, once wildcard DNS is set up
+ *  - /store/<name> on the marketplace or preview hosts → the storefront too (handy for testing)
  *  - a seller's own domain     → their storefront too (looked up by verified domain)
  */
 const STORE_HOSTS = (process.env.STORE_HOSTS ?? "fastchina.store,www.fastchina.store").split(",").map((h) => h.trim());
 const MAIN_HOSTS = (process.env.MAIN_HOSTS ?? "fastchina.shop,www.fastchina.shop").split(",").map((h) => h.trim());
 const STORE_ROOT = process.env.STORE_ROOT_DOMAIN ?? "fastchina.store";
 /** Pages that work the same on every domain (sign-in, legal, APIs, app files). */
-const SHARED = /^\/(sign-in|api|legal|track|offline|unsubscribe|notifications|manifest\.webmanifest|sw\.js|robots\.txt|sitemap\.xml)(\/|$)/;
+const SHARED = /^\/(sign-in|api|legal|track|offline|unsubscribe|notifications|pwa|manifest\.webmanifest|sw\.js|robots\.txt|sitemap\.xml)(\/|$)/;
+/** Pages of the dropship site itself; any other first path segment on fastchina.store is a store name. */
+const STORE_PAGES = new Set(["", "seller", "opengraph-image", "store", "pwa", "admin", "api"]);
+const NAME = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/;
 /** Development and preview hosts are never treated as a seller's own domain. */
 const isInfraHost = (h: string) => h === "localhost" || /^[\d.]+$/.test(h) || h.endsWith(".netlify.app") || h.endsWith(".vercel.app") || h.endsWith(".local");
 
@@ -47,8 +52,12 @@ export async function proxy(request: NextRequest) {
   };
 
   if (!SHARED.test(pathname) && !pathname.startsWith("/s/")) {
-    // fastchina.store itself: the dropship site and seller dashboard.
-    if (STORE_HOSTS.includes(host) && !pathname.startsWith("/store")) return rewrite(`/store${pathname === "/" ? "" : pathname}`);
+    // fastchina.store itself: the dropship site and seller dashboard, or fastchina.store/<store name>.
+    if (STORE_HOSTS.includes(host)) {
+      const [, first = "", ...rest] = pathname.split("/");
+      if (!STORE_PAGES.has(first) && NAME.test(first)) return rewrite(`/s/${first}${rest.length ? `/${rest.join("/")}` : ""}`);
+      if (!pathname.startsWith("/store")) return rewrite(`/store${pathname === "/" ? "" : pathname}`);
+    }
     // name.fastchina.store: a seller's storefront.
     if (host.endsWith(`.${STORE_ROOT}`) && !STORE_HOSTS.includes(host)) {
       return rewrite(`/s/${host.slice(0, -STORE_ROOT.length - 1)}${pathname === "/" ? "" : pathname}`);
@@ -58,6 +67,10 @@ export async function proxy(request: NextRequest) {
       return rewrite(`/s/${host.replace(/^www\./, "")}${pathname === "/" ? "" : pathname}`);
     }
   }
+
+  // Marketplace and preview hosts: /store/<name> opens that seller's storefront.
+  const m = /^\/store\/([a-z0-9-]+)(\/.*)?$/.exec(pathname);
+  if (m && !STORE_HOSTS.includes(host) && !STORE_PAGES.has(m[1]) && NAME.test(m[1])) return rewrite(`/s/${m[1]}${m[2] ?? ""}`);
 
   const res = NextResponse.next({ request });
   if (pathname.startsWith("/admin")) res.headers.set("X-Robots-Tag", "noindex, nofollow");

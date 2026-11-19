@@ -8,6 +8,7 @@ import { getMe, ORDER_GROUPS, type OrderGroup } from "@/lib/data/me";
 import { cn, naira } from "@/lib/format";
 import { trackingStep, type OrderStatus } from "@/lib/orders/lifecycle";
 import { SettingsShell } from "../settings/ui";
+import { ReviewButton } from "./review-button";
 
 export const metadata: Metadata = { title: "My orders", robots: { index: false } };
 const PAY: Record<string, string> = { full: "Paid in full", small: "Pay small small", group: "Group pay" };
@@ -54,7 +55,12 @@ async function Body({ searchParams }: { searchParams: PageProps<"/account/orders
                 <span className="rounded-full bg-surface px-2.5 py-1 text-[12px] font-bold">{trackingStep(o.status as OrderStatus).label}</span>
               </div>
               <ul className="text-[13px] text-muted">
-                {o.items.map((i, k) => <li key={k} className="truncate">{i.qty}× {i.title}{i.variant_label ? ` · ${i.variant_label}` : ""}</li>)}
+                {o.items.map((i, k) => (
+                  <li key={k} className="flex items-center justify-between gap-2">
+                    <span className="truncate">{i.qty}× {i.title}{i.variant_label ? ` · ${i.variant_label}` : ""}</span>
+                    {o.status === "delivered" && <ReviewButton itemId={i.id} title={i.title} author={me.name.split(" ")[0]} />}
+                  </li>
+                ))}
               </ul>
               <div className="flex items-center justify-between gap-2 border-t border-line pt-2 text-[13px]">
                 <span className="text-muted">{PAY[o.pay_mode] ?? o.pay_mode} · {new Date(o.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Africa/Lagos" })}</span>

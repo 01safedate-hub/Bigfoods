@@ -33,7 +33,7 @@ const HOW = [
 ];
 
 const STORE_FAQ = [
-  { q: "Can I start dropshipping in Nigeria for free?", a: "Yes. The Free plan costs ₦0 a month: 20 products, your own link (yourname.fastchina.store) and up to ₦2,000,000 in total sales before you need to upgrade. You never buy stock." },
+  { q: "Can I start dropshipping in Nigeria for free?", a: "Yes. The Free plan costs ₦0 a month: 20 products, your own link (fastchina.store/yourname) and up to ₦2,000,000 in total sales before you need to upgrade. You never buy stock." },
   { q: "How do I get paid?", a: "Your selling price is our price plus your markup. After your customer collects the order, your markup minus a small plan fee (5% Free, 3% Pro, 1.5% Elite) is paid to your Nigerian bank account weekly." },
   { q: "Who delivers to my customers?", a: "We do. We buy the item in China, photograph it, ship it and deliver it to your customer's nearest Jumia pickup station, with your store name on the order." },
   { q: "Can my customers pay in instalments?", a: "Yes. Pay small small is on by default, and you can switch it off to accept full payment only." },

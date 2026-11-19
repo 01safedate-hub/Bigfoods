@@ -16,7 +16,7 @@ const TOPICS = ["Dropshipping", "Importing", "Wholesale", "Buying guides"] as co
 
 export default function GuidesPage() {
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-10 px-4 py-8 md:py-12">
+    <div className="flex w-full flex-col gap-10 px-4 py-8 md:px-0 md:py-12">
       <JsonLd
         data={graph(
           breadcrumbs([["Home", "/"], ["Guides", "/guides"]]),
@@ -40,7 +40,7 @@ export default function GuidesPage() {
         return (
           <section key={topic} aria-labelledby={`t-${topic}`} className="flex flex-col gap-3">
             <h2 id={`t-${topic}`} className="text-lg font-extrabold">{topic}</h2>
-            <ul className="grid gap-3 md:grid-cols-2">
+            <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {list.map((g) => (
                 <li key={g.slug}>
                   <Link href={`/guides/${g.slug}`} className="group flex h-full flex-col gap-2 rounded-2xl border border-line p-5 transition-colors hover:border-ink">

@@ -71,7 +71,7 @@ export async function getDashboard(): Promise<Dashboard | null> {
 
 export interface AdminOrder {
   id: string; code: string; status: string; pay_mode: string; total_ngn: number; paid_ngn: number; state: string; phone: string | null;
-  created_at: string; items: { title: string; variant_label: string | null; qty: number; unit_ngn: number }[];
+  created_at: string; items: { id?: string; title: string; variant_label: string | null; qty: number; unit_ngn: number; photos?: string[] }[];
   channel?: "retail" | "wholesale"; ship_mode?: "air" | "sea";
 }
 
@@ -80,7 +80,7 @@ export async function listOrders(f: { q?: string; status?: string; state?: strin
   if (!hasSupabase) return null;
   let query = secretDb()
     .from("orders")
-    .select("id, code, status, pay_mode, total_ngn, paid_ngn, state, phone, created_at, channel, ship_mode, order_items(title, variant_label, qty, unit_ngn)")
+    .select("id, code, status, pay_mode, total_ngn, paid_ngn, state, phone, created_at, channel, ship_mode, order_items(id, title, variant_label, qty, unit_ngn, order_item_photos(url))")
     .order("created_at", { ascending: false })
     .limit(100);
   const q = f.q?.trim().replace(/[^A-Za-z0-9+]/g, "");
@@ -90,7 +90,11 @@ export async function listOrders(f: { q?: string; status?: string; state?: strin
   if (f.channel === "retail" || f.channel === "wholesale") query = query.eq("channel", f.channel);
   const { data, error } = await query;
   if (error) throw new Error(`Orders: ${error.message}`);
-  return (data ?? []).map((o) => ({ ...o, items: o.order_items })) as AdminOrder[];
+  return (data ?? []).map((o) => ({
+    ...o,
+    items: (o.order_items as unknown as { id: string; title: string; variant_label: string | null; qty: number; unit_ngn: number; order_item_photos: { url: string }[] }[])
+      .map(({ order_item_photos, ...i }) => ({ ...i, photos: (order_item_photos ?? []).map((p) => p.url) })),
+  })) as AdminOrder[];
 }
 
 export interface StaffMember {
@@ -145,7 +149,7 @@ export async function getOutbox(status?: string): Promise<{ rows: OutboxRow[]; c
 }
 
 export interface AdminStore {
-  id: string; slug: string; name: string; plan: string; plan_renews_at: string | null; status: string; lifetime_sales_ngn: number;
+  id: string; slug: string; alias: string | null; name: string; plan: string; plan_renews_at: string | null; status: string; lifetime_sales_ngn: number;
   custom_domain: string | null; domain_verified: boolean; created_at: string; products: number; owner: string | null;
   payouts: { id: string; amount_ngn: number; items: number; status: string; created_at: string; bank_snapshot: { bank?: string; account?: string; name?: string } }[];
 }
@@ -153,7 +157,7 @@ export interface AdminStore {
 export async function listStores(q?: string): Promise<AdminStore[] | null> {
   if (!hasSupabase) return null;
   const db = secretDb();
-  let query = db.from("stores").select("id, slug, name, plan, plan_renews_at, status, lifetime_sales_ngn, custom_domain, domain_verified, created_at, owner_id, store_products(count), seller_payouts(id, amount_ngn, items, status, created_at, bank_snapshot)")
+  let query = db.from("stores").select("id, slug, alias, name, plan, plan_renews_at, status, lifetime_sales_ngn, custom_domain, domain_verified, created_at, owner_id, store_products(count), seller_payouts(id, amount_ngn, items, status, created_at, bank_snapshot)")
     .order("created_at", { ascending: false }).limit(100);
   if (q?.trim()) query = query.or(`slug.ilike.%${q.trim().replace(/[^a-z0-9-]/gi, "")}%,name.ilike.%${q.trim().replace(/[%,()]/g, "")}%`);
   const { data, error } = await query;
@@ -283,4 +287,15 @@ export async function listDraws(): Promise<AdminDraw[] | null> {
     entries: (d.draw_entries as unknown as { count: number }[])[0]?.count ?? 0,
     winners: (d.draw_winners as unknown as { count: number }[])[0]?.count ?? 0,
   }));
+}
+
+export interface AdminReview { id: number; author: string; rating: number; body: string | null; photos: string[]; status: string; created_at: string; product: string; slug: string }
+
+export async function listReviews(status = "pending"): Promise<AdminReview[] | null> {
+  if (!hasSupabase) return null;
+  const { data } = await secretDb().from("product_reviews").select("id, author, rating, body, photos, status, created_at, products(title, slug)").eq("status", status).order("created_at", { ascending: false }).limit(100);
+  return (data ?? []).map((r) => {
+    const p = r.products as unknown as { title: string; slug: string } | null;
+    return { id: r.id, author: r.author, rating: r.rating, body: r.body, photos: r.photos ?? [], status: r.status, created_at: r.created_at, product: p?.title ?? "", slug: p?.slug ?? "" };
+  });
 }

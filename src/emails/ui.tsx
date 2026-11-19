@@ -1,4 +1,4 @@
-import { Body, Button, Column, Container, Head, Heading, Hr, Html, Link, Preview, Row, Section, Text } from "@react-email/components";
+import { Body, Button, Column, Container, Head, Heading, Hr, Html, Img, Link, Preview, Row, Section, Text } from "@react-email/components";
 import type { ReactNode } from "react";
 
 export const SITE = process.env.SITE_URL ?? "https://fastchina.shop";
@@ -19,17 +19,9 @@ export function Layout({ preview, children, marketing, unsubscribeUrl }: { previ
       <Body style={{ backgroundColor: "#F2F2F2", margin: 0, padding: "24px 0", fontFamily: font, color: C.ink }}>
         <Container style={{ maxWidth: 560, margin: "0 auto", backgroundColor: "#FFFFFF", borderRadius: 12, overflow: "hidden" }}>
           <Section style={{ padding: "20px 28px", borderBottom: `1px solid ${C.line}` }}>
-            <Row>
-              <Column style={{ width: 34 }}>
-                <div style={{ width: 30, height: 30, borderRadius: 7, backgroundColor: C.ink, color: C.gold, textAlign: "center", lineHeight: "30px", fontSize: 18, fontWeight: 900 }}>⚡</div>
-              </Column>
-              <Column>
-                <Link href={SITE} style={{ textDecoration: "none", fontSize: 19, fontWeight: 900, fontStyle: "italic", letterSpacing: "-0.02em" }}>
-                  <span style={{ color: C.ink }}>FAST</span>
-                  <span style={{ color: C.sale }}>CHINA</span>
-                </Link>
-              </Column>
-            </Row>
+            <Link href={SITE} style={{ textDecoration: "none", display: "inline-block" }}>
+              <Img src={`${SITE}/brand/fastchina-wordmark.png`} width="132" height="31" alt="FastChina" style={{ display: "block", border: 0 }} />
+            </Link>
           </Section>
           <Section style={{ padding: "28px 28px 8px" }}>{children}</Section>
           <Section style={{ padding: "8px 28px 28px" }}>

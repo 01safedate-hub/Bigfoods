@@ -3,6 +3,7 @@ import type { MetadataRoute } from "next";
 /** Lets people add FastChina to their home screen; opens full screen like an app. */
 export default function manifest(): MetadataRoute.Manifest {
   return {
+    id: "/?app=shop",
     name: "FastChina",
     short_name: "FastChina",
     description: "China’s factories, delivered free to your Jumia pickup station.",
@@ -18,6 +19,7 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
     shortcuts: [
+      { name: "Wholesale market", url: "/wholesale" },
       { name: "Deals", url: "/deals" },
       { name: "Track an order", url: "/track" },
       { name: "My cart", url: "/cart" },

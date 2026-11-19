@@ -143,12 +143,9 @@ export function WholesaleMarket({ products, categories, kits }: { products: Prod
       {!filtered && kits.length > 0 && (
         <section aria-labelledby="kits-h" className="flex flex-col gap-2.5">
           <div className="flex items-end justify-between gap-2 px-3 md:px-0">
-            <span className="flex flex-col">
-              <h2 id="kits-h" className="text-[18px] font-extrabold md:text-[22px]">Starting a business? Start here</h2>
-              <span className="text-[13px] text-muted">Ready-made stock lists, picked from our best sellers. Add all, then remove or add what you like.</span>
-            </span>
+            <h2 id="kits-h" className="text-[16px] font-extrabold md:text-[20px]">Starter kits</h2>
           </div>
-          <div className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 md:grid md:grid-cols-3 md:overflow-visible md:px-0 xl:grid-cols-5">
+          <div className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 md:px-0 lg:grid lg:grid-cols-4 lg:overflow-visible">
             {kits.map((k) => <KitCard key={k.slug} kit={k} products={products} />)}
           </div>
         </section>
@@ -171,7 +168,7 @@ export function WholesaleMarket({ products, categories, kits }: { products: Prod
           </label>
         </div>
         {results.length ? (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:gap-3 lg:grid-cols-4 xl:grid-cols-5">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:gap-3 lg:grid-cols-4">
             {results.map((p) => <WholesaleCard key={p.slug} product={p} onChoose={() => setSheet(p)} inCart={cart.filter((l) => l.slug === p.slug).reduce((s, l) => s + l.qty, 0)} />)}
           </div>
         ) : (
@@ -186,11 +183,11 @@ export function WholesaleMarket({ products, categories, kits }: { products: Prod
       {sheet && <VariantSheet product={sheet} onClose={() => setSheet(null)} />}
 
       {units > 0 && (
-        <div className="fixed inset-x-0 bottom-[calc(60px+env(safe-area-inset-bottom))] z-30 px-3 pb-2 md:bottom-4 md:mx-auto md:max-w-xl">
+        <div className="fixed inset-x-0 bottom-[calc(49px+env(safe-area-inset-bottom))] z-30 px-3 pb-2 md:bottom-4 md:mx-auto md:max-w-xl">
           <Link href="/wholesale/cart" className="flex items-center justify-between gap-3 rounded-2xl bg-sale px-4 py-3 text-white shadow-2xl">
             <span className="flex flex-col leading-tight">
               <strong className="text-[15px]">Wholesale cart · {units} units</strong>
-              <span className="text-[12px] text-white/85">{naira(total)} · ships by sea, 90+ days</span>
+              <span className="text-[12px] text-white/85">{naira(total)} · by sea, 90+ days</span>
             </span>
             <span className="flex items-center gap-1 rounded-full bg-white px-4 py-2 text-[13px] font-extrabold text-sale">View cart <ArrowRight aria-hidden size={14} /></span>
           </Link>
@@ -242,7 +239,7 @@ function KitCard({ kit, products }: { kit: Kit; products: Product[] }) {
   const units = lines.reduce((s, l) => s + l.qty, 0);
   const total = lines.reduce((s, l) => s + l.qty * l.variant.wholesale, 0);
   return (
-    <article className={cn("flex w-[82%] shrink-0 snap-start flex-col gap-3 rounded-2xl p-4 sm:w-[46%] md:w-auto", TONES[kit.tone])}>
+    <article className={cn("flex w-[78%] shrink-0 snap-start flex-col gap-3 rounded-2xl p-4 sm:w-[44%] md:w-[31%] lg:w-auto", TONES[kit.tone])}>
       <span className="flex flex-col gap-1">
         <span className="text-[11px] font-extrabold tracking-[0.14em] opacity-80">STARTER KIT</span>
         <h3 className="text-[19px] font-extrabold leading-tight">{kit.title}</h3>

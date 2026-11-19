@@ -17,12 +17,13 @@ export default async function LegalPage({ params }: PageProps<"/legal/[doc]">) {
   const d = LEGAL[doc];
   if (!d) notFound();
   return (
-    <article className="mx-auto flex w-full max-w-2xl flex-col gap-5 px-4 py-8 text-[14px] leading-relaxed">
-      <nav aria-label="Legal" className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+    <div className="flex w-full flex-col gap-5 px-4 py-8 md:px-0 lg:grid lg:grid-cols-[240px_minmax(0,760px)] lg:items-start lg:gap-12">
+      <nav aria-label="Legal" className="flex flex-wrap gap-x-4 gap-y-1 text-xs lg:sticky lg:top-28 lg:flex-col lg:gap-1 lg:text-[14px]">
         {Object.entries(LEGAL).map(([k, v]) => (
-          <Link key={k} href={`/legal/${k}`} aria-current={k === doc ? "page" : undefined} className={k === doc ? "font-bold" : "text-muted underline"}>{v.title}</Link>
+          <Link key={k} href={`/legal/${k}`} aria-current={k === doc ? "page" : undefined} className={k === doc ? "font-bold lg:rounded-lg lg:bg-surface lg:px-3 lg:py-2" : "text-muted underline lg:px-3 lg:py-2 lg:no-underline lg:hover:text-ink"}>{v.title}</Link>
         ))}
       </nav>
+      <article className="flex min-w-0 flex-col gap-5 text-[14px] leading-relaxed">
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-extrabold">{d.title}</h1>
         <p className="text-muted">{d.summary} Last updated 17 November 2026.</p>
@@ -33,6 +34,7 @@ export default async function LegalPage({ params }: PageProps<"/legal/[doc]">) {
           {s.p.map((p, i) => <p key={i}>{p}</p>)}
         </section>
       ))}
-    </article>
+      </article>
+    </div>
   );
 }

@@ -41,7 +41,8 @@ export function WholesaleCart() {
   const short = groups.filter((g) => g.reduce((s, l) => s + l.qty, 0) < MIN_QTY);
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 pb-36 md:pt-6">
+    <div className="flex w-full flex-col gap-3 pb-36 md:pt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8 lg:pb-10">
+      <div className="flex min-w-0 flex-col gap-3">
       <div className="flex items-center gap-2 border-b border-line bg-white px-2 py-2 md:rounded-t-2xl md:border">
         <Link href="/wholesale" aria-label="Back to wholesale market" className="flex size-11 items-center justify-center"><ChevronLeft aria-hidden size={24} /></Link>
         <h1 className="flex-1 text-[19px] font-extrabold">Wholesale cart</h1>
@@ -59,7 +60,7 @@ export function WholesaleCart() {
         <>
           <p className="mx-3 flex items-start gap-2 rounded-xl bg-[#FFF1F2] p-3 text-[13px] text-[#7F0A15] md:mx-0">
             <Ship aria-hidden size={18} className="mt-0.5 shrink-0" />
-            Ships by sea. Arrives at your pickup station {SEA_DAYS[0]}–{SEA_DAYS[1]} days after full payment. Clearing, weighing and local delivery are in the price.
+            Ships by sea and clears customs in Lagos {SEA_DAYS[0]}–{SEA_DAYS[1]} days after full payment. Freight and clearing are in the price; delivery from Lagos to you is arranged and billed by state.
           </p>
           {quote.missing > 0 && (
             <p role="alert" className="mx-3 flex flex-wrap items-center gap-2 rounded-xl bg-[#FFF7E0] p-3 text-[13px] text-gold-ink md:mx-0">
@@ -104,12 +105,32 @@ export function WholesaleCart() {
         </>
       )}
 
+      </div>
+
       {lines.length > 0 && (
-        <div className="fixed inset-x-0 bottom-[calc(60px+env(safe-area-inset-bottom))] z-30 border-t border-line bg-white px-3 py-3 md:bottom-0">
+        <aside aria-label="Summary" className="sticky top-28 hidden flex-col gap-3 rounded-2xl border border-line bg-white p-5 lg:flex">
+          <h2 className="text-[16px] font-extrabold">Summary</h2>
+          <dl className="flex flex-col gap-1.5 text-[14px]">
+            <div className="flex justify-between"><dt className="text-muted">Products</dt><dd>{groups.length}</dd></div>
+            <div className="flex justify-between"><dt className="text-muted">Units</dt><dd>{units}</dd></div>
+            <div className="flex justify-between"><dt className="text-muted">Freight &amp; clearing</dt><dd className="font-semibold text-success">Included</dd></div>
+            <div className="flex justify-between"><dt className="text-muted">Delivery in Nigeria</dt><dd>By state, later</dd></div>
+            <div className="flex justify-between border-t border-line pt-2 text-[18px] font-extrabold"><dt>Total</dt><dd className="tabular-nums">{naira(total)}</dd></div>
+          </dl>
+          {short.length || quote.missing ? (
+            <p className="rounded-xl bg-surface p-3 text-[13px] font-semibold text-muted">{quote.missing ? "Remove unavailable items to continue." : `Reach ${MIN_QTY} units of each product to continue.`}</p>
+          ) : (
+            <Link href="/wholesale/checkout" className="flex min-h-12 items-center justify-center rounded-full bg-sale text-[15px] font-extrabold text-white">Checkout</Link>
+          )}
+        </aside>
+      )}
+
+      {lines.length > 0 && (
+        <div className="fixed inset-x-0 bottom-[calc(49px+env(safe-area-inset-bottom))] z-30 border-t border-line bg-white px-3 py-3 md:bottom-0 lg:hidden">
           <div className="mx-auto flex max-w-3xl items-center gap-3">
             <span className="flex min-w-0 flex-1 flex-col leading-tight">
               <strong className="text-[18px] tabular-nums">{naira(total)}</strong>
-              <span className="text-[12px] text-muted">{units} units · {groups.length} products · delivery included</span>
+              <span className="text-[12px] text-muted">{units} units · {groups.length} products · freight &amp; clearing included</span>
             </span>
             {short.length || quote.missing ? (
               <span className="rounded-full bg-surface px-4 py-3 text-[13px] font-bold text-muted">{quote.missing ? "Remove unavailable items" : `Reach ${MIN_QTY} per product`}</span>

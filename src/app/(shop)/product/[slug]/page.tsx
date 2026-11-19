@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ProductCard } from "@/components/shop/product-card";
 import { JsonLd } from "@/components/seo/json-ld";
+import { EndlessFeed } from "@/components/shop/endless-feed";
+import { ReviewsSection } from "@/components/shop/reviews-section";
 import { CATEGORY_PAGES } from "@/lib/content/category-pages";
-import { getProduct, getProducts, getProductSlugs, getQuestions } from "@/lib/data/catalog";
+import { getProduct, getProducts, getProductSlugs, getQuestions, getReviews } from "@/lib/data/catalog";
 import { naira } from "@/lib/format";
 import { breadcrumbs, graph, returnPolicy, SHOP_URL, shippingDetails, snippet } from "@/lib/seo";
 import { ProductView } from "./product-view";
@@ -35,8 +36,11 @@ export default async function ProductPage({ params }: PageProps<"/product/[slug]
   const { slug } = await params;
   const product = await getProduct(slug);
   if (!product) notFound();
-  const qa = await getQuestions(slug);
-  const related = (await getProducts()).filter((p) => p.slug !== slug && (p.category === product.category || p.flash)).slice(0, 6);
+  const [qa, reviews] = await Promise.all([getQuestions(slug), getReviews(slug)]);
+  // Related first, then everything else by popularity: the page keeps showing products as you scroll.
+  const all = (await getProducts()).filter((p) => p.slug !== slug);
+  const near = all.filter((p) => p.category === product.category);
+  const related = [...near, ...all.filter((p) => p.category !== product.category).sort((a, b) => b.sold - a.sold)].slice(0, 120);
 
   // Product details for search engines (Google merchant listings and product snippets).
   const url = `${SHOP_URL}/product/${slug}`;
@@ -77,14 +81,10 @@ export default async function ProductPage({ params }: PageProps<"/product/[slug]
     <>
       <JsonLd data={jsonLd} />
       <ProductView product={qa ? { ...product, qa } : product} />
-      <section aria-label="You may also like" className="flex flex-col gap-2.5 px-1.5 pt-4 md:px-0">
-        <h2 className="px-1.5 text-[15px] font-extrabold md:px-0 md:text-lg">You may also like</h2>
-        <div className="grid grid-cols-2 gap-x-1.5 gap-y-3 sm:grid-cols-3 md:grid-cols-4 md:gap-x-3 lg:grid-cols-6">
-          {related.map((p) => (
-            <ProductCard key={p.slug} product={p} />
-          ))}
-        </div>
-      </section>
+      <div className="px-0 pt-2 md:pt-4">
+        <ReviewsSection reviews={reviews} rating={product.rating} count={product.reviews} />
+      </div>
+      <EndlessFeed products={related} />
     </>
   );
 }

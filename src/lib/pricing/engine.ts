@@ -82,7 +82,7 @@ export interface PriceBreakdown {
   event: number;
   flash: number;
   retailer: number;
-  /** Wholesale: sea freight and clearing (with buffer), local delivery, weighing fee, 10–40% profit. */
+  /** Wholesale: sea freight and clearing (with buffer), weighing fee, 10–40% profit. Local delivery is billed by state. */
   wholesale: number;
   wholesaleCost: number;
   wholesaleProfit: number;
@@ -110,7 +110,8 @@ export function priceOf(p: Costable): PriceBreakdown {
   const seaCbm = Math.max(p.cbm ?? 0, p.weightKg / PRICING.seaKgPerCbm);
   const wholesaleLogistics = (seaCbm * PRICING.seaPerCbm + p.weightKg * PRICING.seaClearingPerKg) * (1 + PRICING.seaBuffer);
   const wholesaleProfit = goods * WHOLESALE_MARGIN[p.category];
-  const wholesaleCost = goods + wholesaleLogistics + lastMile;
+  // Local delivery after customs is billed separately by state, so it isn't in wholesale prices.
+  const wholesaleCost = goods + wholesaleLogistics + PRICING.weighingFeePerItem;
   const wPre = wholesaleCost + wholesaleProfit;
   return {
     goods,

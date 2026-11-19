@@ -6,6 +6,7 @@ import { allow, TOO_MANY } from "@/lib/rate-limit";
 import { getSessionUser } from "@/lib/supabase/auth";
 import { hasSupabase } from "@/lib/supabase/env";
 import { secretDb } from "@/lib/supabase/server";
+import { NIGERIAN_STATES } from "@/lib/geo";
 import { MIN_QTY, shortProducts } from "@/lib/wholesale/rules";
 
 const MAX_LINES = 80;
@@ -55,11 +56,14 @@ type PlaceResult = { ok: true; code: string } | { ok: false; message: string; de
  * Places a wholesale order: re-priced here from the database, sea only, at least the minimum
  * of each product, no coupons or points. The database checks the same rules again.
  */
-export async function placeWholesaleOrder(input: { items: unknown; stationId: unknown; phone: unknown; mode: unknown; weeks?: unknown }): Promise<PlaceResult> {
+export async function placeWholesaleOrder(input: { items: unknown; delivery: unknown; phone: unknown; mode: unknown; weeks?: unknown }): Promise<PlaceResult> {
   const phone = normalisePhone(input?.phone);
   if (!phone) return { ok: false, message: "Enter a Nigerian phone number for order updates." };
   if (input.mode !== "full" && input.mode !== "small") return { ok: false, message: "Choose how to pay." };
-  if (typeof input.stationId !== "string" || !input.stationId) return { ok: false, message: "Choose a pickup station." };
+  const d = (input.delivery ?? {}) as Record<string, unknown>;
+  const str = (v: unknown, n: number) => (typeof v === "string" ? v.trim().slice(0, n) : "");
+  const delivery = { state: str(d.state, 40), city: str(d.city, 80), address: str(d.address, 300) };
+  if (!NIGERIAN_STATES.includes(delivery.state) || delivery.city.length < 2) return { ok: false, message: "Enter your state and city for delivery." };
   if (!hasSupabase) return { ok: false, demo: true, message: "Demo mode: orders turn on when the database is connected." };
   if (!(await allow("wholesale-order", 6, 600))) return { ok: false, message: TOO_MANY };
 
@@ -78,7 +82,8 @@ export async function placeWholesaleOrder(input: { items: unknown; stationId: un
   const user = await getSessionUser();
   const { data, error } = await secretDb().rpc("place_order", {
     p_customer: user?.id ?? null,
-    p_station: input.stationId,
+    p_station: null,
+    p_delivery: delivery,
     p_phone: phone,
     p_mode: input.mode,
     p_total: total,

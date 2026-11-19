@@ -157,3 +157,14 @@ input[type="search"]::-webkit-search-decoration {
     padding-bottom: 0;
   }
 }
+
+/* Feed promo cards: coins and icons bob gently. */
+@keyframes promo-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.promo-float { animation: promo-float 2.6s ease-in-out infinite; }
+.promo-float-slow { animation: promo-float 4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .promo-float, .promo-float-slow { animation: none; }
+}

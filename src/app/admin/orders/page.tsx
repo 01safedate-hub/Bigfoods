@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { type AdminOrder, listOrders } from "@/lib/data/admin";
+import { ItemPhotos } from "./item-photos";
 import { naira } from "@/lib/format";
 import { checkStaff } from "@/lib/supabase/auth";
 import { CancelButton } from "./cancel-button";
@@ -52,7 +53,10 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
             </summary>
             <div className="flex flex-col gap-2 border-t border-[#EEF0F3] p-3.5">
               {o.items.map((i, k) => (
-                <div key={k} className="flex justify-between gap-2"><span>{i.title} <span className="text-xs text-[#5B6170]">{i.variant_label} ×{i.qty}</span></span><span className="tabular-nums">{naira(i.unit_ngn * i.qty)}</span></div>
+                <div key={k} className="flex flex-col gap-1.5 border-b border-[#F1F2F4] pb-2 last:border-0">
+                  <div className="flex justify-between gap-2"><span>{i.title} <span className="text-xs text-[#5B6170]">{i.variant_label} ×{i.qty}</span></span><span className="tabular-nums">{naira(i.unit_ngn * i.qty)}</span></div>
+                  {i.id && ["purchased", "purchasing", "paid", "shipped"].includes(o.status) && <ItemPhotos itemId={i.id} photos={i.photos ?? []} />}
+                </div>
               ))}
               <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs text-[#5B6170]">
                 <span>{o.phone} · placed {new Date(o.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Africa/Lagos" })}</span>

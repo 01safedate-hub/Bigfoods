@@ -68,7 +68,7 @@ export const GUIDES: Guide[] = [
         blocks: [
           { steps: [
             ["Pick a niche you can talk about", "Wigs, beauty tools, phone accessories, watches and home gadgets sell well because people already buy them online and they ship by air. Pick one niche so your store looks focused."],
-            ["Open a free store", `On [FastChina.store](${STORE}/seller) the Free plan costs nothing, holds 20 products and gives you a link like yourname.fastchina.store. There's no monthly fee until you pass ₦2,000,000 in total sales.`],
+            ["Open a free store", `On [FastChina.store](${STORE}/seller) the Free plan costs nothing, holds 20 products and gives you a link like fastchina.store/yourname. There's no monthly fee until you pass ₦2,000,000 in total sales.`],
             ["Choose 10–20 products", "Start with items between ₦5,000 and ₦40,000. They're easy impulse buys, and Pay small small helps with dearer ones. Read the Q&A on each product so you can answer customers."],
             ["Set your markup", "Your selling price is the supplier's price plus your markup. A 20–40% markup is common. Check that your price is still fair against Jumia and Instagram sellers."],
             ["Share your store everywhere", "Post one product a day on WhatsApp status, make short videos, and reply fast. Trust sells more than ads at the start."],
@@ -274,7 +274,7 @@ export const GUIDES: Guide[] = [
       {
         h: "Wholesale prices from 10 units, by sea",
         blocks: [
-          "On the [FastChina wholesale market](/wholesale), every product has a wholesale price from 10 units (mix colours and sizes of the same product to reach 10). Wholesale ships by sea, so it takes about 90 days, but the unit price already includes sea freight, customs clearing, weighing and delivery to your Jumia pickup station. New to selling? Starter kits fill a cart with best sellers for a fashion store, a phone business or a hair and beauty shop in one tap.",
+          "On the [FastChina wholesale market](/wholesale), every product has a wholesale price from 10 units (mix colours and sizes of the same product to reach 10). Wholesale ships by sea, so it takes about 90 days, and the unit price already includes sea freight, customs clearing and weighing. Delivery from Lagos to your state is arranged when your stock arrives and billed by state. New to selling? Starter kits fill a cart with best sellers for a fashion store, a phone business or a hair and beauty shop in one tap.",
         ],
       },
       {

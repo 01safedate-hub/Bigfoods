@@ -18,7 +18,7 @@ export interface Plan {
 export const PLANS: Record<PlanKey, Plan> = {
   free: {
     key: "free", name: "Free", price: 0, maxProducts: 20, feePct: 5, themes: ["studio"], customDomain: false,
-    perks: ["20 products", "Studio theme", "yourname.fastchina.store", "Up to ₦2,000,000 in sales", "5% fee on your profit"],
+    perks: ["20 products", "Studio theme", "fastchina.store/yourname", "Up to ₦2,000,000 in sales", "5% fee on your profit"],
   },
   pro: {
     key: "pro", name: "Pro", price: 15_000, maxProducts: 200, feePct: 3, themes: ["studio", "noir", "bloom"], customDomain: true,
@@ -61,6 +61,20 @@ export function storePrice(fastchinaPrice: number, markupType: "pct" | "fixed", 
 export const sellerNet = (markup: number, plan: PlanKey) => markup - Math.round((markup * PLANS[plan].feePct) / 100);
 
 export const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/;
-export const RESERVED = new Set(["www", "admin", "api", "app", "store", "shop", "seller", "sellers", "mail", "help", "support", "fastchina", "static", "assets"]);
+export const RESERVED = new Set(["www", "admin", "api", "app", "store", "shop", "seller", "sellers", "mail", "help", "support", "fastchina", "static", "assets", "pwa", "sign-in", "signin", "login", "legal", "track", "offline", "wholesale", "guides", "category", "categories", "product", "products", "deals", "search", "cart", "checkout", "account", "wishlist", "notifications", "unsubscribe", "sitemap", "robots", "opengraph-image", "about", "contact", "blog", "why-fastchina", "terms", "privacy"]);
 export const slugify = (name: string) =>
   name.toLowerCase().normalize("NFKD").replace(/[^\w\s-]/g, "").trim().replace(/[\s_]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "").slice(0, 30);
+
+/** Where the dropship site lives (fastchina.store). */
+export const STORE_ORIGIN = (process.env.NEXT_PUBLIC_STORE_URL ?? "https://fastchina.store").replace(/\/$/, "");
+
+/**
+ * A store's public address. Default: fastchina.store/<alias or name>. A verified own domain wins.
+ * (name.fastchina.store also works once wildcard DNS is set up.)
+ */
+export function storePublicUrl(s: { slug: string; alias?: string | null; customDomain?: string | null }): string {
+  if (s.customDomain) return `https://${s.customDomain}`;
+  return `${STORE_ORIGIN}/${s.alias || s.slug}`;
+}
+/** The same, without https:// for display. */
+export const storeAddress = (s: Parameters<typeof storePublicUrl>[0]) => storePublicUrl(s).replace(/^https?:\/\//, "");

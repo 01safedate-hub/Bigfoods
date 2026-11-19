@@ -8,7 +8,7 @@ describe("email templates", () => {
       const e = await renderEmail(name, t.sample, t.marketing ? "https://fastchina.shop/unsubscribe?u=x&t=y" : undefined);
       expect(e.subject.length).toBeGreaterThan(5);
       expect(e.subject).not.toMatch(/undefined|NaN|#\s/);
-      expect(e.html).toContain("FAST");
+      expect(e.html).toContain("fastchina-wordmark.png");
       expect(e.html).not.toMatch(/undefined|NaN/);
       expect(e.text.length).toBeGreaterThan(40);
       expect(e.html.includes("Unsubscribe")).toBe(Boolean(t.marketing));

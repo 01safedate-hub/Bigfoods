@@ -5,7 +5,8 @@ import { InfoButton } from "@/components/ui/info-button";
 import type { Product } from "@/lib/catalog/types";
 import { cn } from "@/lib/format";
 import { ProductCard } from "./product-card";
-import { categoryRanks, SpotlightCard } from "./spotlight-card";
+import { PromoTile, SpotlightCarousel } from "./feed-promos";
+import { categoryRanks } from "./spotlight-card";
 
 const TABS = ["For You", "Gadgets", "New In", "Under ₦10k", "Sea items"] as const;
 type Tab = (typeof TABS)[number];
@@ -47,11 +48,16 @@ export function ProductFeed({ products }: { products: Product[] }) {
       ) : (
         <div className="grid grid-cols-2 gap-x-1.5 gap-y-3 px-1.5 sm:grid-cols-3 md:grid-cols-4 md:gap-x-3 md:gap-y-5 md:px-0 lg:grid-cols-5 xl:grid-cols-6">
           {list.map((p, i) => {
-            const spot = (i + 1) % 8 === 0 ? best[((i + 1) / 8 - 1) % Math.max(best.length, 1)] : undefined;
+            const n = i + 1;
+            const spotSlot = n % 8 === 0;
+            const spot = spotSlot ? best[(n / 8 - 1) % Math.max(best.length, 1)] : undefined;
             return (
               <Fragment key={p.slug}>
                 <ProductCard product={p} />
-                {spot && <SpotlightCard product={spot} rank={ranks.get(spot.slug)} className="col-span-2 aspect-[16/11] sm:aspect-[2/1]" />}
+                {/* Every 12 cards: a small "sell with us" card, different each visit. */}
+                {n % 12 === 5 && <PromoTile slot={Math.floor(n / 12)} />}
+                {/* Every 8 cards: a big swipeable card (best seller, then wholesale, then dropshipping). */}
+                {spotSlot && <SpotlightCarousel product={spot} rank={spot ? ranks.get(spot.slug) : undefined} className="col-span-2 aspect-[16/11] sm:aspect-[2/1]" />}
               </Fragment>
             );
           })}

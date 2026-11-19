@@ -37,7 +37,15 @@ export default async function GuidePage({ params }: PageProps<"/guides/[slug]">)
   const related = GUIDES.filter((x) => x.slug !== g.slug).sort((a, b) => Number(b.topic === g.topic) - Number(a.topic === g.topic)).slice(0, 3);
 
   return (
-    <article className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-6 text-[16px] leading-[1.7] text-[#333] md:py-10">
+    <div className="lg:grid lg:grid-cols-[240px_minmax(0,760px)] lg:gap-12 xl:grid-cols-[260px_minmax(0,760px)_1fr]">
+    {/* Desktop: contents stay in view on the left. */}
+    <nav aria-label="Contents" className="sticky top-28 hidden max-h-[calc(100dvh-8rem)] flex-col gap-1 self-start overflow-y-auto pt-10 lg:flex">
+      <strong className="px-3 pb-1 text-[12px] tracking-wider text-muted">IN THIS GUIDE</strong>
+      {g.sections.map((s) => <a key={s.h} href={`#${anchor(s.h)}`} className="rounded-lg px-3 py-2 text-[14px] leading-snug hover:bg-surface">{s.h}</a>)}
+      <a href="#faq" className="rounded-lg px-3 py-2 text-[14px] hover:bg-surface">Questions people ask</a>
+      <Link href="/guides" className="mt-3 px-3 text-[13px] font-bold underline">All guides</Link>
+    </nav>
+    <article className="flex min-w-0 flex-col gap-8 px-4 py-6 text-[16px] leading-[1.7] text-[#333] md:py-10 lg:px-0">
       <JsonLd
         data={graph(
           {
@@ -74,7 +82,7 @@ export default async function GuidePage({ params }: PageProps<"/guides/[slug]">)
         <p className="rounded-2xl bg-surface p-5 text-[17px] leading-relaxed text-ink"><strong>In short: </strong>{g.summary}</p>
       </header>
 
-      <nav aria-label="In this guide" className="flex flex-col gap-2 border-y border-line py-4">
+      <nav aria-label="In this guide" className="flex flex-col gap-2 border-y border-line py-4 lg:hidden">
         <strong className="text-[13px] tracking-wide text-ink">IN THIS GUIDE</strong>
         <ol className="flex list-decimal flex-col gap-1 pl-5 text-[15px]">
           {g.sections.map((s) => <li key={s.h}><a href={`#${anchor(s.h)}`} className="hover:underline">{s.h}</a></li>)}
@@ -125,5 +133,6 @@ export default async function GuidePage({ params }: PageProps<"/guides/[slug]">)
         </ul>
       </section>
     </article>
+    </div>
   );
 }

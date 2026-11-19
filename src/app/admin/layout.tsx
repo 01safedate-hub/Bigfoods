@@ -7,7 +7,13 @@ import { checkStaff } from "@/lib/supabase/auth";
 import { secretDb } from "@/lib/supabase/server";
 import { StaffGate } from "./staff-gate";
 
-export const metadata: Metadata = { title: { default: "Admin", template: "%s · FastChina admin" }, robots: { index: false, follow: false } };
+export const metadata: Metadata = {
+  title: { default: "Admin", template: "%s · FastChina admin" },
+  robots: { index: false, follow: false },
+  manifest: "/pwa/admin",
+  appleWebApp: { capable: true, title: "FC Admin", statusBarStyle: "black" },
+  icons: { icon: "/pwa/admin-192.png", apple: "/pwa/admin-192.png" },
+};
 
 /** Staff see the tabs for their role (null = demo mode: all tabs). */
 async function RoleNav() {

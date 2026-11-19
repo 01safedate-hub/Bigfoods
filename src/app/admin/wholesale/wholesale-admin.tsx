@@ -25,7 +25,7 @@ export function WholesaleAdminView({ data }: { data: WholesaleAdmin }) {
         <h1 className="text-2xl font-extrabold">Wholesale</h1>
         <Link href="/wholesale" className="text-sm font-bold underline">Open the wholesale market</Link>
       </div>
-      <p className="text-[#5B6170]">Sea only, {String(data.costs.wholesale_min_qty ?? 10)}+ units per product, no coupons or points. Prices are goods + sea freight and clearing (with a safety buffer) + weighing + local delivery + the category margin, so a wholesale sale never loses money.</p>
+      <p className="text-[#5B6170]">Sea only, {String(data.costs.wholesale_min_qty ?? 10)}+ units per product, no coupons or points. Prices are goods + sea freight and clearing (with a safety buffer) + weighing + the category margin, so a wholesale sale never loses money. Delivery within Nigeria is arranged after customs and billed separately by state.</p>
       <div role="tablist" className="no-scrollbar flex gap-1 overflow-x-auto border-b border-[#E3E5EA]">
         {TABS.map(([k, l]) => (
           <button key={k} role="tab" type="button" aria-selected={tab === k} onClick={() => setTab(k)} className={cn("min-h-11 shrink-0 border-b-2 px-3.5 text-sm", tab === k ? "border-ink font-bold" : "border-transparent text-[#5B6170]")}>{l}</button>
@@ -213,7 +213,7 @@ function Costs({ costs }: { costs: Record<string, unknown> }) {
         ))}
       </div>
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm font-bold">Local delivery to the pickup station (by item weight)</legend>
+        <legend className="mb-1 text-sm font-bold">Local delivery to the pickup station, single items only (by item weight)</legend>
         {tiers.map((t, i) => (
           <div key={i} className="flex flex-wrap items-center gap-2 text-sm">
             <span>Up to</span>

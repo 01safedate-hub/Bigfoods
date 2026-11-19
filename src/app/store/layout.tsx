@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   description: STORE_DESCRIPTION,
   keywords: ["dropshipping in Nigeria", "how to start dropshipping for free", "free online store Nigeria", "dropshipping from China", "wholesale sea freight China to Nigeria"],
   alternates: { canonical: "/" },
+  manifest: "/pwa/store",
+  appleWebApp: { capable: true, title: "FastChina.store", statusBarStyle: "black-translucent" },
+  icons: { icon: "/pwa/store-192.png", apple: "/pwa/store-192.png" },
   openGraph: { type: "website", siteName: "FastChina.store", locale: "en_NG", url: "/", title: "Start your dropshipping store in Nigeria for free", description: STORE_DESCRIPTION },
   twitter: { card: "summary_large_image", title: "Start your dropshipping store in Nigeria for free", description: STORE_DESCRIPTION },
 };
