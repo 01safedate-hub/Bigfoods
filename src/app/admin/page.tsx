@@ -28,7 +28,13 @@ export default async function AdminHome() {
   const margin = d.sales_7d ? Math.round((d.profit_7d / d.sales_7d) * 100) : 0;
   return (
     <>
-      <h1 className="text-2xl font-extrabold">Dashboard</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-2xl font-extrabold">Dashboard</h1>
+        <span className="flex gap-2 text-xs font-semibold">
+          <Link href="/admin/guide" className="rounded-md border border-[#D0D4DB] bg-white px-3 py-2">New here? Read the guide</Link>
+          <Link href="/admin/accounts" className="rounded-md bg-ink px-3 py-2 text-white">Accounts</Link>
+        </span>
+      </div>
       <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
         {[
           ["Sales today", naira(d.sales_today), `${d.orders_today} paid orders`],

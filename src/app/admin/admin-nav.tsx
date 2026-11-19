@@ -13,7 +13,8 @@ const NAV: { label: string; href: string; roles: Role[] }[] = [
   { label: "Orders", href: "/admin/orders", roles: ["super_admin", "finance", "purchasing", "warehouse", "customer_care"] },
   { label: "Wholesale", href: "/admin/wholesale", roles: ["super_admin", "finance", "purchasing", "warehouse", "marketing"] },
   { label: "Products", href: "/admin/products", roles: ["super_admin", "purchasing", "marketing"] },
-  { label: "Purchasing & dispatch", href: "/admin/purchasing", roles: ["super_admin", "purchasing", "warehouse"] },
+  { label: "Purchasing & dispatch", href: "/admin/purchasing", roles: ["super_admin", "purchasing", "warehouse", "finance", "customer_care"] },
+  { label: "Accounts", href: "/admin/accounts", roles: ["super_admin", "finance"] },
   { label: "Customers", href: "/admin/customers", roles: ["super_admin", "finance", "customer_care", "marketing"] },
   { label: "Q&A inbox", href: "/admin/questions", roles: ["super_admin", "customer_care", "marketing"] },
   { label: "Reviews", href: "/admin/reviews", roles: ["super_admin", "customer_care", "marketing"] },
@@ -24,6 +25,7 @@ const NAV: { label: string; href: string; roles: Role[] }[] = [
   { label: "Pricing rules & guardrails", href: "/admin/pricing", roles: ["super_admin", "finance"] },
   { label: "Dropship sellers", href: "/admin/sellers", roles: ["super_admin", "finance", "customer_care"] },
   { label: "Staff & roles", href: "/admin/staff", roles: ["super_admin"] },
+  { label: "Guide", href: "/admin/guide", roles: ALL },
 ];
 
 export function AdminNav({ role }: { role: string | null }) {

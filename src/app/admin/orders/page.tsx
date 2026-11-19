@@ -4,6 +4,7 @@ import { ItemPhotos } from "./item-photos";
 import { naira } from "@/lib/format";
 import { checkStaff } from "@/lib/supabase/auth";
 import { CancelButton } from "./cancel-button";
+import { GuideCard } from "../guide/guide-card";
 
 export const metadata: Metadata = { title: "Orders" };
 
@@ -24,6 +25,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
   return (
     <>
       <h1 className="text-2xl font-extrabold">Orders</h1>
+      <GuideCard page="orders" />
       <form className="flex flex-wrap gap-2" role="search">
         <label className="sr-only" htmlFor="oq">Order code or phone</label>
         <input id="oq" name="q" defaultValue={f.q} placeholder="Order code or phone" className="min-h-10 min-w-0 flex-1 rounded-md border border-[#D0D4DB] bg-white px-3" />
