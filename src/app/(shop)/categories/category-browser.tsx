@@ -1,5 +1,6 @@
 "use client";
 
+import { inDepartment } from "@/lib/catalog/audience";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -23,7 +24,7 @@ export function CategoryBrowser({ products: all }: { products: Product[] }) {
   }, [slug]);
   const cat = CATEGORIES.find((c) => c.slug === slug) ?? CATEGORIES[0];
   const products = all.filter((p) =>
-    cat.slug === "for-you" ? true : cat.slug === "women" ? ["fashion", "bags"].includes(p.category) : cat.slug === "men" ? ["fashion", "jewellery", "shoes"].includes(p.category) : cat.slug === "retailer" ? p.wholesale : p.category === cat.slug,
+    cat.slug === "for-you" ? true : cat.slug === "women" ? inDepartment(p, "women") : cat.slug === "men" ? inDepartment(p, "men") : cat.slug === "retailer" ? p.wholesale : p.category === cat.slug,
   );
 
   return (

@@ -4,6 +4,9 @@ import { MapPin, Search, ShoppingCart, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { DEPARTMENTS } from "@/lib/catalog/categories";
+
+/** Each department tab opens its own category. */
+const DEPT_SLUG: Record<string, string> = { Women: "women", Men: "men", Phones: "gadgets", Hair: "hair", Beauty: "beauty", Home: "home", "Sea items": "furniture" };
 import { cn } from "@/lib/format";
 import { useCart } from "./cart-provider";
 import { BrandWordmark, MARK_PATH } from "./brand";
@@ -97,7 +100,7 @@ export function ShopHeader() {
           {DEPARTMENTS.map((d, i) => (
             <Link
               key={d}
-              href={i === 0 ? "/" : `/categories`}
+              href={i === 0 ? "/" : `/categories?c=${DEPT_SLUG[d] ?? "for-you"}`}
               className={cn("border-b-[2.5px] px-2.5 pt-0.5 pb-1 text-[14px]", i === 0 ? "border-ink font-extrabold" : "border-transparent font-semibold text-subtle")}
             >
               {d}
