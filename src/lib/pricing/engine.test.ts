@@ -9,16 +9,16 @@ const phone: Costable = { cny: 620, weightKg: 0.45, category: "gadgets" };
 const chair: Costable = { cny: 260, weightKg: 18, cbm: 0.25, category: "furniture" };
 
 describe("exchange rate", () => {
-  it("uses ₦315 per ¥1 (₦2,100/$ ÷ ¥6.6664/$)", () => {
-    expect(NAIRA_PER_CNY).toBe(315);
+  it("uses ₦240 per ¥1 (₦1,600/$ ÷ ¥6.6664/$)", () => {
+    expect(NAIRA_PER_CNY).toBe(240);
   });
 });
 
 describe("priceOf", () => {
   it("charges profit on goods only and passes freight, clearing and last-mile through", () => {
     const b = priceOf(dress);
-    expect(b.goods).toBe(28 * 315);
-    expect(b.plannedProfit).toBeCloseTo(28 * 315 * 0.8);
+    expect(b.goods).toBe(28 * 240);
+    expect(b.plannedProfit).toBeCloseTo(28 * 240 * 0.8);
     expect(b.logistics).toBeCloseTo(0.3 * (PRICING.airPerKg + PRICING.clearingPerKg));
     expect(b.list).toBeGreaterThan(b.cost + b.plannedProfit);
     expect(b.list % 100).toBe(0);
@@ -26,12 +26,17 @@ describe("priceOf", () => {
 
   it("prices gadgets at 10% + ₦50,000", () => {
     const b = priceOf(phone);
-    expect(b.plannedProfit).toBeCloseTo(620 * 315 * 0.1 + 50_000);
+    expect(b.plannedProfit).toBeCloseTo(620 * 240 * 0.1 + 50_000);
   });
 
-  it("sends furniture by sea and charges per CBM", () => {
+  it("sends furniture by sea and charges per CBM, plus the packing buffer", () => {
     const b = priceOf(chair);
-    expect(b.logistics).toBeCloseTo(0.25 * PRICING.seaPerCbm + 18 * PRICING.seaClearingPerKg);
+    expect(b.logistics).toBeCloseTo((0.25 * PRICING.seaPerCbm + 18 * PRICING.seaClearingPerKg) * (1 + PRICING.seaBuffer));
+  });
+
+  it("charges heavy compact sea goods as at least weight ÷ kg-per-CBM", () => {
+    const b = priceOf({ ...chair, cbm: 0.05, weightKg: 40 });
+    expect(b.logistics).toBeCloseTo(((40 / PRICING.seaKgPerCbm) * PRICING.seaPerCbm + 40 * PRICING.seaClearingPerKg) * (1 + PRICING.seaBuffer));
   });
 
   it("adds local delivery by size and the weighing fee", () => {

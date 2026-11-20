@@ -38,7 +38,8 @@ describe("discount audit: every cart, every promo, every coupon", () => {
   });
 
   it("gadget coupons only touch gadgets, normal coupons never do", () => {
-    const phone = lineFromCosts(SAMPLE_PRODUCTS.find((p) => p.category === "gadgets")!, 1);
+    // The dearest gadget, so the cart clears the gadget coupon's minimum spend.
+    const phone = lineFromCosts([...SAMPLE_PRODUCTS].filter((p) => p.category === "gadgets").sort((a, b) => b.cny - a.cny)[0], 1);
     const dress = lineFromCosts(SAMPLE_PRODUCTS.find((p) => p.category === "fashion")!, 2);
     const normal = FALLBACK_COUPONS.find((c) => !c.gadgetOnly && c.minSpend === 0)!;
     const gadget = FALLBACK_COUPONS.find((c) => c.gadgetOnly)!;

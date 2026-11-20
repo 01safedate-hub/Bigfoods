@@ -94,9 +94,11 @@ export interface PriceBreakdown {
  */
 export function priceOf(p: Costable): PriceBreakdown {
   const goods = p.cny * NAIRA_PER_CNY;
-  const logistics = shipsBySea(p)
-    ? (p.cbm ?? 0) * PRICING.seaPerCbm + p.weightKg * PRICING.seaClearingPerKg
-    : p.weightKg * (PRICING.airPerKg + PRICING.clearingPerKg);
+  // Sea freight is charged on volume, but heavy compact goods count as at least weight ÷ kg-per-CBM,
+  // plus a buffer for packing. Single items and wholesale use the same rule.
+  const seaCbm = Math.max(p.cbm ?? 0, p.weightKg / PRICING.seaKgPerCbm);
+  const seaLogistics = (seaCbm * PRICING.seaPerCbm + p.weightKg * PRICING.seaClearingPerKg) * (1 + PRICING.seaBuffer);
+  const logistics = shipsBySea(p) ? seaLogistics : p.weightKg * (PRICING.airPerKg + PRICING.clearingPerKg);
   const lastMile = localDeliveryFee(p.weightKg, p.cbm ?? 0) + PRICING.weighingFeePerItem;
   const plannedProfit = isGadget(p)
     ? goods * PRICING.gadget.pct + PRICING.gadget.flat
@@ -106,9 +108,8 @@ export function priceOf(p: Costable): PriceBreakdown {
     const preFee = cost + plannedProfit * (1 - share);
     return roundUp100(preFee + paymentFee(preFee));
   };
-  // Wholesale always goes by sea, so freight is by volume (at least weight ÷ kg-per-CBM).
-  const seaCbm = Math.max(p.cbm ?? 0, p.weightKg / PRICING.seaKgPerCbm);
-  const wholesaleLogistics = (seaCbm * PRICING.seaPerCbm + p.weightKg * PRICING.seaClearingPerKg) * (1 + PRICING.seaBuffer);
+  // Wholesale always goes by sea.
+  const wholesaleLogistics = seaLogistics;
   const wholesaleProfit = goods * WHOLESALE_MARGIN[p.category];
   // Local delivery after customs is billed separately by state, so it isn't in wholesale prices.
   const wholesaleCost = goods + wholesaleLogistics + PRICING.weighingFeePerItem;

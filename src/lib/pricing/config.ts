@@ -5,7 +5,7 @@
  */
 export const PRICING = {
   /** Our dollar rate. */
-  nairaPerUsd: 2100,
+  nairaPerUsd: 1600,
   /** Market yuan per dollar (16 Nov 2026). Refreshed daily; prices reprice if it moves > 1.5%. */
   cnyPerUsd: 6.6664,
   /** Air freight China → Lagos. Assumed until the real rate is set. */
