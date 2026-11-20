@@ -65,5 +65,5 @@ The front end is complete and runs on sample data. Next steps: Supabase schema a
 ## Backend (Supabase)
 
 - `supabase/migrations/`: database schema, applied in order. Roles and profiles, pricing settings, categories, products and SKUs. Prices are calculated in the database (mirroring `src/lib/pricing`), and customers can only read selling prices: costs, margins and suppliers are column-restricted.
-- `supabase/functions/tmapi/`: the only place that talks to TMAPI (1688 data). Actions: `search`, `import`, `check_images`, `probe_images`. Needs the `TMAPI_KEY` secret. Staff JWT or the internal task token required.
+- `supabase/functions/tmapi/`: the only place that talks to TMAPI. Our key is subscribed to Alibaba.com (not 1688): `alibaba_search`, `alibaba_import` (USD prices converted to yuan at the admin rate; single-unit tier price; images copied to storage; one request at a time, retried when busy). Also `search`, `import`, `check_images`, `probe_images`, `raw`. Needs the `TMAPI_KEY` secret. Staff JWT or the internal task token required.
 - 1688 images block hotlinking (403 when the Referer is our domain), so product images are copied into the `product-images` storage bucket on import.
