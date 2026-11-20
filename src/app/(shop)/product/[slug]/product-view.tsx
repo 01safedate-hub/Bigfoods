@@ -5,7 +5,7 @@ import { ProductTrust } from "@/components/shop/product-trust";
 import { WholesaleBar } from "@/components/shop/wholesale-promo";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useCart } from "@/components/shop/cart-provider";
 import { useLivePromo } from "@/components/shop/live-price";
 import { ProductTile } from "@/components/shop/product-card";
@@ -48,6 +48,7 @@ export function ProductView({ product }: { product: Product }) {
   const sea = product.shipMode === "sea";
   const weekly = weeklyOf(total, plan);
   const photos = [...(variant.image ? [variant.image] : []), ...product.images.filter((u) => u !== variant.image)];
+  const strip = useRef<HTMLDivElement>(null);
   const eta = now === null ? (sea ? "in 90+ days" : "in 10–18 days") : sea ? `from ${addDaysLabel(now, 90)}` : `${addDaysLabel(now, 10)} – ${addDaysLabel(now, 18)}`;
 
   const addToCart = () => {
@@ -67,8 +68,29 @@ export function ProductView({ product }: { product: Product }) {
       {/* Gallery */}
       <div className="flex flex-col gap-2 md:sticky md:top-32 md:flex-row-reverse md:self-start">
         <div className="relative md:min-w-0 md:flex-1">
-          <ProductTile tint={product.tint} icon={product.icon} name={product.name} image={photos[image] ?? photos[0]} badge={product.badge} priority sizes="(min-width: 768px) 45vw, 100vw" className="h-[400px] w-full rounded-none md:aspect-[4/5] md:h-auto md:rounded-md" iconSize={150} />
+          {/* Phone: swipe through every photo. Desktop: one large photo picked from the thumbnails. */}
+          <div
+            ref={strip}
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth));
+              if (i !== image) setImage(i);
+            }}
+            className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto md:hidden"
+          >
+            {(photos.length ? photos : [undefined]).map((src, i) => (
+              <ProductTile key={src ?? i} tint={product.tint} icon={product.icon} name={i === 0 ? product.name : ""} image={src} badge={i === 0 ? product.badge : undefined} priority={i === 0} sizes="100vw" className="h-[400px] w-full shrink-0 snap-center rounded-none" iconSize={150} />
+            ))}
+          </div>
+          <div className="hidden md:block">
+            <ProductTile tint={product.tint} icon={product.icon} name={product.name} image={photos[image] ?? photos[0]} badge={product.badge} priority sizes="45vw" className="aspect-[4/5] w-full rounded-md" iconSize={150} />
+          </div>
           <span className="absolute bottom-2.5 left-2.5 rounded-sm bg-white px-2 py-1 text-[10px] font-extrabold text-success">QC PHOTOS BEFORE DISPATCH</span>
+          {photos.length > 1 && (
+            <span aria-live="polite" className="absolute right-2.5 bottom-2.5 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-bold text-white md:hidden">
+              {Math.min(image, photos.length - 1) + 1}/{photos.length}
+            </span>
+          )}
         </div>
         <div className="no-scrollbar hidden gap-2 md:flex md:flex-col">
           {photos.length > 1
@@ -119,7 +141,12 @@ export function ProductView({ product }: { product: Product }) {
               <div className="flex flex-wrap gap-1.5">
                 {o.values.map((v) => {
                   const on = choice[o.name] === v.label;
-                  const pick = () => setChoice({ ...choice, [o.name]: v.label });
+                  // A new colour shows its own photo first.
+                  const pick = () => {
+                    setChoice({ ...choice, [o.name]: v.label });
+                    setImage(0);
+                    strip.current?.scrollTo({ left: 0 });
+                  };
                   return v.hex ? (
                     <button key={v.label} type="button" aria-label={v.label} aria-pressed={on} onClick={pick} className={cn("size-9 rounded-full border-[3px] border-white", on ? "ring-2 ring-ink" : "ring-1 ring-black/20")} style={{ background: v.hex }} />
                   ) : (
