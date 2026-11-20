@@ -178,16 +178,20 @@ async function mirror(db: SupabaseClient, url: string, path: string): Promise<{ 
 // Supplier titles are keyword lists ("2025 Hot Selling Wholesale OEM ..."). Keep the product words.
 function cleanTitle(t: string) {
   const out = t
-    .replace(/\b(20\d\d|new arrivals?|hot[- ]?sell(ing|er)?s?|best[- ]?sell(ing|er)s?|wholesale|factory( direct| price)?|custom(ized)? logo|oem|odm|cheap|free shipping|dropshipping|high quality|top quality|in stock|ready to ship|manufacturers?|suppliers?)\b/gi, " ")
+    .replace(/\b(20\d\d|new arrivals?|hot[- ]?sell(ing|er)?s?|hot[- ]?sale|best[- ]?sell(ing|er)s?|wholesale|factory( direct| price)?|custom(ized)? logo|oem|odm|cheap|free shipping|dropshipping|high quality|top quality|in stock|ready to ship|manufacturers?|suppliers?)\b/gi, " ")
     .replace(/\b[A-Z]{2,}[-_]?\d{2,}[A-Z0-9-]*\b/g, " ") // model codes like SNB-001
     .replace(/\s+([,/&])/g, "$1").replace(/\s{2,}/g, " ").replace(/^[\s,/&-]+|[\s,/&-]+$/g, "").trim();
-  const short = out.length > 90 ? out.slice(0, 90).replace(/\s+\S*$/, "") : out;
+  const lead = out.replace(/^new\s+/i, "");
+  const short = lead.length > 90 ? lead.slice(0, 90).replace(/\s+\S*$/, "") : lead;
   return short ? short[0].toUpperCase() + short.slice(1) : t.slice(0, 90);
 }
 
-async function importAlibaba(db: SupabaseClient, d: Detail, category: string, maxMoq = 2) {
+async function importAlibaba(db: SupabaseClient, d: Detail, category: string, maxMoq = 1, maxUsd?: number) {
   const moq = Math.max(1, num(d.min_order_quantity) ?? 1);
   if (moq > maxMoq) return { skipped: true, reason: `Minimum order is ${moq} ${d.unit ?? "pieces"}` };
+  // Listings we can't price safely: made-to-order logo items, or no shipping weight given.
+  if (/\bcustom(ized)?\s+(logo|design|made)\b/i.test(String(d.title ?? ""))) return { skipped: true, reason: "Made-to-order item" };
+  if (!((num(d.delivery_info?.unit_weight) ?? 0) > 0)) return { skipped: true, reason: "Supplier gives no shipping weight" };
   const { data: cat } = await db.from("categories").select("id, slug").eq("slug", category).single();
   if (!cat) throw new Error(`Unknown category ${category}`);
   const { data: rate } = await db.from("pricing_settings").select("cny_per_usd").eq("id", 1).single();
@@ -197,6 +201,8 @@ async function importAlibaba(db: SupabaseClient, d: Detail, category: string, ma
   const single = tiers.length ? tiers[0] : num(d.price_info?.price_max);
   const lowest = tiers.length ? Math.min(...tiers) : num(d.price_info?.price_min);
   const bump = single && lowest ? single / lowest : 1; // sku price -> single-unit price
+  // Search shows the bulk price; the price for one piece can be much higher.
+  if (maxUsd && single && single > maxUsd * 1.5) return { skipped: true, reason: `One piece costs $${single}` };
 
   const itemId = Number(d.item_id);
   const title = cleanTitle(String(d.title ?? `Item ${itemId}`));
@@ -349,7 +355,7 @@ Deno.serve(async (req) => {
         const r = await tmapi(db, "/alibaba/search/items", { keywords: input.keyword ?? "", page: 1, sort: input.sort ?? "relevance" });
         if (!r.ok) return json({ ok: false, code: r.code, msg: r.msg }, 502);
         urls = ((r.data as any)?.items ?? [])
-          .filter((it: any) => (num(it.min_order_quantity) ?? 1) <= (input.max_moq ?? 2) && (!input.max_usd || (num(it.price_info?.price_min) ?? 0) <= input.max_usd))
+          .filter((it: any) => (num(it.min_order_quantity) ?? 1) <= (input.max_moq ?? 1) && (!input.max_usd || (num(it.price_info?.price_min) ?? 0) <= input.max_usd))
           .slice(0, Math.min(input.count ?? 3, 10)).map((it: any) => it.product_url);
       }
       const results = [];
@@ -357,7 +363,7 @@ Deno.serve(async (req) => {
         if (!/^https:\/\/(www\.)?alibaba\.com\/product-detail\//.test(url)) { results.push({ url, error: "Not an Alibaba.com product link" }); continue; }
         const det = await tmapi(db, "/alibaba/item_detail_by_url", {}, { url, currency: "USD" });
         if (!det.ok) { results.push({ url, error: det.msg }); continue; }
-        try { results.push(await importAlibaba(db, det.data as Detail, input.category, input.max_moq ?? 2)); }
+        try { results.push(await importAlibaba(db, det.data as Detail, input.category, input.max_moq ?? 1, input.max_usd)); }
         catch (e) { results.push({ url, error: (e as Error).message }); }
       }
       return json({ ok: true, imported: results.filter((r: any) => r.slug).length, results });

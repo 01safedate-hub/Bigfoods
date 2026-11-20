@@ -8,8 +8,8 @@ export const PRICING = {
   nairaPerUsd: 1600,
   /** Market yuan per dollar (16 Nov 2026). Refreshed daily; prices reprice if it moves > 1.5%. */
   cnyPerUsd: 6.6664,
-  /** Air freight China → Lagos. Assumed until the real rate is set. */
-  airPerKg: 15_000,
+  /** Air freight China → Lagos: about $10/kg at ₦1,600/$. */
+  airPerKg: 16_000,
   /** Customs clearing per kilogram: air cargo. */
   clearingPerKg: 1_800,
   /** Customs clearing per kilogram: sea cargo. */
