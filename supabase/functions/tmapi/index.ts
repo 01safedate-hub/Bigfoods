@@ -7,6 +7,7 @@
 //   { "action": "alibaba_search", "keyword": "lace front wig" }                       // Alibaba.com
 //   { "action": "alibaba_import", "keyword": "lace front wig", "category": "hair", "count": 3 }
 //   { "action": "alibaba_import", "url": "https://www.alibaba.com/product-detail/…html", "category": "hair" }
+//   { "action": "alibaba_import", "urls": ["https://www.alibaba.com/x/B2jYnx", …], "category": "bags" }   // share links work too (max 10)
 //   add "allow_custom": true to take "custom logo" listings too (they come in marked Customisable)
 //   add "verified_only": true and/or "min_ontime": 95 to take reliable suppliers only
 //   add "default_kg": 0.5 to price listings with no weight at that weight; "exclude": "lcd|battery" to skip titles
@@ -289,6 +290,26 @@ async function importAlibaba(db: SupabaseClient, d: Detail, category: string, ma
   return { slug: saved.slug, title: saved.title, updated: !!had, moq, usd_single: single, variants: keep.length, images: imgs.length, mirrored: imgs.filter((u) => u.includes("supabase")).length, ...(imageErrors.length ? { image_errors: imageErrors.slice(0, 2) } : {}), prices: priced };
 }
 
+// Share links (alibaba.com/x/B2jYnx) redirect to the product page: follow them to the real address.
+const DETAIL = /^https:\/\/(www\.)?alibaba\.com\/product-detail\//;
+async function resolveAlibabaUrl(u: string): Promise<string> {
+  let cur = u.trim().replace(/\s+/g, "");
+  if (DETAIL.test(cur)) return cur;
+  if (!/^https:\/\/([a-z]+\.)?alibaba\.com\//.test(cur)) return cur;
+  for (let i = 0; i < 6; i++) {
+    if (DETAIL.test(cur)) return cur.split("?")[0];
+    const res = await fetch(cur, { redirect: "manual", headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36" }, signal: AbortSignal.timeout(15_000) });
+    const loc = res.headers.get("location");
+    if (loc) { cur = new URL(loc, cur).toString(); continue; }
+    const page = await res.text();
+    const found = page.match(/https?:\/\/(?:www\.)?alibaba\.com\/product-detail\/[^"'\s?<>#]+?\.html/);
+    if (found) return found[0].replace(/^http:/, "https:");
+    const id = (cur.match(/[\/_-](\d{10,})(?:\.html|[\/?]|$)/) ?? page.match(/"productId"\s*:\s*"?(\d{10,})/))?.[1];
+    return id ? `https://www.alibaba.com/product-detail/_${id}.html` : cur;
+  }
+  return cur;
+}
+
 // ---- Image checks ---------------------------------------------------------------
 async function probeImage(url: string, referer?: string) {
   const started = Date.now();
@@ -376,7 +397,7 @@ Deno.serve(async (req) => {
     if (input.action === "alibaba_import") {
       // { url, category } for one item, or { keyword, category, count } to import the top matches.
       if (!input.category) return json({ error: "category is required" }, 400);
-      let urls: string[] = input.url ? [input.url] : [];
+      let urls: string[] = [...(input.url ? [String(input.url)] : []), ...((Array.isArray(input.urls) ? input.urls : []) as unknown[]).map(String)].slice(0, 10);
       if (!urls.length) {
         const r = await tmapi(db, "/alibaba/search/items", { keywords: input.keyword ?? "", page: input.page ?? 1, sort: input.sort ?? "relevance" });
         if (!r.ok) return json({ ok: false, code: r.code, msg: r.msg }, 502);
@@ -387,8 +408,9 @@ Deno.serve(async (req) => {
           .slice(0, Math.min(input.count ?? 3, 10)).map((it: any) => it.product_url);
       }
       const results = [];
-      for (const url of urls) {
-        if (!/^https:\/\/(www\.)?alibaba\.com\/product-detail\//.test(url)) { results.push({ url, error: "Not an Alibaba.com product link" }); continue; }
+      for (const link of urls) {
+        const url = await resolveAlibabaUrl(link).catch(() => link);
+        if (!DETAIL.test(url)) { results.push({ url: link, error: "Not an Alibaba.com product link" }); continue; }
         const det = await tmapi(db, "/alibaba/item_detail_by_url", {}, { url, currency: "USD" });
         if (!det.ok) { results.push({ url, error: det.msg }); continue; }
         try { results.push(await importAlibaba(db, det.data as Detail, input.category, input.max_moq ?? 1, input.max_usd, input.allow_custom === true, num(input.default_kg) ?? undefined, input.exclude ? String(input.exclude).slice(0, 200) : undefined, num(input.min_ontime) ?? undefined, input.verified_only === true)); }
