@@ -33,11 +33,11 @@ export const INFO: Record<InfoKey, InfoContent> = {
   },
   flash: {
     title: "How Flash Sale works",
-    intro: "A limited number of items at their lowest price, until the timer runs out.",
+    intro: "Every 6 hours a new set of items drops to its flash price until the timer runs out.",
     points: [
+      "New flash items at 12am, 6am, 12pm and 6pm (Lagos time).",
       "Flash prices take up to half of our profit off the normal price.",
-      "Stock is limited. When the bar is full the deal ends, even if time is left.",
-      "Limit 2 per customer per item.",
+      "The flash price is locked in when you check out before the timer ends.",
       "Flash and Midnight Drop prices don’t add together. You get whichever is lower.",
     ],
     fine: "Every flash item is still sold above what it costs us.",

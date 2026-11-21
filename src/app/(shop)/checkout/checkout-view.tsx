@@ -17,6 +17,7 @@ import { myProfile, setMyStation } from "../auth-actions";
 import { useSiteData } from "@/components/shop/site-data";
 import { cn, naira } from "@/lib/format";
 import { productTotals, unitFromPrices } from "@/lib/pricing/prices";
+import { inFlash } from "@/lib/pricing/flash";
 import { canPaySmall, SMALL_SMALL } from "@/lib/payments/instalments";
 import { type CheckoutQuote, placeOrder, quoteCheckout } from "../actions";
 import { addDaysLabel } from "@/lib/time";
@@ -80,7 +81,7 @@ export function CheckoutView() {
 
   const selected = items.filter((i) => i.selected);
   const totals = productTotals(selected);
-  const unitOf = (i: (typeof selected)[number]) => unitFromPrices(i.snap.prices, i.qty, promo, totals.get(i.slug));
+  const unitOf = (i: (typeof selected)[number]) => unitFromPrices(i.snap.prices, i.qty, promo, totals.get(i.slug), now !== null && inFlash(i.slug, now));
 
   // The total, coupon and points are worked out on the server with the guardrails; the browser never sees costs.
   const [serverQuote, setServerQuote] = useState<CheckoutQuote | null>(null);

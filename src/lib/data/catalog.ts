@@ -6,12 +6,13 @@ import type { IconKey, PriceSet, Product, QA, Variant } from "@/lib/catalog/type
 import type { CategoryKey, QuoteLine } from "@/lib/pricing/engine";
 import { pausedPrices } from "@/lib/pricing/audit";
 import { customTypesLabel } from "@/lib/catalog/supplier";
+import { inFlash } from "@/lib/pricing/flash";
 import { hasSupabase } from "@/lib/supabase/env";
 import { publicDb, secretDb } from "@/lib/supabase/server";
 
 /** Only columns customers are allowed to read (see the column grants in the migrations). */
 const PRODUCT_COLUMNS =
-  "slug, title, description, main_images, sale_count, rating, reviews, badge, is_new, tint, icon, flash_claimed_pct, specs, options, wholesale, customisable, " +
+  "slug, title, description, created_at, main_images, sale_count, rating, reviews, badge, is_new, tint, icon, flash_claimed_pct, specs, options, wholesale, customisable, " +
   "dispatch_days, custom_moq, custom_types, supplier_verified, supplier_ontime, supplier_years, " +
   "categories(slug, is_gadget, ship_mode, wholesale_enabled), " +
   "product_skus(id, props, image_url, stock, price_list, price_midnight, price_event, price_flash, price_retailer, price_wholesale, active, sort, promo_paused)";
@@ -20,6 +21,7 @@ interface Row {
   slug: string;
   title: string;
   description: string | null;
+  created_at: string | null;
   main_images: string[];
   sale_count: number;
   rating: number | null;
@@ -76,6 +78,7 @@ function rowToProduct(r: Row): Product | null {
     sold: r.sale_count,
     badge: r.badge ?? undefined,
     isNew: r.is_new,
+    addedAt: r.created_at ? Date.parse(r.created_at) : undefined,
     specs: r.specs ?? [],
     options: r.options ?? [],
     variants,
@@ -136,7 +139,7 @@ export async function getQuoteLines(items: LineRequest[]): Promise<ServerLine[]>
   if (!hasSupabase) {
     return items.flatMap((it) => {
       const s = sampleBySlug(it.slug);
-      return s ? [{ ...it, ...sampleQuoteLine(s, it.variantId, it.qty) }] : [];
+      return s ? [{ ...it, ...sampleQuoteLine(s, it.variantId, it.qty), flash: inFlash(it.slug, Date.now()) }] : [];
     });
   }
   const ids = items.map((i) => i.variantId);
@@ -164,6 +167,7 @@ export async function getQuoteLines(items: LineRequest[]): Promise<ServerLine[]>
       title: r.products.title,
       variantLabel: (r.props_text ?? "").split(";").map((kv) => kv.split(":")[1] ?? kv).filter(Boolean).join(" / "),
       shipMode: r.products.categories?.ship_mode ?? "air",
+      flash: inFlash(it.slug, Date.now()),
     }];
   });
 }
@@ -189,7 +193,7 @@ export async function getQuestions(slug: string): Promise<QA[] | null> {
 /** Ranked product slugs for a search, or null when search must run in the browser (no database). */
 export async function searchSlugs(q: string): Promise<string[] | null> {
   if (!hasSupabase) return null;
-  const { data, error } = await publicDb().rpc("search_products", { q, lim: 60 });
+  const { data, error } = await publicDb().rpc("search_products", { q, lim: 120 });
   if (error) throw new Error(`Search: ${error.message}`);
   return ((data ?? []) as { slug: string }[]).map((r) => r.slug);
 }

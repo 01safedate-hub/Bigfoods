@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, MapPin, Moon, Plane, Ship } from "lucide-react";
+import { Heart, MapPin, Moon, Plane, Ship, Zap } from "lucide-react";
 import { ProductTrust } from "@/components/shop/product-trust";
 import { WholesaleBar } from "@/components/shop/wholesale-promo";
 import Link from "next/link";
@@ -16,6 +16,7 @@ import type { Product, QA } from "@/lib/catalog/types";
 import { cn, compact, naira } from "@/lib/format";
 import { PRICING } from "@/lib/pricing/config";
 import { unitFromPrices } from "@/lib/pricing/prices";
+import { inFlash } from "@/lib/pricing/flash";
 import { addDaysLabel } from "@/lib/time";
 import { askQuestion } from "../../actions";
 import { SizeGuide } from "@/components/shop/size-guide";
@@ -43,7 +44,8 @@ export function ProductView({ product }: { product: Product }) {
 
   const variant = product.variants.find((v) => Object.entries(v.props).every(([k, val]) => choice[k] === val)) ?? product.variants[0];
   const b = variant.prices;
-  const unit = unitFromPrices(b, qty, promo);
+  const flash = now !== null && inFlash(product.slug, now) && b.flash < b.list;
+  const unit = unitFromPrices(b, qty, promo, qty, flash);
   const total = unit * qty;
   const retail = qty >= PRICING.retailerMinQty;
   const sea = product.shipMode === "sea";
@@ -117,9 +119,17 @@ export function ProductView({ product }: { product: Product }) {
           <div className="order-1 flex flex-wrap items-baseline gap-2 md:order-none">
             <strong className="text-[26px] text-sale md:text-[32px]">{naira(unit)}</strong>
             {retail && <span className="rounded-sm bg-[#7A5C17] px-1.5 py-0.5 text-[11px] font-extrabold text-white">RETAILER PRICE</span>}
-            {promo === "midnight" && !retail && <span className="text-sm text-muted line-through">{naira(b.list)}</span>}
+            {(promo === "midnight" || flash) && !retail && unit < b.list && <span className="text-sm text-muted line-through">{naira(b.list)}</span>}
+            {flash && !retail && <span className="rounded-sm bg-sale px-1.5 py-0.5 text-[11px] font-extrabold text-white">FLASH SALE</span>}
             <span className="text-xs font-bold text-success">Free shipping</span>
           </div>
+          {flash && (
+            <div className="order-1 flex items-center gap-2 rounded-md bg-sale px-2.5 py-1.5 text-xs font-semibold text-white md:order-none md:text-[13px]">
+              <Zap aria-hidden size={14} className="fill-white" />
+              <span className="flex-1">Flash price {naira(b.flash)} · ends in <Countdown target="flash" /></span>
+              <InfoButton topic="flash" />
+            </div>
+          )}
           <div className="order-1 flex items-center gap-2 rounded-md bg-night px-2.5 py-1.5 text-xs text-white md:order-none md:text-[13px]">
             <Moon aria-hidden size={14} className="text-night-soft" />
             <span className="flex-1">

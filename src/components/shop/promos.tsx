@@ -6,6 +6,8 @@ import { Countdown, MidnightLabel } from "@/components/ui/countdown";
 import { InfoButton } from "@/components/ui/info-button";
 import { Progress } from "@/components/ui/progress";
 import { usePersistentState } from "@/hooks/use-persistent-state";
+import { useNow } from "@/hooks/use-now";
+import { flashPicks } from "@/lib/pricing/flash";
 import type { Product } from "@/lib/catalog/types";
 import { cn, naira } from "@/lib/format";
 import { ProductTile } from "./product-card";
@@ -73,7 +75,11 @@ export function CouponRow({ compact = false }: { compact?: boolean }) {
   );
 }
 
-export function FlashSale({ products }: { products: Product[] }) {
+/** This block's flash sale, picked from `products` by the clock (see flash.ts). Hidden until there is something to show. */
+export function FlashSale({ products, max = 12 }: { products: Product[]; max?: number }) {
+  const now = useNow(60_000);
+  const picks = now === null ? [] : flashPicks(products, now, max);
+  if (!picks.length) return null;
   return (
     <section aria-label="Flash sale" className="flex flex-col gap-2 rounded-md bg-sale-soft p-2.5 md:p-4">
       <div className="flex items-center gap-2">
@@ -89,10 +95,11 @@ export function FlashSale({ products }: { products: Product[] }) {
         </Link>
       </div>
       <div className="no-scrollbar flex gap-2 overflow-x-auto md:grid md:grid-cols-6 md:gap-3 md:overflow-visible">
-        {products.map((p) => {
+        {picks.map((p) => {
           const b = p.prices;
           const off = Math.round((1 - b.flash / b.list) * 100);
-          const pct = p.flash?.claimedPct ?? 50;
+          // Only show "claimed" when staff set a real figure; otherwise the honest sold count.
+          const pct = p.flash?.claimedPct;
           return (
             <Link key={p.slug} href={`/product/${p.slug}`} className="flex w-24 shrink-0 flex-col gap-1 md:w-auto">
               <span className="relative">
@@ -100,8 +107,14 @@ export function FlashSale({ products }: { products: Product[] }) {
                 <span className="absolute left-0 top-0 bg-sale px-1 py-0.5 text-[10px] font-extrabold text-white">-{off}%</span>
               </span>
               <strong className="text-[13px] text-sale md:text-[15px]">{naira(b.flash)}</strong>
-              <Progress value={pct} className="h-1 bg-[#F6D3D8]" label={`${pct}% claimed`} />
-              <span className="text-[10px] text-muted">{pct >= 85 ? "Almost gone" : `${pct}% claimed`}</span>
+              {pct !== undefined ? (
+                <>
+                  <Progress value={pct} className="h-1 bg-[#F6D3D8]" label={`${pct}% claimed`} />
+                  <span className="text-[10px] text-muted">{pct >= 85 ? "Almost gone" : `${pct}% claimed`}</span>
+                </>
+              ) : (
+                <span className="text-[10px] text-muted"><s>{naira(b.list)}</s>{p.sold > 0 ? ` · ${p.sold.toLocaleString("en-NG")} sold` : ""}</span>
+              )}
             </Link>
           );
         })}

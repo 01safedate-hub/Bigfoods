@@ -165,7 +165,7 @@ export function DealsView({ flash }: { flash: Product[] }) {
       </section>
 
       <div className="md:col-span-2 lg:col-span-3">
-        <FlashSale products={flash} />
+        <FlashSale products={flash} max={36} />
       </div>
       <p className="px-1 text-xs leading-relaxed text-muted md:col-span-2 lg:col-span-3">
         One coupon per order. Coupons don’t apply to retailer (10+) prices. Points can pay up to 10% of an order.

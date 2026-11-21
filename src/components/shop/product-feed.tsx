@@ -11,10 +11,15 @@ import { categoryRanks } from "./spotlight-card";
 const TABS = ["For You", "Gadgets", "New In", "Under ₦10k", "Sea items"] as const;
 type Tab = (typeof TABS)[number];
 
+/** Newest first: products staff marked new, then by date added. */
+export function newIn(list: Product[], max = 60): Product[] {
+  return [...list].sort((a, b) => Number(!!b.isNew) - Number(!!a.isNew) || (b.addedAt ?? 0) - (a.addedAt ?? 0)).slice(0, max);
+}
+
 const filter = (tab: Tab, list: Product[]) => {
   switch (tab) {
     case "Gadgets": return list.filter((p) => p.isGadget);
-    case "New In": return list.filter((p) => p.isNew);
+    case "New In": return newIn(list);
     case "Under ₦10k": return list.filter((p) => p.prices.list < 10_000);
     case "Sea items": return list.filter((p) => p.shipMode === "sea");
     default: return list;

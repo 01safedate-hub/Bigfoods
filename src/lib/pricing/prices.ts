@@ -7,9 +7,11 @@ import type { PricePromo } from "./engine";
  * `productQty`: units of the same product across all its variants in the cart. Retailer prices
  * count the whole product, so 5 black + 5 wine of one dress reach the 10-piece price.
  */
-export function unitFromPrices(prices: PriceSet, qty: number, promo: PricePromo, productQty = qty): number {
+export function unitFromPrices(prices: PriceSet, qty: number, promo: PricePromo, productQty = qty, flash = false): number {
   const options = [prices.list];
   if (promo !== "none") options.push(prices[promo]);
+  // On flash sale this block (see flash.ts).
+  if (flash) options.push(prices.flash);
   if (Math.max(qty, productQty) >= PRICING.retailerMinQty) options.push(prices.retailer);
   return Math.min(...options);
 }

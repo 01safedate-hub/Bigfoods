@@ -41,7 +41,7 @@ export async function priceLines(items: LineRequest[]): Promise<PricedLine[]> {
   const promo = activePromo();
   const lines = await getQuoteLines(clean(items));
   const totals = productTotals(lines);
-  return lines.map((l) => ({ slug: l.slug, variantId: l.variantId, qty: l.qty, prices: l.prices, unit: unitFromPrices(l.prices, l.qty, promo, totals.get(l.slug)) }));
+  return lines.map((l) => ({ slug: l.slug, variantId: l.variantId, qty: l.qty, prices: l.prices, unit: unitFromPrices(l.prices, l.qty, promo, totals.get(l.slug), l.flash) }));
 }
 
 export interface CheckoutQuote {
@@ -112,7 +112,7 @@ export async function quoteCheckout(items: LineRequest[], opts: { claimedCouponI
   const { promo, requested, lines, best, q, balance, couponHint } = await computeQuote(items, opts.claimedCouponIds, Boolean(opts.usePoints));
   return {
     promo,
-    lines: lines.map((l) => ({ slug: l.slug, variantId: l.variantId, qty: l.qty, prices: l.prices, unit: unitFromPrices(l.prices, l.qty, promo, l.productQty) })),
+    lines: lines.map((l) => ({ slug: l.slug, variantId: l.variantId, qty: l.qty, prices: l.prices, unit: unitFromPrices(l.prices, l.qty, promo, l.productQty, l.flash) })),
     missing: requested.length - lines.length,
     subtotalList: q.subtotalList,
     subtotal: q.subtotal,
@@ -193,7 +193,7 @@ export async function placeOrder(input: {
     p_points: q.points,
     p_weeks: weeks,
     p_items: lines.map((l) => ({
-      sku_id: l.variantId, qty: l.qty, unit: l.noDiscounts ? l.prices.list : unitFromPrices(l.prices, l.qty, promo, l.productQty),
+      sku_id: l.variantId, qty: l.qty, unit: l.noDiscounts ? l.prices.list : unitFromPrices(l.prices, l.qty, promo, l.productQty, l.flash),
       cost: Math.round(l.cost), title: l.title ?? l.slug, variant: l.variantLabel ?? "", ship: l.shipMode ?? "air",
     })),
   });

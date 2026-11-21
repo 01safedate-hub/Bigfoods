@@ -1,6 +1,7 @@
 "use client";
 
-import { Moon } from "lucide-react";
+import { Moon, Zap } from "lucide-react";
+import { inFlash } from "@/lib/pricing/flash";
 import { useNow } from "@/hooks/use-now";
 import type { PriceSet } from "@/lib/catalog/types";
 import { naira } from "@/lib/format";
@@ -12,9 +13,27 @@ export function useLivePromo() {
   return now !== null && midnightDrop(now).live ? ("midnight" as const) : ("none" as const);
 }
 
-export function LivePrice({ prices, className, showWas }: { prices: PriceSet; className?: string; showWas?: boolean }) {
+/** Whether this product is in the current flash-sale block (client clock). */
+export function useFlash(slug: string) {
+  const now = useNow(60_000);
+  return now !== null && inFlash(slug, now);
+}
+
+export function LivePrice({ prices, className, showWas, slug }: { prices: PriceSet; className?: string; showWas?: boolean; slug?: string }) {
   const promo = useLivePromo();
-  const live = promo === "midnight" && prices.midnight < prices.list;
+  const flash = useFlash(slug ?? "") && !!slug && prices.flash < prices.list && prices.flash <= (promo === "midnight" ? prices.midnight : prices.list);
+  const live = !flash && promo === "midnight" && prices.midnight < prices.list;
+  if (flash) {
+    return (
+      <>
+        <span className={className} style={{ color: "var(--color-sale)" }}>
+          <Zap aria-label="Flash sale price" size={12} strokeWidth={2.6} className="mr-0.5 inline -translate-y-px fill-current" />
+          {naira(prices.flash)}
+        </span>
+        {showWas && <s className="text-[11px] text-subtle">{naira(prices.list)}</s>}
+      </>
+    );
+  }
   return (
     <>
       <span className={className} style={live ? { color: "var(--color-night)" } : undefined}>

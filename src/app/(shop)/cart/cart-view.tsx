@@ -12,7 +12,9 @@ import { InfoButton } from "@/components/ui/info-button";
 import { Progress } from "@/components/ui/progress";
 import { useSiteData } from "@/components/shop/site-data";
 import { cn, naira } from "@/lib/format";
+import { useNow } from "@/hooks/use-now";
 import { productTotals, unitFromPrices } from "@/lib/pricing/prices";
+import { inFlash } from "@/lib/pricing/flash";
 
 const FILTERS = ["All", "Price drops", "Sea items"] as const;
 
@@ -20,6 +22,7 @@ export function CartView() {
   const { coupons } = useSiteData();
   const { items, setQty, toggle, setAll, remove, refresh } = useCart();
   const promo = useLivePromo();
+  const now = useNow(60_000);
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
 
   // Re-check prices with the server (price changes, retailer quantities). Costs never reach the browser.
@@ -36,7 +39,7 @@ export function CartView() {
   const selected = items.filter((i) => i.selected);
   // Retailer prices count every selected variant of the same product together.
   const totals = productTotals(selected);
-  const unitOf = (i: (typeof items)[number], p: "none" | "midnight" = promo) => unitFromPrices(i.snap.prices, i.qty, p, i.selected ? totals.get(i.slug) : i.qty);
+  const unitOf = (i: (typeof items)[number], p: "none" | "midnight" = promo) => unitFromPrices(i.snap.prices, i.qty, p, i.selected ? totals.get(i.slug) : i.qty, now !== null && inFlash(i.slug, now));
   const subtotalList = selected.reduce((s, i) => s + i.snap.prices.list * i.qty, 0);
   const subtotal = selected.reduce((s, i) => s + unitOf(i) * i.qty, 0);
   const midnightTotal = selected.reduce((s, i) => s + unitOf(i, "midnight") * i.qty, 0);

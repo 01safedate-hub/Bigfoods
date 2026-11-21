@@ -53,6 +53,8 @@ export interface Product {
   sold: number;
   badge?: string;
   isNew?: boolean;
+  /** When it was added to the shop (ms), for "New In". */
+  addedAt?: number;
   specs: [string, string][];
   options: ProductOption[];
   variants: Variant[];

@@ -33,7 +33,6 @@ const BUBBLES = [
 
 export default async function HomePage() {
   const products = await getProducts();
-  const flash = products.filter((p) => p.flash);
   const photos = imageMap(products, BUBBLE_PHOTOS);
   const heroPhotos = imageMap(products, {
     gadgets: { category: ["gadgets", "audio"] }, women: { category: ["fashion", "bags", "beauty"], name: "women" },
@@ -100,7 +99,7 @@ export default async function HomePage() {
       </section>
 
       <div className="px-3 md:px-0">
-        <FlashSale products={flash} />
+        <FlashSale products={products} />
       </div>
 
       <BestSellers products={[...products].sort((a, b) => b.sold - a.sold).slice(0, 6)} ranks={Object.fromEntries(categoryRanks(products))} />

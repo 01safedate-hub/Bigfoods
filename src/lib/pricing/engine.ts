@@ -159,6 +159,8 @@ export interface QuoteLine {
   productQty?: number;
   /** Set by the profit guard: this variant sells at list price only (no promotions, coupons or points drawn from it). */
   noDiscounts?: boolean;
+  /** In this block's flash sale: the flash price applies. */
+  flash?: boolean;
 }
 
 /** Build a quote line from factory costs (sample data, admin tools and tests). */
@@ -201,7 +203,7 @@ export function quoteCart(
 
   for (const line of lines) {
     const { qty } = line;
-    const unit = line.noDiscounts ? line.prices.list : unitFromPrices(line.prices, qty, promo, line.productQty);
+    const unit = line.noDiscounts ? line.prices.list : unitFromPrices(line.prices, qty, promo, line.productQty, line.flash);
     subtotalList += line.prices.list * qty;
     subtotal += unit * qty;
     // A guarded line keeps all its profit: it adds nothing to the room other discounts can use.

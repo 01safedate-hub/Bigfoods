@@ -7,7 +7,7 @@ import type { Product, Variant } from "@/lib/catalog/types";
 import { cn } from "@/lib/format";
 import { unitFromPrices } from "@/lib/pricing/prices";
 import { useCart } from "./cart-provider";
-import { useLivePromo } from "./live-price";
+import { useFlash, useLivePromo } from "./live-price";
 import { useWishlist } from "./wishlist-provider";
 
 export function WishlistButton({ slug, className }: { slug: string; className?: string }) {
@@ -31,6 +31,7 @@ export function AddToCartIcon({ product, variant, className }: { product: Produc
   const { add } = useCart();
   const router = useRouter();
   const promo = useLivePromo();
+  const flash = useFlash(product.slug);
   const [done, setDone] = useState(false);
   return (
     <button
@@ -38,7 +39,7 @@ export function AddToCartIcon({ product, variant, className }: { product: Produc
       aria-label={variant ? "Add to cart" : "Choose options"}
       onClick={() => {
         if (!variant) return router.push(`/product/${product.slug}`);
-        add(product, variant, 1, unitFromPrices(variant.prices, 1, promo));
+        add(product, variant, 1, unitFromPrices(variant.prices, 1, promo, 1, flash));
         setDone(true);
         setTimeout(() => setDone(false), 1200);
       }}

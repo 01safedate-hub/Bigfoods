@@ -6,5 +6,5 @@ export const metadata: Metadata = { title: "Deals & Rewards" };
 
 export default async function DealsPage() {
   const products = await getProducts();
-  return <DealsView flash={products.filter((p) => p.flash)} />;
+  return <DealsView flash={products} />;
 }

@@ -58,7 +58,7 @@ export function ProductCard({ product }: { product: Product }) {
           {product.name}
         </span>
         <span className="flex items-baseline gap-1.5">
-          <LivePrice prices={product.prices} className="text-[15px] font-extrabold" showWas />
+          <LivePrice prices={product.prices} slug={product.slug} className="text-[15px] font-extrabold" showWas />
         </span>
         <span className="text-[11px] text-subtle">
           {compact(product.sold)} sold · ★ {product.rating}
