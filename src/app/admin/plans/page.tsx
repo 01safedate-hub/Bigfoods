@@ -12,7 +12,7 @@ export default async function PlansPage() {
   return (
     <>
       <h1 className="text-2xl font-extrabold">Group pay &amp; plans</h1>
-      <p className="text-[#5B6170]">Pay small small plans cancel themselves 14 days after a missed payment, and Group pay links close after 7 days; money goes back to wallets automatically.</p>
+      <p className="text-[#5B6170]">Pay small small plans have no deadlines: customers pay any amount, any time, and we order once fully paid. Group pay links stay open until fully paid, and a Group pay order with contributions can’t be cancelled until it’s complete.</p>
       {rows.length === 0 ? (
         <p className="rounded-lg border border-dashed border-[#C9CDD4] bg-white p-6 text-center text-[#5B6170]">No plans or Group pay links yet.</p>
       ) : (

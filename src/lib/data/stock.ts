@@ -6,7 +6,7 @@ import { secretDb } from "@/lib/supabase/server";
 export const variantText = (v: string | null | undefined) => (v ?? "").split(";").map((p) => p.replace(/^[^:]*:/, "").trim()).filter(Boolean).join(" / ");
 const lagosDay = (iso: string) => new Date(iso).toLocaleDateString("en-CA", { timeZone: "Africa/Lagos" });
 
-export interface BuyRow { sku_id: string; title: string; variant: string; supplier: string | null; cny: number; est: number; orders: number; need: number; covered: number; short: number; sea: boolean }
+export interface BuyRow { sku_id: string; title: string; variant: string; supplier: string | null; cny: number; est: number; orders: number; need: number; covered: number; short: number; sea: boolean; url: string | null }
 export interface PurchaseView {
   id: string; ref: string; kind: "buy" | "restock"; bought_on: string; supplier: string | null; ship_mode: string; status: "expected" | "arrived"; arrived_on: string | null; note: string | null;
   fees: { category: string; amount_ngn: number; note: string | null }[];
@@ -92,7 +92,7 @@ export async function getStockBoard(f: StockFilters): Promise<StockBoard | null>
   else if (f.show === "waiting") queue = queue.filter((o) => !o.ready);
 
   return {
-    buy: (buy.data ?? []).map((r) => ({ sku_id: r.sku_id, title: r.title, variant: variantText(r.variant), supplier: r.supplier, cny: Number(r.cny_price ?? 0), est: r.est_cost_ngn, orders: r.orders, need: r.need, covered: r.covered, short: r.short, sea: !!r.sea })),
+    buy: (buy.data ?? []).map((r) => ({ sku_id: r.sku_id, title: r.title, variant: variantText(r.variant), supplier: r.supplier, cny: Number(r.cny_price ?? 0), est: r.est_cost_ngn, orders: r.orders, need: r.need, covered: r.covered, short: r.short, sea: !!r.sea, url: r.source_url ?? null })),
     purchases: (pur.data ?? []).map((p) => {
       const lines = p.purchase_lines as unknown as Line[];
       return {

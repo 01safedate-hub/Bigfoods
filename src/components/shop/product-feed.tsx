@@ -26,10 +26,12 @@ export function ProductFeed({ products }: { products: Product[] }) {
   const list = filter(tab, products);
   // Every 8 cards, a full-photo best seller spans the row so long scrolls don't feel samey.
   const best = [...list].sort((a, b) => b.sold - a.sold).slice(0, 6);
+  // Real product photos for the promo cards.
+  const photos = [...list].sort((a, b) => b.sold - a.sold).flatMap((p) => p.images.slice(0, 1)).slice(0, 24);
   const ranks = categoryRanks(products);
   return (
     <section aria-label="Products" className="flex flex-col gap-2">
-      <div className="no-scrollbar sticky top-[96px] z-10 flex items-center gap-0.5 overflow-x-auto bg-white px-2 md:static md:px-0">
+      <div className="no-scrollbar sticky top-[69px] z-10 flex items-center gap-0.5 overflow-x-auto bg-white px-2 md:static md:px-0">
         {TABS.map((t) => (
           <button
             key={t}
@@ -55,9 +57,9 @@ export function ProductFeed({ products }: { products: Product[] }) {
               <Fragment key={p.slug}>
                 <ProductCard product={p} />
                 {/* Every 12 cards: a small "sell with us" card, different each visit. */}
-                {n % 12 === 5 && <PromoTile slot={Math.floor(n / 12)} />}
+                {n % 12 === 5 && <PromoTile slot={Math.floor(n / 12)} images={photos} />}
                 {/* Every 8 cards: a big swipeable card (best seller, then wholesale, then dropshipping). */}
-                {spotSlot && <SpotlightCarousel product={spot} rank={spot ? ranks.get(spot.slug) : undefined} className="col-span-2 aspect-[16/11] sm:aspect-[2/1]" />}
+                {spotSlot && <SpotlightCarousel product={spot} rank={spot ? ranks.get(spot.slug) : undefined} className="col-span-2 aspect-[16/11] sm:aspect-[2/1]" images={photos} />}
               </Fragment>
             );
           })}

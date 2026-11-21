@@ -75,3 +75,16 @@ export async function setProductStatus(slug: unknown, status: unknown): Promise<
   if (status === "active") await pingIndexNow([`${SHOP_URL}/product/${slug}`]);
   return { ok: true };
 }
+
+/** Mark whether the factory can add a customer's logo or artwork to this product. */
+export async function setProductCustomisable(slug: unknown, on: unknown): Promise<Result> {
+  const role = await requireCatalogRole();
+  if ("error" in role) return { ok: false, message: role.error };
+  if (typeof slug !== "string" || typeof on !== "boolean") return { ok: false, message: "Nothing to save." };
+  if (role.demo) return { ok: true };
+  const { error } = await secretDb().from("products").update({ customisable: on, updated_at: new Date().toISOString() }).eq("slug", slug);
+  if (error) return { ok: false, message: error.message };
+  updateTag("catalog");
+  updateTag(`product:${slug}`);
+  return { ok: true };
+}

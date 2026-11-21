@@ -15,9 +15,11 @@ import { useNow } from "@/hooks/use-now";
 import type { Product, QA } from "@/lib/catalog/types";
 import { cn, compact, naira } from "@/lib/format";
 import { PRICING } from "@/lib/pricing/config";
-import { unitFromPrices, weekly as weeklyOf } from "@/lib/pricing/prices";
+import { unitFromPrices } from "@/lib/pricing/prices";
 import { addDaysLabel } from "@/lib/time";
 import { askQuestion } from "../../actions";
+import { SizeGuide } from "@/components/shop/size-guide";
+import { productSizes, sizeKindOf } from "@/lib/catalog/size-guide";
 import { attempt } from "@/lib/net";
 
 type Pay = "full" | "small" | "group";
@@ -32,7 +34,6 @@ export function ProductView({ product }: { product: Product }) {
   const [image, setImage] = useState(0);
   const [qty, setQty] = useState(1);
   const [pay, setPay] = useState<Pay>("full");
-  const [plan, setPlan] = useState(4);
   const [watch, setWatch] = useState(false);
   const [qa, setQa] = useState<QA[]>(product.qa ?? []);
   const [asking, setAsking] = useState(false);
@@ -46,9 +47,9 @@ export function ProductView({ product }: { product: Product }) {
   const total = unit * qty;
   const retail = qty >= PRICING.retailerMinQty;
   const sea = product.shipMode === "sea";
-  const weekly = weeklyOf(total, plan);
   const photos = [...(variant.image ? [variant.image] : []), ...product.images.filter((u) => u !== variant.image)];
   const strip = useRef<HTMLDivElement>(null);
+  const sizeKind = sizeKindOf(product);
   const eta = now === null ? (sea ? "in 90+ days" : "in 10–18 days") : sea ? `from ${addDaysLabel(now, 90)}` : `${addDaysLabel(now, 10)} – ${addDaysLabel(now, 18)}`;
 
   const addToCart = () => {
@@ -59,7 +60,7 @@ export function ProductView({ product }: { product: Product }) {
 
   const payOpts: { id: Pay; title: string; sub: string; amount: string }[] = [
     { id: "full", title: "Pay in full", sub: "Card, transfer, USSD or wallet", amount: naira(total) },
-    { id: "small", title: "Pay small small", sub: `${plan} weekly payments · 0% interest`, amount: `${naira(weekly)}/wk` },
+    { id: "small", title: "Pay small small", sub: "Any amount, any time · 0% interest · no deadlines", amount: total >= 10_000 ? "from ₦1,000" : "from ₦10,000 orders" },
     { id: "group", title: "Group pay", sub: "Share a link, friends chip in", amount: "from ₦0" },
   ];
 
@@ -158,6 +159,17 @@ export function ProductView({ product }: { product: Product }) {
               </div>
             </div>
           ))}
+          {sizeKind && (
+            <SizeGuide
+              kind={sizeKind}
+              sizes={productSizes(product)}
+              onPick={(names) => {
+                const o = product.options.find((x) => /size|eu|uk|us\b/i.test(x.name));
+                const v = o?.values.find((x) => names.some((n) => x.label.replace(/^(eu|uk|us)\s*/i, "").trim().toUpperCase() === n.toUpperCase()));
+                if (o && v) setChoice({ ...choice, [o.name]: v.label });
+              }}
+            />
+          )}
           {variant.stock <= 0 && <p className="font-bold text-sale">This option is out of stock. Try another.</p>}
           <div className="flex items-center gap-2">
             <span className="flex flex-1 items-center">
@@ -219,13 +231,7 @@ export function ProductView({ product }: { product: Product }) {
             </button>
           ))}
           {pay === "small" && (
-            <div className="flex gap-1.5 pl-7">
-              {[4, 8, 12].map((n) => (
-                <button key={n} type="button" aria-pressed={plan === n} onClick={() => setPlan(n)} className={cn("min-h-10 border-[1.5px] px-3.5 text-[13px] font-bold", plan === n ? "border-ink bg-ink text-white" : "border-black/15")}>
-                  {n} wks
-                </button>
-              ))}
-            </div>
+            <p className="pl-7 text-[12px] text-muted">Start with any amount and pay the rest whenever you like. We order it once it’s fully paid.</p>
           )}
           {/* Desktop actions */}
           <div className="mt-2 hidden gap-2 md:flex">
@@ -245,7 +251,7 @@ export function ProductView({ product }: { product: Product }) {
           </div>
         </section>
 
-        <ProductTrust sea={product.shipMode === "sea"} />
+        <ProductTrust sea={product.shipMode === "sea"} customisable={product.customisable} />
 
         {product.wholesale && <WholesaleBar slug={product.slug} from={Number.isFinite(product.wholesaleFrom) ? product.wholesaleFrom : undefined} />}
 

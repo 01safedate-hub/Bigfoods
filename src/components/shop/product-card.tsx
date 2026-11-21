@@ -53,7 +53,10 @@ export function ProductCard({ product }: { product: Product }) {
           <ProductTile tint={product.tint} icon={product.icon} name={product.name} image={product.images[0]} badge={product.badge} className="aspect-[3/4] w-full" />
           <ShipTag sea={product.shipMode === "sea"} className="absolute bottom-2 left-1.5" />
         </span>
-        <span className="mt-0.5 truncate text-xs text-[#333] md:text-[13px]">{product.name}</span>
+        <span className="mt-0.5 truncate text-xs text-[#333] md:text-[13px]">
+          {product.customisable && <span className="mr-1 rounded-sm bg-[#FFF1D6] px-1 py-px text-[9px] font-extrabold text-[#8A5A00]">CUSTOM</span>}
+          {product.name}
+        </span>
         <span className="flex items-baseline gap-1.5">
           <LivePrice prices={product.prices} className="text-[15px] font-extrabold" showWas />
         </span>

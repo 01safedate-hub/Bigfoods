@@ -3,14 +3,12 @@
 import { Check, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Progress } from "@/components/ui/progress";
-import { useNow } from "@/hooks/use-now";
 import { naira } from "@/lib/format";
 import { type LinkProgress, linkProgress } from "../../actions";
 
 /** Live progress for a real Group pay link. Refreshes every 10 seconds while the page is open. */
 export function LiveLink({ code, initial }: { code: string; initial: LinkProgress }) {
   const [p, setP] = useState(initial);
-  const now = useNow(30_000);
   useEffect(() => {
     const t = setInterval(async () => {
       if (document.visibilityState !== "visible") return;
@@ -20,7 +18,8 @@ export function LiveLink({ code, initial }: { code: string; initial: LinkProgres
     return () => clearInterval(t);
   }, [code]);
   const left = p.target - p.raised;
-  const closed = now !== null && Date.parse(p.expires_at) <= now;
+  // Links stay open until the order is fully paid.
+  const closed = left <= 0;
   return (
     <div className="mx-auto flex w-full max-w-lg flex-col gap-4 px-3 py-6">
       <h1 className="text-xl font-extrabold">Help pay for this order</h1>
@@ -32,7 +31,7 @@ export function LiveLink({ code, initial }: { code: string; initial: LinkProgres
         <Progress value={(p.raised / p.target) * 100} className="h-2.5 bg-[#E0DEF7]" barClass="bg-group" label="Raised so far" />
         <span className="flex items-center justify-between text-xs">
           <span className="flex items-center gap-1 font-bold text-group"><Users aria-hidden size={13} /> {p.people} {p.people === 1 ? "person has" : "people have"} chipped in · live</span>
-          <span className="text-muted">{closed ? "Link closed" : `Open until ${new Date(p.expires_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Africa/Lagos" })}`}</span>
+          <span className="text-muted">{closed ? "Fully paid" : "Open until fully paid"}</span>
         </span>
       </section>
       <section className="flex flex-col rounded-lg border border-line bg-white">

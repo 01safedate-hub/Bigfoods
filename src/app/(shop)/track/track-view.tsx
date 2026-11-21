@@ -1,14 +1,13 @@
 "use client";
 
-import { Check, Copy, PackageSearch } from "lucide-react";
+import { Copy, PackageSearch } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { useNow } from "@/hooks/use-now";
 import { cn, naira } from "@/lib/format";
 import { AUTO_DELIVER_DAYS, trackingStep } from "@/lib/orders/lifecycle";
-import { planStatus } from "@/lib/payments/instalments";
+import { progressPct } from "@/lib/payments/instalments";
 import { type TrackedOrder, trackOrder } from "../actions";
 import { attempt } from "@/lib/net";
 
@@ -49,9 +48,8 @@ export function TrackView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const now = useNow(60_000);
   const step = order ? trackingStep(order.status) : null;
-  const plan = order?.plan ? planStatus(order.plan.instalments.map((i) => ({ n: i.n, dueMs: Date.parse(i.due), amount: i.amount })), order.paid, now ?? 0) : null;
+  const plan = order?.plan && order.plan.status === "active" ? { pct: progressPct(order.paid, order.total), left: Math.max(0, order.total - order.paid) } : null;
 
   return (
     <div className="flex w-full max-w-3xl flex-col gap-4 px-3 py-6 md:px-0">
@@ -98,28 +96,20 @@ export function TrackView() {
             )}
           </section>
 
-          {plan && order.plan && (
+          {plan && (
             <section className="flex flex-col gap-2 rounded-lg border border-line bg-white p-4">
               <div className="flex justify-between"><strong>Pay small small</strong><span className="text-xs text-muted">{naira(order.paid)} of {naira(order.total)} paid</span></div>
-              <ol>
-                {order.plan.instalments.map((i) => {
-                  const covered = order.plan!.instalments.filter((x) => x.n <= i.n).reduce((a, x) => a + x.amount, 0) <= order.paid;
-                  return (
-                    <li key={i.n} className="flex justify-between border-b border-dashed border-[#e2e2e2] py-1.5 last:border-0">
-                      <span className="flex items-center gap-1.5">{covered && <Check aria-hidden size={14} className="text-success" />}{day(i.due)} · payment {i.n}</span>
-                      <strong className={covered ? "text-success" : ""}>{naira(i.amount)}</strong>
-                    </li>
-                  );
-                })}
-              </ol>
-              {plan.state === "late" && <p className="font-semibold text-sale">A payment is overdue. Pay {naira(plan.overdue)} to keep your plan. It’s cancelled on {day(plan.cancelAtMs!)} if unpaid.</p>}
+              <span className="h-2 overflow-hidden rounded-full bg-[#E5E7EB]" role="progressbar" aria-valuenow={plan.pct} aria-valuemin={0} aria-valuemax={100}>
+                <span className="block h-full rounded-full bg-success" style={{ width: `${plan.pct}%` }} />
+              </span>
+              <p className="text-[13px] text-muted">{naira(plan.left)} left. Pay any amount, any time: there are no deadlines. Your price is locked, and we order it as soon as it’s fully paid.</p>
             </section>
           )}
 
           {order.link && (
             <section className="flex flex-col gap-2 rounded-lg bg-group-soft p-4">
               <strong>Group pay link</strong>
-              <span className="text-xs text-muted">Open until {day(order.link.expires_at)} · {naira(order.paid)} of {naira(order.total)} raised</span>
+              <span className="text-xs text-muted">Open until it’s fully paid · {naira(order.paid)} of {naira(order.total)} raised</span>
               <button
                 type="button"
                 onClick={() => {

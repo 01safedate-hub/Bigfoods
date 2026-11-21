@@ -1,5 +1,6 @@
 "use client";
 
+import { ProductTrustNote } from "@/components/shop/product-trust";
 import { ArrowRight, Check, ChevronLeft, Ship } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -54,6 +55,7 @@ export function WholesaleProductView({ product }: { product: Product }) {
           <Link href="/wholesale" className="hidden w-fit items-center gap-1 text-[13px] font-bold text-sale md:flex"><ChevronLeft aria-hidden size={16} /> Wholesale market</Link>
           <span className="flex w-fit items-center gap-1.5 rounded-full bg-sale px-3 py-1 text-[11px] font-extrabold tracking-[0.12em] text-white"><Ship aria-hidden size={13} /> WHOLESALE · SEA ONLY</span>
           <h1 className="text-[20px] font-extrabold leading-snug md:text-[28px]">{product.name}</h1>
+          {product.customisable && <span className="w-fit rounded-sm bg-[#FFF1D6] px-2 py-0.5 text-[11px] font-extrabold tracking-wide text-[#8A5A00]">CUSTOMISABLE · ADD YOUR LOGO</span>}
           <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <strong className="text-[26px] tabular-nums text-sale">{naira(product.wholesaleFrom)}</strong>
             <span className="text-[13px] text-muted">/unit{product.variants.filter((v) => v.wholesale > 0).length > 1 ? " and up" : ""}</span>
@@ -83,6 +85,10 @@ export function WholesaleProductView({ product }: { product: Product }) {
             </Link>
           )}
         </section>
+
+        <div className="mx-3 md:mx-0">
+          <ProductTrustNote customisable={product.customisable} />
+        </div>
 
         <p className="mx-3 rounded-xl bg-white p-3 text-[13px] text-muted md:mx-0 md:border md:border-line">
           Wholesale orders don’t use coupons, points or sales. Delivery inside Nigeria is arranged after customs and billed by state.

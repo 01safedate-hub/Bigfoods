@@ -10,7 +10,7 @@ import { publicDb, secretDb } from "@/lib/supabase/server";
 
 /** Only columns customers are allowed to read (see the column grants in the migrations). */
 const PRODUCT_COLUMNS =
-  "slug, title, description, main_images, sale_count, rating, reviews, badge, is_new, tint, icon, flash_claimed_pct, specs, options, wholesale, " +
+  "slug, title, description, main_images, sale_count, rating, reviews, badge, is_new, tint, icon, flash_claimed_pct, specs, options, wholesale, customisable, " +
   "categories(slug, is_gadget, ship_mode, wholesale_enabled), " +
   "product_skus(id, props, image_url, stock, price_list, price_midnight, price_event, price_flash, price_retailer, price_wholesale, active, sort, promo_paused)";
 
@@ -30,6 +30,7 @@ interface Row {
   specs: [string, string][];
   options: Product["options"];
   wholesale: boolean;
+  customisable: boolean | null;
   categories: { slug: string; is_gadget: boolean; ship_mode: "air" | "sea"; wholesale_enabled: boolean } | null;
   product_skus: {
     id: string; props: Record<string, string>; image_url: string | null; stock: number; active: boolean; sort: number; promo_paused: boolean;
@@ -74,6 +75,7 @@ function rowToProduct(r: Row): Product | null {
     wholesaleFrom: Math.min(...variants.map((v) => v.wholesale || Infinity)),
     wholesale: r.wholesale !== false && r.categories?.wholesale_enabled !== false && variants.some((v) => v.wholesale > 0),
     flash: r.flash_claimed_pct === null ? undefined : { claimedPct: r.flash_claimed_pct },
+    customisable: r.customisable === true,
   };
 }
 

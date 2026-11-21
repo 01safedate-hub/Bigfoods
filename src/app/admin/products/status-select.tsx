@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { setProductStatus } from "./actions";
+import { setProductCustomisable, setProductStatus } from "./actions";
 
 const LABEL: Record<string, string> = { active: "Live", draft: "Draft", hidden: "Hidden", sold_out: "Sold out" };
 
@@ -31,5 +31,30 @@ export function StatusSelect({ slug, status }: { slug: string; status: string })
         {Object.entries(LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
       </select>
     </span>
+  );
+}
+
+/** Customisable on/off: shows the "add your logo" option to customers. */
+export function CustomisableToggle({ slug, on }: { slug: string; on: boolean }) {
+  const [value, setValue] = useState(on);
+  const [pending, start] = useTransition();
+  return (
+    <label className="flex min-h-9 cursor-pointer items-center gap-1.5 text-xs font-bold">
+      <input
+        type="checkbox"
+        checked={value}
+        disabled={pending}
+        onChange={(e) => {
+          const next = e.target.checked;
+          setValue(next);
+          start(async () => {
+            const r = await setProductCustomisable(slug, next).catch(() => ({ ok: false as const, message: "" }));
+            if (!r.ok) setValue(!next);
+          });
+        }}
+        className="size-4 accent-[#8A5A00]"
+      />
+      Customisable
+    </label>
   );
 }

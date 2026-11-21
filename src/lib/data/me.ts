@@ -1,3 +1,4 @@
+import type { ItemCustom } from "@/app/(shop)/account/orders/custom-artwork";
 import "server-only";
 import { getSessionUser, userDb } from "@/lib/supabase/auth";
 import { hasSupabase } from "@/lib/supabase/env";
@@ -18,7 +19,7 @@ export interface MyOrder {
   total_ngn: number;
   paid_ngn: number;
   created_at: string;
-  items: { id: string; title: string; variant_label: string | null; qty: number }[];
+  items: { id: string; title: string; variant_label: string | null; qty: number; customisable: boolean; custom: ItemCustom | null }[];
 }
 
 export interface Me {
@@ -45,7 +46,7 @@ export async function getMe(): Promise<Me | null> {
     db.from("profiles").select("full_name, phone, role, station_id").eq("id", user.id).maybeSingle(),
     db.from("my_balances").select("wallet_ngn, points").maybeSingle(),
     db.from("wishlists").select("product_id", { count: "exact", head: true }),
-    db.from("orders").select("code, status, pay_mode, total_ngn, paid_ngn, created_at, order_items(id, title, variant_label, qty)").order("created_at", { ascending: false }).limit(50),
+    db.from("orders").select("code, status, pay_mode, total_ngn, paid_ngn, created_at, order_items(id, title, variant_label, qty, product_skus(products(customisable)), order_customisations(id, status, quote_ngn, staff_note, files))").order("created_at", { ascending: false }).limit(50),
   ]);
   const p = profile.data;
   let station: Me["station"] = null;
@@ -53,7 +54,15 @@ export async function getMe(): Promise<Me | null> {
     const { data } = await db.from("pickup_stations").select("id, name, area, state, verified").eq("id", p.station_id).maybeSingle();
     station = data ?? null;
   }
-  const list = ((orders.data ?? []) as unknown as (Omit<MyOrder, "items"> & { order_items: MyOrder["items"] })[]).map(({ order_items, ...o }) => ({ ...o, items: order_items ?? [] }));
+  type RawItem = Omit<MyOrder["items"][number], "customisable" | "custom"> & { product_skus: { products: { customisable: boolean } | null } | null; order_customisations: ItemCustom[] | ItemCustom | null };
+  const list = ((orders.data ?? []) as unknown as (Omit<MyOrder, "items"> & { order_items: RawItem[] })[]).map(({ order_items, ...o }) => ({
+    ...o,
+    items: (order_items ?? []).map(({ product_skus, order_customisations, ...i }) => ({
+      ...i,
+      customisable: product_skus?.products?.customisable === true,
+      custom: Array.isArray(order_customisations) ? (order_customisations[0] ?? null) : order_customisations,
+    })),
+  }));
   const counts = Object.fromEntries(
     (Object.keys(ORDER_GROUPS) as OrderGroup[]).map((g) => [g, list.filter((o) => (ORDER_GROUPS[g].statuses as readonly string[]).includes(o.status)).length]),
   ) as Record<OrderGroup, number>;

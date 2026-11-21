@@ -32,7 +32,7 @@ export const TEMPLATES: Record<string, Template> = {
       <>
         <H>Welcome to FastChina</H>
         <P>We buy straight from factories in China and deliver to your Jumia pickup station. Shipping is free on everything, and customs clearing is included in the price.</P>
-        <Summary rows={[["First-order coupon", "₦500 off", "sale"], ["Midnight Drop", "12am–4am daily"], ["Pay small small", "0% weekly payments"]]} />
+        <Summary rows={[["First-order coupon", "₦500 off", "sale"], ["Midnight Drop", "12am–4am daily"], ["Pay small small", "Any amount, any time, 0%"]]} />
         <Btn href="/deals" tone="sale">START SHOPPING</Btn>
         <P muted>Tip: check in daily on your account page for free points. 100 points = ₦100 off.</P>
       </>

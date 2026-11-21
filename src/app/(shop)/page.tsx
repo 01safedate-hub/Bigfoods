@@ -109,7 +109,7 @@ export default async function HomePage() {
         <div className="flex flex-col gap-2">
           <h2 id="about-h" className="text-[15px] font-extrabold text-ink">Buy from China in Nigeria, without the stress</h2>
           <p>FastChina brings China’s factory prices to Nigeria in Naira. We buy from the factory, photograph your item at our China warehouse, ship it by air (10+ days) or sea for big items (90+ days), clear customs and deliver free to your nearest Jumia pickup station.</p>
-          <p>Pay in full, Pay small small over up to 12 weeks, or split the cost with friends using Group pay. Reselling? Buy 10 or more of an item at the <Link href="/wholesale" className="font-semibold text-ink underline">wholesale price</Link>, or open a <a href="https://fastchina.store" className="font-semibold text-ink underline">free dropshipping store</a>.</p>
+          <p>Pay in full, Pay small small (any amount, any time, no deadlines), or split the cost with friends using Group pay. Reselling? Buy 10 or more of an item at the <Link href="/wholesale" className="font-semibold text-ink underline">wholesale price</Link>, or open a <a href="https://fastchina.store" className="font-semibold text-ink underline">free dropshipping store</a>.</p>
         </div>
         <nav aria-label="Shop by category" className="flex flex-col gap-1.5">
           <strong className="text-ink">Popular categories</strong>

@@ -10,7 +10,7 @@ const WAYS = [
   [Landmark, "Bank transfer", "Pay into a one-time account number generated for your order."],
   [Smartphone, "USSD", "Pay from any Nigerian bank with a short code, no internet needed."],
   [Wallet, "FastChina wallet", "Refunds and prizes land here instantly and can pay for any order."],
-  [Users, "Pay small small & Group pay", "Spread a price over 4, 8 or 12 weeks at 0% interest, or split it with friends."],
+  [Users, "Pay small small & Group pay", "Pay any amount, any time at 0% interest, or split it with friends. No deadlines."],
 ] as const;
 
 export default function PaymentsPage() {

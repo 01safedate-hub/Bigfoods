@@ -5,7 +5,7 @@ import Link from "next/link";
 import { type AdminProduct, listAdminProducts } from "@/lib/data/admin";
 import { naira } from "@/lib/format";
 import { checkStaff } from "@/lib/supabase/auth";
-import { StatusSelect } from "./status-select";
+import { CustomisableToggle, StatusSelect } from "./status-select";
 
 export const metadata: Metadata = { title: "Products" };
 
@@ -51,6 +51,8 @@ export default async function ProductsPage({ searchParams }: PageProps<"/admin/p
               <Link href={`/product/${p.slug}`} className="truncate font-bold hover:underline">{p.title}</Link>
               <span className="text-xs text-[#5B6170]">{p.category ?? "No category"} · {p.source === "custom" ? "Custom" : "Imported"} · from {p.price_list_min ? naira(p.price_list_min) : "—"}</span>
             </span>
+            {p.source_url && <a href={p.source_url} target="_blank" rel="noreferrer" className="text-xs font-bold text-[#2563EB] underline">Supplier ↗</a>}
+            <CustomisableToggle slug={p.slug} on={p.customisable === true} />
             <StatusSelect slug={p.slug} status={p.status} />
           </li>
         ))}

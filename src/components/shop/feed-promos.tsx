@@ -4,6 +4,7 @@ import {
   ArrowRight, BadgePercent, Banknote, Coins, Crown, Gift, Globe, HandCoins, Laptop, Megaphone, PiggyBank, Rocket, Ship, ShoppingBag, Smartphone,
   Smile, Sparkles, Store, TrendingUp, Truck, type LucideIcon,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Product } from "@/lib/catalog/types";
@@ -47,27 +48,50 @@ const readOffset = () => {
 };
 const usePromo = (slot: number) => PROMOS[(slot + useSyncExternalStore(() => () => {}, readOffset, () => 0)) % PROMOS.length];
 
-/** A promo the size of a product card: a little character, floating coins, one line and a button. */
-export function PromoTile({ slot }: { slot: number }) {
+/** Real product photos from the feed, chosen per slot, that change every few seconds. */
+function useRotating(images: string[] | undefined, slot: number, every = 3500) {
+  const list = (images ?? []).filter(Boolean);
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    if (list.length < 2 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const t = setInterval(() => setTick((n) => n + 1), every + (slot % 3) * 400);
+    return () => clearInterval(t);
+  }, [list.length, every, slot]);
+  if (!list.length) return { current: null as string | null, all: [] as string[] };
+  const base = (slot * 5) % list.length;
+  const pick = (k: number) => list[(base + k) % list.length];
+  return { current: pick(tick), all: [0, 1, 2].map((k) => pick(tick + k)) };
+}
+
+/** A promo the size of a product card: real product photos, one line and a button. */
+export function PromoTile({ slot, images }: { slot: number; images?: string[] }) {
   const p = usePromo(slot);
   const Person = p.person;
-  const Prop = p.prop;
   const external = p.href.startsWith("http");
+  const { current } = useRotating(images, slot);
   const body = (
     <>
       <span className={cn("relative flex aspect-[3/4] w-full items-center justify-center overflow-hidden rounded bg-gradient-to-br text-white", p.tone)}>
-        <span aria-hidden className="absolute -right-6 -top-6 size-24 rounded-full bg-white/10" />
-        <span aria-hidden className="absolute -bottom-8 -left-4 size-28 rounded-full bg-white/10" />
-        <span aria-hidden className="relative flex size-[46%] items-center justify-center rounded-full bg-white/15 ring-4 ring-white/10">
-          <Person size={44} strokeWidth={1.6} />
+        {current ? (
+          <>
+            <Image key={current} src={current} alt="" fill sizes="(min-width: 1024px) 220px, 50vw" className="promo-fade object-cover" />
+            <span aria-hidden className={cn("absolute inset-0 bg-gradient-to-t opacity-80 mix-blend-multiply", p.tone)} />
+            <span aria-hidden className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/70 to-transparent" />
+          </>
+        ) : (
+          <>
+            <span aria-hidden className="absolute -right-6 -top-6 size-24 rounded-full bg-white/10" />
+            <span aria-hidden className="relative flex size-[46%] items-center justify-center rounded-full bg-white/15 ring-4 ring-white/10"><Person size={44} strokeWidth={1.6} /></span>
+          </>
+        )}
+        <span className="absolute left-2 top-2 flex size-8 items-center justify-center rounded-full bg-white/95 text-ink shadow"><Person aria-hidden size={17} /></span>
+        <Coins aria-hidden size={18} className="promo-float-slow absolute right-3 top-3 text-[#FDE68A] drop-shadow" />
+        <span className="absolute inset-x-2 bottom-2 flex flex-col gap-1">
+          <span className="w-fit rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-extrabold text-ink">{external ? "FREE" : "WHOLESALE"}</span>
+          <strong className="line-clamp-2 text-[15px] font-extrabold leading-tight drop-shadow">{p.title}</strong>
         </span>
-        <Prop aria-hidden size={22} className="promo-float absolute right-[16%] top-[18%] text-[#FDE68A]" />
-        <Coins aria-hidden size={18} className="promo-float-slow absolute bottom-[20%] left-[16%] text-[#FDE68A]" />
-        <Sparkles aria-hidden size={14} className="promo-float absolute left-[24%] top-[16%] text-white/80" />
-        <span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-extrabold text-ink">{external ? "FREE" : "WHOLESALE"}</span>
       </span>
       <span className="mt-1.5 flex flex-col gap-0.5 px-0.5">
-        <strong className="line-clamp-2 text-[13px] leading-snug">{p.title}</strong>
         <span className="line-clamp-1 text-[11px] text-muted">{p.sub}</span>
         <span className="mt-0.5 flex items-center gap-1 text-[12px] font-extrabold text-[#1D4ED8]">{p.cta} <ArrowRight aria-hidden size={13} /></span>
       </span>
@@ -77,7 +101,7 @@ export function PromoTile({ slot }: { slot: number }) {
 }
 
 /** Big swipeable slot: a best seller, then the wholesale market, then free dropshipping. */
-export function SpotlightCarousel({ product, rank, className }: { product?: Product; rank?: number; className?: string }) {
+export function SpotlightCarousel({ product, rank, className, images }: { product?: Product; rank?: number; className?: string; images?: string[] }) {
   const track = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
   useEffect(() => {
@@ -89,8 +113,8 @@ export function SpotlightCarousel({ product, rank, className }: { product?: Prod
   }, []);
   const slides = [
     product && <SpotlightCard key="p" product={product} rank={rank} className="size-full" />,
-    <AdSlide key="w" href="/wholesale" tone="from-[#F0283A] via-[#C8102E] to-[#6E0711]" kicker="WHOLESALE MARKET" title="Stock your shop at factory prices" sub="From 10 units per product, by sea. Starter kits for new businesses." cta="Open wholesale" icon={Ship} />,
-    <AdSlide key="d" href={`${STORE}/seller`} tone="from-[#3B82F6] via-[#1D4ED8] to-[#172554]" kicker="DROPSHIP FOR FREE" title="Sell these products. Keep your profit." sub="Your own store website for ₦0. We buy, ship and deliver." cta="Start free" icon={HandCoins} external />,
+    <AdSlide key="w" href="/wholesale" tone="from-[#F0283A] via-[#C8102E] to-[#6E0711]" kicker="WHOLESALE MARKET" title="Stock your shop at factory prices" sub="From 10 units per product, by sea. Starter kits for new businesses." cta="Open wholesale" icon={Ship} images={images} slot={1} />,
+    <AdSlide key="d" href={`${STORE}/seller`} tone="from-[#3B82F6] via-[#1D4ED8] to-[#172554]" kicker="DROPSHIP FOR FREE" title="Sell these products. Keep your profit." sub="Your own store website for ₦0. We buy, ship and deliver." cta="Start free" icon={HandCoins} external images={images} slot={2} />,
   ].filter(Boolean);
   return (
     <div className={cn("relative", className)}>
@@ -104,17 +128,30 @@ export function SpotlightCarousel({ product, rank, className }: { product?: Prod
   );
 }
 
-export function AdSlide({ href, tone, kicker, title, sub, cta, icon: Icon, external, className }: { href: string; tone: string; kicker: string; title: string; sub: string; cta: string; icon: LucideIcon; external?: boolean; className?: string }) {
+export function AdSlide({ href, tone, kicker, title, sub, cta, icon: Icon, external, className, images, slot = 0 }: { href: string; tone: string; kicker: string; title: string; sub: string; cta: string; icon: LucideIcon; external?: boolean; className?: string; images?: string[]; slot?: number }) {
+  const { all } = useRotating(images, slot + 7, 4000);
   const inner = (
     <>
       <span aria-hidden className="absolute -right-10 -top-12 size-48 rounded-full bg-white/10" />
       <span aria-hidden className="absolute -bottom-16 right-10 size-40 rounded-full bg-white/10" />
-      <Icon aria-hidden size={88} strokeWidth={1.2} className="promo-float-slow absolute right-5 top-6 text-white/25" />
-      <Coins aria-hidden size={26} className="promo-float absolute right-28 top-10 text-[#FDE68A]" />
-      <span className="text-[11px] font-extrabold tracking-[0.14em] text-white/85">{kicker}</span>
-      <span className="mt-auto flex flex-col gap-1">
-        <strong className="max-w-[80%] text-[21px] font-extrabold leading-tight md:text-[26px]">{title}</strong>
-        <span className="max-w-[85%] text-[13px] text-white/90">{sub}</span>
+      {all.length ? (
+        // Three real product photos, fanned like cards, swapping every few seconds.
+        <span aria-hidden className="absolute right-3 top-8 h-[52%] w-[46%] md:top-6 md:h-[62%] md:w-[34%]">
+          {all.map((src, k) => (
+            <span key={`${k}-${src}`} className={cn("promo-fade absolute aspect-[3/4] h-full overflow-hidden rounded-xl border-2 border-white/90 bg-white shadow-xl",
+              k === 0 ? "right-0 top-0 z-[3] rotate-3" : k === 1 ? "right-[28%] top-[6%] z-[2] -rotate-6 opacity-95" : "right-[52%] top-[14%] z-[1] -rotate-12 opacity-85")}>
+              <Image src={src} alt="" fill sizes="160px" className="object-cover" />
+            </span>
+          ))}
+        </span>
+      ) : (
+        <Icon aria-hidden size={88} strokeWidth={1.2} className="promo-float-slow absolute right-5 top-6 text-white/25" />
+      )}
+      <Coins aria-hidden size={26} className="promo-float absolute left-[46%] top-5 z-[4] text-[#FDE68A] drop-shadow" />
+      <span className="relative z-[4] flex items-center gap-1.5 text-[11px] font-extrabold tracking-[0.14em] text-white/90"><Icon aria-hidden size={14} /> {kicker}</span>
+      <span className="relative z-[4] mt-auto flex flex-col gap-1">
+        <strong className="max-w-[62%] text-[21px] font-extrabold leading-tight drop-shadow md:max-w-[60%] md:text-[26px]">{title}</strong>
+        <span className="max-w-[62%] text-[13px] text-white/90">{sub}</span>
         <span className="mt-2 flex w-fit items-center gap-1 rounded-full bg-white px-4 py-2 text-[13px] font-extrabold text-ink">{cta} <ArrowRight aria-hidden size={14} /></span>
       </span>
     </>

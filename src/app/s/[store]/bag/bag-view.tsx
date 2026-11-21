@@ -9,7 +9,7 @@ import { useOnline } from "@/hooks/use-online";
 import { type Station, statesOf } from "@/lib/catalog/stations";
 import { cn, naira } from "@/lib/format";
 import { attempt } from "@/lib/net";
-import { buildSchedule, planOptions } from "@/lib/payments/instalments";
+import { canPaySmall } from "@/lib/payments/instalments";
 import { useBag } from "../../bag-provider";
 import { placeStoreOrder } from "../../actions";
 
@@ -23,10 +23,7 @@ export function BagView({ store, storeKey, open, allowSmall, stations }: { store
   const [phone, setPhone] = useState("");
   const [mode, setMode] = useState<"full" | "small">("full");
   const total = items.reduce((s, i) => s + i.price * i.qty, 0);
-  const weeksOk = allowSmall ? planOptions(total) : [];
-  const [weeks, setWeeks] = useState(4);
-  const w = weeksOk.includes(weeks) ? weeks : weeksOk[0];
-  const schedule = w ? buildSchedule(total, w, 0) : [];
+  const smallOk = allowSmall && canPaySmall(total);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, start] = useTransition();
   const base = `/s/${storeKey}`;
@@ -70,7 +67,7 @@ export function BagView({ store, storeKey, open, allowSmall, stations }: { store
           e.preventDefault();
           start(async () => {
             setMsg(null);
-            const r = await attempt(() => placeStoreOrder({ store, items: items.map((i) => ({ slug: i.slug, variantId: i.variantId, qty: i.qty })), stationId: station, phone, mode, weeks: w }));
+            const r = await attempt(() => placeStoreOrder({ store, items: items.map((i) => ({ slug: i.slug, variantId: i.variantId, qty: i.qty })), stationId: station, phone, mode }));
             if (!r.ok) return setMsg(r.message);
             if (!r.value.ok) return setMsg(r.value.message);
             try {
@@ -97,16 +94,13 @@ export function BagView({ store, storeKey, open, allowSmall, stations }: { store
         </label>
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-1 text-[13px] font-semibold">How to pay</legend>
-          {(allowSmall ? ([["full", "Pay in full"], ["small", "Pay small small · 0% weekly"]] as const) : ([["full", "Pay in full"]] as const)).map(([k, label]) => (
-            <label key={k} className={cn("flex min-h-12 cursor-pointer items-center gap-2 rounded-[var(--st-radius)] border px-3 text-[14px]", mode === k ? "border-[var(--st-fg)] font-bold" : "border-[var(--st-line)]", k === "small" && !weeksOk.length && "opacity-40")}>
-              <input type="radio" name="mode" className="size-4 accent-[var(--st-accent)]" checked={mode === k} disabled={k === "small" && !weeksOk.length} onChange={() => setMode(k)} /> {label}
+          {(allowSmall ? ([["full", "Pay in full"], ["small", "Pay small small · any amount, any time"]] as const) : ([["full", "Pay in full"]] as const)).map(([k, label]) => (
+            <label key={k} className={cn("flex min-h-12 cursor-pointer items-center gap-2 rounded-[var(--st-radius)] border px-3 text-[14px]", mode === k ? "border-[var(--st-fg)] font-bold" : "border-[var(--st-line)]", k === "small" && !smallOk && "opacity-40")}>
+              <input type="radio" name="mode" className="size-4 accent-[var(--st-accent)]" checked={mode === k} disabled={k === "small" && !smallOk} onChange={() => setMode(k)} /> {label}
             </label>
           ))}
-          {mode === "small" && weeksOk.length > 0 && (
-            <span className="flex flex-wrap gap-2 text-[13px]">
-              {weeksOk.map((n) => <button key={n} type="button" aria-pressed={w === n} onClick={() => setWeeks(n)} className={cn("min-h-10 rounded-full border px-3", w === n ? "border-[var(--st-fg)] font-bold" : "border-[var(--st-line)]")}>{n} weeks</button>)}
-              <span className="w-full text-[var(--st-muted)]">{naira(schedule[0]?.amount ?? 0)} today, then {naira(schedule[1]?.amount ?? 0)} a week.</span>
-            </span>
+          {mode === "small" && smallOk && (
+            <span className="text-[13px] text-[var(--st-muted)]">Pay any amount now and the rest whenever you like. No deadlines, 0% interest. We order it once it’s fully paid.</span>
           )}
         </fieldset>
         <div className="flex items-baseline justify-between border-t border-[var(--st-line)] pt-3">
@@ -115,7 +109,7 @@ export function BagView({ store, storeKey, open, allowSmall, stations }: { store
         </div>
         {msg && <p role="alert" className="text-[13px] font-semibold text-[#DC2626]">{msg}</p>}
         <button type="submit" disabled={busy || !open || !online || !station} className="min-h-14 rounded-[var(--st-radius)] text-[16px] font-bold text-white disabled:opacity-40" style={{ background: "var(--st-accent)" }}>
-          {busy ? "Placing order…" : !online ? "Offline" : !open ? "Not taking orders right now" : mode === "small" ? `Pay ${naira(schedule[0]?.amount ?? total)} today` : `Pay ${naira(total)}`}
+          {busy ? "Placing order…" : !online ? "Offline" : !open ? "Not taking orders right now" : mode === "small" ? "Start Pay small small" : `Pay ${naira(total)}`}
         </button>
         <p className="text-center text-[12px] text-[var(--st-muted)]">Secure payment · Fulfilled and delivered by FastChina</p>
       </form>

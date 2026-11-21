@@ -11,7 +11,7 @@ import { quoteWholesale } from "../actions";
 
 /** Re-checks prices with the server; lines whose price moved get the new price. */
 export function useWholesaleQuote(lines: WCartLine[]) {
-  const [state, setState] = useState<{ missing: number; unavailable: Set<string>; plans: number[]; total: number; checked: boolean }>({ missing: 0, unavailable: new Set(), plans: [], total: 0, checked: false });
+  const [state, setState] = useState<{ missing: number; unavailable: Set<string>; smallOk: boolean; total: number; checked: boolean }>({ missing: 0, unavailable: new Set(), smallOk: false, total: 0, checked: false });
   const key = lines.map((l) => `${l.variantId}:${l.qty}`).join(",");
   useEffect(() => {
     if (!lines.length) return;
@@ -20,7 +20,7 @@ export function useWholesaleQuote(lines: WCartLine[]) {
       if (!q) return;
       wcart.reprice(new Map(q.lines.map((l) => [l.variantId, l.unit])));
       const ok = new Set(q.lines.map((l) => l.variantId));
-      setState({ missing: q.missing, unavailable: new Set(lines.filter((l) => !ok.has(l.variantId)).map((l) => l.variantId)), plans: q.plans, total: q.total, checked: true });
+      setState({ missing: q.missing, unavailable: new Set(lines.filter((l) => !ok.has(l.variantId)).map((l) => l.variantId)), smallOk: q.smallOk, total: q.total, checked: true });
     }, 400);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps

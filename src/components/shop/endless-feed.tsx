@@ -21,6 +21,7 @@ export function EndlessFeed({ products, title = "You may also like" }: { product
   }, [products.length]);
   if (!products.length) return null;
   const best = [...products].sort((a, b) => b.sold - a.sold);
+  const photos = best.flatMap((p) => p.images.slice(0, 1)).slice(0, 24);
   return (
     <section aria-label={title} className="flex flex-col gap-2.5 px-1.5 pt-4 pb-24 md:px-0 md:pb-6">
       <h2 className="px-1.5 text-[15px] font-extrabold md:px-0 md:text-lg">{title}</h2>
@@ -31,8 +32,8 @@ export function EndlessFeed({ products, title = "You may also like" }: { product
           return (
             <Fragment key={`${p.slug}-${i}`}>
               <ProductCard product={p} />
-              {n % 12 === 7 && <PromoTile slot={Math.floor(n / 12) + 3} />}
-              {n % 16 === 0 && <SpotlightCarousel product={best[(n / 16) % best.length]} className="col-span-2 aspect-[16/11] sm:aspect-[2/1]" />}
+              {n % 12 === 7 && <PromoTile slot={Math.floor(n / 12) + 3} images={photos} />}
+              {n % 16 === 0 && <SpotlightCarousel product={best[(n / 16) % best.length]} className="col-span-2 aspect-[16/11] sm:aspect-[2/1]" images={photos} />}
             </Fragment>
           );
         })}

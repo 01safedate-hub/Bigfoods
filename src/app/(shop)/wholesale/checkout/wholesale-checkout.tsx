@@ -20,7 +20,6 @@ export function WholesaleCheckout() {
   const [delivery, setDelivery] = useState({ state: "", city: "", address: "" });
   const [phone, setPhone] = useState("");
   const [mode, setMode] = useState<"full" | "small">("full");
-  const [weeks, setWeeks] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [done, setDone] = useState<string | null>(null);
@@ -36,14 +35,13 @@ export function WholesaleCheckout() {
 
   const total = lines.reduce((s, l) => s + l.qty * l.unit, 0);
   const units = lines.reduce((s, l) => s + l.qty, 0);
-  const weekly = weeks ? Math.ceil(total / weeks / 100) * 100 : 0;
 
   if (done) {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center gap-3 px-6 py-16 text-center">
         <CheckCircle2 aria-hidden size={52} strokeWidth={1.4} className="text-success" />
         <h1 className="text-[22px] font-extrabold">Wholesale order placed</h1>
-        <p className="text-[15px] text-muted">Order <strong className="font-mono text-ink">#{done}</strong>. {mode === "small" ? "Your weekly plan has started; we order your stock when it’s fully paid." : "Complete your payment and we’ll order your stock."} It ships by sea; we’ll call you to arrange delivery when it clears customs (about {SEA_DAYS[0]} days).</p>
+        <p className="text-[15px] text-muted">Order <strong className="font-mono text-ink">#{done}</strong>. {mode === "small" ? "Your Pay small small plan has started. Pay any amount, any time; we order your stock once it’s fully paid." : "Complete your payment and we’ll order your stock."} It ships by sea; we’ll call you to arrange delivery when it clears customs (about {SEA_DAYS[0]} days).</p>
         <Link href={`/track?code=${done}`} className="min-h-12 rounded-full bg-sale px-6 py-3.5 font-extrabold text-white">Track this order</Link>
         <Link href="/wholesale" className="text-[14px] font-bold underline">Back to the wholesale market</Link>
       </div>
@@ -63,9 +61,9 @@ export function WholesaleCheckout() {
   async function place() {
     setErr("");
     if (!delivery.state || delivery.city.trim().length < 2) return setErr("Enter your state and city for delivery.");
-    if (mode === "small" && !weeks) return setErr("Choose how many weeks to pay over.");
+    if (mode === "small" && !quote.smallOk) return setErr("Pay small small starts from ₦10,000.");
     setBusy(true);
-    const r = await placeWholesaleOrder({ items: lines.map(({ slug, variantId, qty }) => ({ slug, variantId, qty })), delivery, phone, mode, weeks: weeks ?? undefined })
+    const r = await placeWholesaleOrder({ items: lines.map(({ slug, variantId, qty }) => ({ slug, variantId, qty })), delivery, phone, mode })
       .catch(() => ({ ok: false as const, message: "You seem to be offline. Your cart is saved; try again when you’re connected." }));
     setBusy(false);
     if (!r.ok) return setErr(r.message);
@@ -112,7 +110,7 @@ export function WholesaleCheckout() {
       <section className={box} aria-labelledby="pay-h">
         <h2 id="pay-h" className="text-[15px] font-extrabold">How to pay</h2>
         <div role="radiogroup" aria-label="How to pay" className="flex flex-col gap-2">
-          {([["full", "Pay in full", "Card, transfer, USSD or wallet"], ["small", "Pay small small", "Weekly over 4, 8 or 12 weeks · 0% interest"]] as const).map(([m, t, d]) => (
+          {([["full", "Pay in full", "Card, transfer, USSD or wallet"], ["small", "Pay small small", "Any amount, any time · 0% interest · no deadlines"]] as const).map(([m, t, d]) => (
             <button key={m} type="button" role="radio" aria-checked={mode === m} onClick={() => setMode(m)} className={cn("flex items-center gap-3 rounded-xl border p-3 text-left", mode === m ? "border-ink bg-surface" : "border-line")}>
               <span className={cn("size-4 shrink-0 rounded-full border-2", mode === m ? "border-[5px] border-ink" : "border-[#bbb]")} />
               <span className="flex flex-col"><strong className="text-[14px]">{t}</strong><span className="text-[12px] text-muted">{d}</span></span>
@@ -120,12 +118,7 @@ export function WholesaleCheckout() {
           ))}
         </div>
         {mode === "small" && (
-          <div className="flex flex-wrap gap-2">
-            {(quote.plans.length ? quote.plans : [4, 8, 12]).map((w) => (
-              <button key={w} type="button" onClick={() => setWeeks(w)} aria-pressed={weeks === w} className={cn("min-h-10 rounded-full border px-4 text-[13px] font-bold", weeks === w ? "border-ink bg-ink text-white" : "border-line")}>{w} weeks</button>
-            ))}
-            {weeks && <span className="self-center text-[13px] text-muted">{naira(weekly)} a week</span>}
-          </div>
+          <p className="text-[13px] text-muted">Pay what you can now and the rest whenever you like. Your price is locked, and we order your stock as soon as it’s fully paid.</p>
         )}
         <p className="text-[12px] text-muted">Coupons, points and sale promotions don’t apply to wholesale: these are already our lowest prices.</p>
       </section>
@@ -162,7 +155,7 @@ export function WholesaleCheckout() {
           {err && <p role="alert" className="text-[13px] font-semibold text-sale">{err}</p>}
           <button type="button" onClick={() => void place()} disabled={busy || quote.missing > 0} className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-sale text-[15px] font-extrabold text-white disabled:opacity-50">
             {busy && <Loader2 aria-hidden size={17} className="animate-spin" />}
-            Place wholesale order · {naira(mode === "small" && weeks ? weekly : total)}{mode === "small" && weeks ? " now" : ""}
+            {mode === "small" ? "Place order · start paying small small" : `Place wholesale order · ${naira(total)}`}
           </button>
         </div>
       </div>

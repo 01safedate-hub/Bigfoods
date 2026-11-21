@@ -17,7 +17,7 @@ import { myProfile, setMyStation } from "../auth-actions";
 import { useSiteData } from "@/components/shop/site-data";
 import { cn, naira } from "@/lib/format";
 import { productTotals, unitFromPrices } from "@/lib/pricing/prices";
-import { buildSchedule, planOptions, SMALL_SMALL } from "@/lib/payments/instalments";
+import { canPaySmall, SMALL_SMALL } from "@/lib/payments/instalments";
 import { type CheckoutQuote, placeOrder, quoteCheckout } from "../actions";
 import { addDaysLabel } from "@/lib/time";
 import { useOnline } from "@/hooks/use-online";
@@ -70,7 +70,8 @@ export function CheckoutView() {
     return () => { live = false; };
   }, [LISTED]);
   const [method, setMethod] = useState("Card");
-  const [plan, setPlan] = useState(4);
+  // Pay small small: the first payment the customer chose (₦).
+  const [plan, setPlan] = useState(0);
   const [usePoints, setUsePoints] = useState(false);
   const [mine, setMine] = useState(50_000);
   const [others, setOthers] = useState<number[]>([]);
@@ -112,11 +113,11 @@ export function CheckoutView() {
   const quote = serverQuote ?? { subtotalList: estimateList, subtotal: estimate, priceSavings: estimateList - estimate, coupon: 0, couponLabel: null, couponNote: undefined, points: 0, pointsBalance: 0, total: estimate, lines: [], missing: 0, promo };
   const best = quote.couponLabel ? { label: quote.couponLabel } : null;
   const due = quote.total;
-  // Pay small small: only plan lengths this total allows; the schedule adds up to the total exactly.
-  const planChoices = planOptions(due);
-  const weeks = planChoices.includes(plan) ? plan : (planChoices[0] ?? plan);
-  const schedule = planChoices.length ? buildSchedule(due, weeks, 0) : [];
-  const weekly = schedule[0]?.amount ?? 0;
+  // Pay small small: no schedule. Start with any amount; pay the rest whenever you like.
+  const smallOk = canPaySmall(due);
+  const r100 = (n: number) => Math.max(SMALL_SMALL.minPayment, Math.round(n / 100) * 100);
+  const startChoices = [...new Set([r100(2_000), r100(5_000), r100(due * 0.25), r100(due * 0.5)])].filter((v) => v < due).sort((a, b) => a - b);
+  const weekly = smallOk ? Math.min(due, plan > 100 ? plan : (startChoices[1] ?? startChoices[0] ?? due)) : 0;
   const lineTotal = (i: (typeof selected)[number]) => {
     const l = quote.lines.find((x) => x.slug === i.slug && x.variantId === i.variantId);
     return (l ? l.unit : unitOf(i)) * i.qty;
@@ -155,7 +156,7 @@ export function CheckoutView() {
 
   const stations = STATIONS.filter((s) => s.state === state);
   const eta = now ? `${addDaysLabel(now, 10)} – ${addDaysLabel(now, 18)}` : "in 10–18 days";
-  const cta = mode === "full" ? `PAY ${naira(due)}` : mode === "small" ? (weekly ? `PAY ${naira(weekly)} TODAY` : `PAY ${naira(due)} IN FULL`) : mine ? `PAY ${naira(mine)} & SHARE LINK` : "CREATE LINK";
+  const cta = mode === "full" ? `PAY ${naira(due)}` : mode === "small" ? (weekly ? `PAY ${naira(weekly)} NOW` : `PAY ${naira(due)} IN FULL`) : mine ? `PAY ${naira(mine)} & SHARE LINK` : "CREATE LINK";
 
   if (selected.length === 0) {
     return (
@@ -234,7 +235,7 @@ export function CheckoutView() {
             <InfoButton topic="pay" />
           </span>
           <div className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label="Payment type">
-            {([["full", "Pay in full", "Card · transfer"], ["small", "Small small", "Weekly, 0%"], ["group", "Group pay", "Friends chip in"]] as const).map(([id, t, s]) => (
+            {([["full", "Pay in full", "Card · transfer"], ["small", "Small small", "Any time, 0%"], ["group", "Group pay", "Friends chip in"]] as const).map(([id, t, s]) => (
               <button key={id} type="button" role="radio" aria-checked={mode === id} onClick={() => setMode(id)} className={cn("flex min-h-[58px] flex-col items-start gap-0.5 rounded-md border-[1.5px] bg-white px-2 py-2.5 text-left", mode === id ? "border-ink" : "border-[#e6e6e6]")}>
                 <strong className="text-xs md:text-sm">{t}</strong>
                 <span className="text-[10px] text-muted md:text-xs">{s}</span>
@@ -255,26 +256,24 @@ export function CheckoutView() {
 
           {mode === "small" && (
             <div className="flex flex-col gap-2">
-              {planChoices.length === 0 ? (
+              {!smallOk ? (
                 <span className="text-muted">Pay small small starts from {naira(SMALL_SMALL.minOrder)}. Add a little more to your cart to use it.</span>
               ) : (
                 <>
-                  <span className="flex items-center gap-1.5">
-                    {SMALL_SMALL.weekOptions.map((n) => (
-                      <button key={n} type="button" disabled={!planChoices.includes(n)} aria-pressed={weeks === n} onClick={() => setPlan(n)} className={cn(chip(weeks === n), "disabled:opacity-35")}>{n} weeks</button>
-                    ))}
+                  <span className="flex items-center justify-between font-bold">
+                    Start with
                     <InfoButton topic="smallsmall" />
                   </span>
-                  <ol>
-                    {schedule.slice(0, 3).map((i) => (
-                      <li key={i.n} className="flex justify-between border-b border-dashed border-[#e2e2e2] py-1.5">
-                        <span>{i.n === 1 ? "Today" : now ? addDaysLabel(now, 7 * (i.n - 1)) : `Week ${i.n}`} · payment {i.n} of {weeks}</span>
-                        <strong>{naira(i.amount)}</strong>
-                      </li>
+                  <div className="flex flex-wrap gap-1.5">
+                    {startChoices.map((v) => (
+                      <button key={v} type="button" aria-pressed={weekly === v} onClick={() => setPlan(v)} className={chip(weekly === v)}>{naira(v)}</button>
                     ))}
-                    {weeks > 3 && <li className="py-1.5 text-muted">+ {weeks - 3} more weekly {weeks - 3 === 1 ? "payment" : "payments"} of {naira(schedule[1]?.amount ?? 0)}</li>}
-                  </ol>
-                  <span className="leading-relaxed text-muted">0% interest. Adds up to exactly {naira(due)}. Today’s price is locked. We order from the factory when your last payment clears.</span>
+                  </div>
+                  <ul className="flex flex-col gap-1 leading-relaxed text-muted">
+                    <li>• Pay the remaining {naira(due - weekly)} in any amounts, whenever you like. No deadlines.</li>
+                    <li>• 0% interest. Today’s price is locked.</li>
+                    <li>• We order from the factory as soon as it’s fully paid.</li>
+                  </ul>
                 </>
               )}
             </div>
@@ -383,7 +382,7 @@ export function CheckoutView() {
                 setPlaceMsg(null);
                 const call = await attempt(() => placeOrder({
                   items: selected.map((i) => ({ slug: i.slug, variantId: i.variantId, qty: i.qty })),
-                  stationId: station, phone, mode, weeks, claimedCouponIds: claimed, usePoints,
+                  stationId: station, phone, mode, claimedCouponIds: claimed, usePoints,
                 }));
                 if (!call.ok) return setPlaceMsg(call.message);
                 const r = call.value;

@@ -63,6 +63,8 @@ export interface Product {
   wholesale: boolean;
   qa?: QA[];
   flash?: { claimedPct: number };
+  /** The factory can add the customer's logo or artwork (priced after we see it). */
+  customisable?: boolean;
 }
 
 /** Sample source data with factory costs (server-side only in production). */

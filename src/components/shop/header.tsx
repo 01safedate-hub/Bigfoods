@@ -4,14 +4,14 @@ import { MapPin, Search, ShoppingCart, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { DEPARTMENTS } from "@/lib/catalog/categories";
-
-/** Each department tab opens its own category. */
-const DEPT_SLUG: Record<string, string> = { Women: "women", Men: "men", Phones: "gadgets", Hair: "hair", Beauty: "beauty", Home: "home", "Sea items": "furniture" };
 import { cn } from "@/lib/format";
 import { useCart } from "./cart-provider";
 import { BrandWordmark, MARK_PATH } from "./brand";
 import { useStationId } from "@/lib/station-store";
 import { useSiteData } from "./site-data";
+
+/** Each department tab opens its own page (circles for its categories, then products). */
+const DEPT_SLUG: Record<string, string> = { Women: "women", Men: "men", Phones: "phones", Hair: "hair", Beauty: "beauty", Home: "home", "Sea items": "sea" };
 
 /** The app icon: the winged F on black. Used alone on phones and as the favicon. */
 export function BoltMark({ size = 32, className }: { size?: number; className?: string }) {
@@ -45,8 +45,8 @@ export function Logo({ className, tld = ".shop", compactMark }: { className?: st
 const DESKTOP_NAV = [
   { href: "/deals", label: "Deals", strong: true },
   { href: "/category/gadgets", label: "Phones & Gadgets" },
-  { href: "/categories?c=women", label: "Women" },
-  { href: "/categories?c=men", label: "Men" },
+  { href: "/d/women", label: "Women" },
+  { href: "/d/men", label: "Men" },
   { href: "/category/hair", label: "Hair & Wigs" },
   { href: "/category/beauty", label: "Beauty" },
   { href: "/category/home", label: "Home" },
@@ -75,7 +75,7 @@ function StationChip() {
 export function ShopHeader() {
   const { count } = useCart();
   const path = usePathname();
-  const showDepts = path === "/";
+  const showDepts = path === "/" || path.startsWith("/d/");
   // These pages draw their own search box or title bar on phones; one header is enough.
   const ownBar = path === "/search" || path === "/checkout";
   const onSearch = path === "/search";
@@ -100,8 +100,9 @@ export function ShopHeader() {
           {DEPARTMENTS.map((d, i) => (
             <Link
               key={d}
-              href={i === 0 ? "/" : `/categories?c=${DEPT_SLUG[d] ?? "for-you"}`}
-              className={cn("border-b-[2.5px] px-2.5 pt-0.5 pb-1 text-[14px]", i === 0 ? "border-ink font-extrabold" : "border-transparent font-semibold text-subtle")}
+              href={i === 0 ? "/" : `/d/${DEPT_SLUG[d] ?? "women"}`}
+              aria-current={(i === 0 ? path === "/" : path === `/d/${DEPT_SLUG[d]}`) ? "page" : undefined}
+              className={cn("border-b-[2.5px] px-2.5 pt-0.5 pb-1 text-[14px]", (i === 0 ? path === "/" : path === `/d/${DEPT_SLUG[d]}`) ? "border-ink font-extrabold" : "border-transparent font-semibold text-subtle")}
             >
               {d}
             </Link>

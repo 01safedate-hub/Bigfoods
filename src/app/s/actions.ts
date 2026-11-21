@@ -3,7 +3,7 @@
 import { getQuoteLines, type LineRequest } from "@/lib/data/catalog";
 import { getStore } from "@/lib/data/stores";
 import { storePrice } from "@/lib/dropship/plans";
-import { planOptions } from "@/lib/payments/instalments";
+import { canPaySmall } from "@/lib/payments/instalments";
 import { allow, TOO_MANY } from "@/lib/rate-limit";
 import { getSessionUser } from "@/lib/supabase/auth";
 import { hasSupabase } from "@/lib/supabase/env";
@@ -43,11 +43,9 @@ export async function placeStoreOrder(input: { store: string; items: LineRequest
     return { l, price, markup };
   });
   const total = priced.reduce((s, x) => s + x.price * x.l.qty, 0);
-  let weeks: number | null = null;
-  if (input.mode === "small") {
-    weeks = Number(input.weeks);
-    if (!planOptions(total).includes(weeks)) return { ok: false, message: "That plan length isn’t available for this total." };
-  }
+  // Pay small small has no schedule; the plan length is kept only for older records.
+  const weeks = 0;
+  if (input.mode === "small" && !canPaySmall(total)) return { ok: false, message: "Pay small small starts from ₦10,000." };
   const user = await getSessionUser();
   const { data, error } = await secretDb().rpc("place_store_order", {
     p_store: found.store.id, p_customer: user?.id ?? null, p_station: input.stationId, p_phone: phone, p_mode: input.mode, p_total: total, p_weeks: weeks,

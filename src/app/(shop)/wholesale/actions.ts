@@ -1,7 +1,7 @@
 "use server";
 
 import { getWholesaleLines, type LineRequest } from "@/lib/data/catalog";
-import { planOptions } from "@/lib/payments/instalments";
+import { canPaySmall } from "@/lib/payments/instalments";
 import { allow, TOO_MANY } from "@/lib/rate-limit";
 import { getSessionUser } from "@/lib/supabase/auth";
 import { hasSupabase } from "@/lib/supabase/env";
@@ -33,7 +33,7 @@ export interface WholesaleQuote {
   missing: number;
   short: string[];
   total: number;
-  plans: number[];
+  smallOk: boolean;
 }
 
 /** Current wholesale prices for the cart (they move with the yuan rate). */
@@ -46,7 +46,7 @@ export async function quoteWholesale(items: unknown): Promise<WholesaleQuote> {
     missing: req.length - lines.length,
     short: shortProducts(lines),
     total,
-    plans: total > 0 ? planOptions(total) : [],
+    smallOk: canPaySmall(total),
   };
 }
 
@@ -74,11 +74,9 @@ export async function placeWholesaleOrder(input: { items: unknown; delivery: unk
   const short = shortProducts(lines);
   if (short.length) return { ok: false, message: `Add at least ${MIN_QTY} of each product (mix colours and sizes to reach it).` };
   const total = lines.reduce((s, l) => s + l.unit * l.qty, 0);
-  let weeks: number | null = null;
-  if (input.mode === "small") {
-    weeks = Number(input.weeks);
-    if (!planOptions(total).includes(weeks)) return { ok: false, message: "That plan length isn’t available for this total." };
-  }
+  // Pay small small has no schedule; the plan length is kept only for older records.
+  const weeks = 0;
+  if (input.mode === "small" && !canPaySmall(total)) return { ok: false, message: "Pay small small starts from ₦10,000." };
   const user = await getSessionUser();
   const { data, error } = await secretDb().rpc("place_order", {
     p_customer: user?.id ?? null,

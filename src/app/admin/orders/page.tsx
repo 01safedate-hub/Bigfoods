@@ -4,6 +4,8 @@ import { ItemPhotos } from "./item-photos";
 import { naira } from "@/lib/format";
 import { checkStaff } from "@/lib/supabase/auth";
 import { CancelButton } from "./cancel-button";
+import { CustomReview } from "./custom-review";
+import { ExternalLink } from "lucide-react";
 import { GuideCard } from "../guide/guide-card";
 
 export const metadata: Metadata = { title: "Orders" };
@@ -56,7 +58,20 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
             <div className="flex flex-col gap-2 border-t border-[#EEF0F3] p-3.5">
               {o.items.map((i, k) => (
                 <div key={k} className="flex flex-col gap-1.5 border-b border-[#F1F2F4] pb-2 last:border-0">
-                  <div className="flex justify-between gap-2"><span>{i.title} <span className="text-xs text-[#5B6170]">{i.variant_label} ×{i.qty}</span></span><span className="tabular-nums">{naira(i.unit_ngn * i.qty)}</span></div>
+                  <div className="flex justify-between gap-2">
+                    <span>
+                      {i.source_url ? (
+                        <a href={i.source_url} target="_blank" rel="noreferrer" title="Open the supplier's page to order" className="inline-flex items-center gap-1 font-semibold text-[#2563EB] underline">
+                          {i.title} <ExternalLink aria-hidden size={13} />
+                        </a>
+                      ) : i.title}{" "}
+                      <span className="text-xs text-[#5B6170]">{i.variant_label} ×{i.qty}</span>
+                      {i.customisable && <span className="ml-1 rounded-sm bg-[#FFF1D6] px-1.5 py-0.5 text-[10px] font-bold text-[#8A5A00]">CUSTOMISABLE</span>}
+                      {i.supplier_variant && <span className="block text-[11px] text-[#5B6170]">Supplier option: {i.supplier_variant}</span>}
+                    </span>
+                    <span className="tabular-nums">{naira(i.unit_ngn * i.qty)}</span>
+                  </div>
+                  {i.custom && <CustomReview c={i.custom} />}
                   {i.id && ["purchased", "purchasing", "paid", "shipped"].includes(o.status) && <ItemPhotos itemId={i.id} photos={i.photos ?? []} />}
                 </div>
               ))}

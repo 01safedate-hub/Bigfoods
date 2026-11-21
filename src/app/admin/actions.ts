@@ -217,3 +217,26 @@ export async function moderateReview(id: unknown, status: unknown): Promise<Resu
   if (slug) updateTag(`product:${slug}`);
   return { ok: true, message: status === "published" ? "Published" : "Hidden" };
 }
+
+/** Staff decision on a customer's logo/artwork: price it, mark it paid (transfer confirmed), or ask for a better file. */
+export async function decideCustomisation(id: unknown, action: unknown, amount?: unknown, note?: unknown): Promise<Result> {
+  await requireStaff();
+  if (typeof id !== "number" || !["quote", "paid", "decline"].includes(action as string)) return { ok: false, message: "Nothing to save." };
+  if (!hasSupabase) return { ok: true, message: "Demo: not saved." };
+  const staffNote = typeof note === "string" ? note.trim().slice(0, 400) || null : null;
+  const now = new Date().toISOString();
+  let patch: Record<string, unknown>;
+  if (action === "quote") {
+    const n = Math.round(Number(amount));
+    if (!Number.isFinite(n) || n < 0 || n > 5_000_000) return { ok: false, message: "Enter the customisation price in naira." };
+    patch = { status: "quoted", quote_ngn: n, quoted_at: now, staff_note: staffNote, updated_at: now };
+  } else if (action === "paid") {
+    patch = { status: "paid", paid_at: now, updated_at: now };
+  } else {
+    patch = { status: "declined", staff_note: staffNote ?? "Please send a clearer file.", updated_at: now };
+  }
+  const q = secretDb().from("order_customisations").update(patch).eq("id", id);
+  const { error } = await (action === "paid" ? q.eq("status", "quoted") : q.neq("status", "paid"));
+  if (error) return { ok: false, message: error.message };
+  return { ok: true, message: action === "quote" ? "Price sent to the customer" : action === "paid" ? "Marked paid" : "Asked for a new file" };
+}

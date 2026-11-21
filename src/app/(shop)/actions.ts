@@ -3,7 +3,7 @@
 import type { Coupon } from "@/lib/pricing/engine";
 import { getSiteData } from "@/lib/data/site";
 import type { OrderStatus } from "@/lib/orders/lifecycle";
-import { planOptions } from "@/lib/payments/instalments";
+import { canPaySmall } from "@/lib/payments/instalments";
 import { redirect } from "next/navigation";
 import { allow, TOO_MANY } from "@/lib/rate-limit";
 import { getSessionUser, userDb } from "@/lib/supabase/auth";
@@ -177,11 +177,9 @@ export async function placeOrder(input: {
   const { requested, lines, best, q, promo, user } = await computeQuote(input.items, input.claimedCouponIds, Boolean(input.usePoints));
   if (!lines.length) return { ok: false, message: "Your cart is empty." };
   if (lines.length !== requested.length) return { ok: false, message: "Some items changed or sold out. Check your cart and try again." };
-  let weeks: number | null = null;
-  if (input.mode === "small") {
-    weeks = Number(input.weeks);
-    if (!planOptions(q.total).includes(weeks)) return { ok: false, message: "That plan length isn’t available for this total." };
-  }
+  // Pay small small has no schedule; the plan length is kept only for older records.
+  const weeks = 0;
+  if (input.mode === "small" && !canPaySmall(q.total)) return { ok: false, message: "Pay small small starts from ₦10,000." };
 
   // The database re-checks the coupon and the points balance under a lock, so they can't be used twice.
   const { data, error } = await secretDb().rpc("place_order", {

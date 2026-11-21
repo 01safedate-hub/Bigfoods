@@ -43,7 +43,7 @@ export function BuyTab({ rows }: { rows: BuyRow[] }) {
             <tbody>
               {rows.map((r) => (
                 <tr key={r.sku_id} className="border-t border-[#EEF0F3] tabular-nums">
-                  <td className="px-3 py-2.5"><strong className="block font-semibold">{r.title}</strong><span className="text-xs text-[#5B6170]">{r.variant || "—"}{r.sea && " · sea"}{r.cny ? ` · ¥${r.cny}` : ""}</span></td>
+                  <td className="px-3 py-2.5">{r.url ? <a href={r.url} target="_blank" rel="noreferrer" title="Open the supplier's page" className="block font-semibold text-[#2563EB] underline">{r.title} ↗</a> : <strong className="block font-semibold">{r.title}</strong>}<span className="text-xs text-[#5B6170]">{r.variant || "—"}{r.sea && " · sea"}{r.cny ? ` · ¥${r.cny}` : ""}</span></td>
                   <td className="px-3 py-2.5 text-[#5B6170]">{r.supplier ?? "—"}</td>
                   <td className="px-3 py-2.5">{r.orders}</td>
                   <td className="px-3 py-2.5">{r.need}</td>
