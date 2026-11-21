@@ -21,7 +21,6 @@ export function BestSellers({ products, ranks }: { products: Product[]; ranks: R
     return () => el.removeEventListener("scroll", on);
   }, []);
   if (!products.length) return null;
-  const photos = products.flatMap((p) => p.images.slice(0, 1));
   return (
     <section aria-labelledby="best-h" className="flex flex-col gap-2.5">
       <div className="flex items-baseline justify-between px-3 md:px-0">
@@ -33,8 +32,8 @@ export function BestSellers({ products, ranks }: { products: Product[]; ranks: R
           const slide = "aspect-[4/5] w-[86%] shrink-0 snap-center sm:w-[46%] lg:aspect-[4/3] lg:w-[32%]";
           const card = <SpotlightCard key={p.slug} product={p} rank={ranks[p.slug]} priority={i === 0} className={slide} />;
           // The second and fourth cards advertise the wholesale market and free dropshipping.
-          if (i === 1) return [<div key="ad-w" className={cn(slide, "overflow-hidden rounded-2xl")}><AdSlide href="/wholesale" tone="from-[#F0283A] via-[#C8102E] to-[#6E0711]" kicker="WHOLESALE MARKET" title="Stock your shop at factory prices" sub="From 10 units per product, by sea. Starter kits inside." cta="Open wholesale" icon={Ship} images={photos} slot={1} /></div>, card];
-          if (i === 3) return [<div key="ad-d" className={cn(slide, "overflow-hidden rounded-2xl")}><AdSlide href={`${STORE}/seller`} external tone="from-[#3B82F6] via-[#1D4ED8] to-[#172554]" kicker="DROPSHIP FOR FREE" title="Sell these products. Keep your profit." sub="Your own store website for ₦0." cta="Start free" icon={HandCoins} images={photos} slot={2} /></div>, card];
+          if (i === 1) return [<div key="ad-w" className={cn(slide, "overflow-hidden rounded-2xl")}><AdSlide href="/wholesale" tone="from-[#F0283A] via-[#C8102E] to-[#6E0711]" kicker="WHOLESALE MARKET" title="Stock your shop at factory prices" sub="From 10 units per product, by sea. Starter kits inside." cta="Open wholesale" icon={Ship} art="ship" /></div>, card];
+          if (i === 3) return [<div key="ad-d" className={cn(slide, "overflow-hidden rounded-2xl")}><AdSlide href={`${STORE}/seller`} external tone="from-[#3B82F6] via-[#1D4ED8] to-[#172554]" kicker="DROPSHIP FOR FREE" title="Sell these products. Keep your profit." sub="Your own store website for ₦0." cta="Start free" icon={HandCoins} art="seller-win" /></div>, card];
           return [card];
         })}
       </div>
