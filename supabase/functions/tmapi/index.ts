@@ -8,6 +8,7 @@
 //   { "action": "alibaba_import", "keyword": "lace front wig", "category": "hair", "count": 3 }
 //   { "action": "alibaba_import", "url": "https://www.alibaba.com/product-detail/…html", "category": "hair" }
 //   add "allow_custom": true to take "custom logo" listings too (they come in marked Customisable)
+//   add "default_kg": 0.5 to price listings with no weight at that weight; "exclude": "lcd|battery" to skip titles
 //
 // Auth: a staff JWT (super_admin, purchasing, marketing) or the x-task-token header
 // (scheduled jobs, value in public.internal_tokens). verify_jwt is off because we check here.
@@ -187,14 +188,18 @@ function cleanTitle(t: string) {
   return short ? short[0].toUpperCase() + short.slice(1) : t.slice(0, 90);
 }
 
-async function importAlibaba(db: SupabaseClient, d: Detail, category: string, maxMoq = 1, maxUsd?: number, allowCustom = false) {
+async function importAlibaba(db: SupabaseClient, d: Detail, category: string, maxMoq = 1, maxUsd?: number, allowCustom = false, defaultKg?: number, exclude?: string) {
   const moq = Math.max(1, num(d.min_order_quantity) ?? 1);
   if (moq > maxMoq) return { skipped: true, reason: `Minimum order is ${moq} ${d.unit ?? "pieces"}` };
   // Listings we can't price safely: made-to-order logo items, or no shipping weight given.
   // "Custom logo" listings usually also sell plain; with allow_custom they come in marked Customisable.
   const madeToOrder = /\bcustom(ized)?\s+(logo|design|made)\b/i.test(String(d.title ?? ""));
   if (madeToOrder && !allowCustom) return { skipped: true, reason: "Made-to-order item" };
-  if (!((num(d.delivery_info?.unit_weight) ?? 0) > 0)) return { skipped: true, reason: "Supplier gives no shipping weight" };
+  // Titles staff don't want (spare parts, look-alike brands): a case-insensitive pattern.
+  if (exclude && new RegExp(exclude, "i").test(String(d.title ?? ""))) return { skipped: true, reason: "Excluded by title" };
+  // No weight given: staff can pass a safe typical weight for the kind of item (a phone ships at about 0.5 kg).
+  const givenKg = num(d.delivery_info?.unit_weight) ?? 0;
+  if (!(givenKg > 0) && !(defaultKg && defaultKg > 0)) return { skipped: true, reason: "Supplier gives no shipping weight" };
   const { data: cat } = await db.from("categories").select("id, slug").eq("slug", category).single();
   if (!cat) throw new Error(`Unknown category ${category}`);
   const { data: rate } = await db.from("pricing_settings").select("cny_per_usd").eq("id", 1).single();
@@ -216,7 +221,7 @@ async function importAlibaba(db: SupabaseClient, d: Detail, category: string, ma
     imgs.push(m.url);
     if (m.error) imageErrors.push(m.error);
   }
-  const w = num(d.delivery_info?.unit_weight);
+  const w = givenKg > 0 ? givenKg : defaultKg!;
   const dims = String(d.delivery_info?.unit_size ?? "").split(/x/i).map(num).filter((n): n is number => !!n);
   const cbm = dims.length === 3 ? Math.round((dims[0] * dims[1] * dims[2]) / 1e6 * 10000) / 10000 : null;
   const props = ((d.product_props ?? []) as any[]).filter((p) => p.key && p.value && !/brand|model/i.test(p.key));
@@ -364,7 +369,8 @@ Deno.serve(async (req) => {
         const r = await tmapi(db, "/alibaba/search/items", { keywords: input.keyword ?? "", page: input.page ?? 1, sort: input.sort ?? "relevance" });
         if (!r.ok) return json({ ok: false, code: r.code, msg: r.msg }, 502);
         urls = ((r.data as any)?.items ?? [])
-          .filter((it: any) => (num(it.min_order_quantity) ?? 1) <= (input.max_moq ?? 1) && (!input.max_usd || (num(it.price_info?.price_min) ?? 0) <= input.max_usd))
+          .filter((it: any) => (num(it.min_order_quantity) ?? 1) <= (input.max_moq ?? 1) && (!input.max_usd || (num(it.price_info?.price_min) ?? 0) <= input.max_usd)
+            && (!input.exclude || !new RegExp(String(input.exclude).slice(0, 200), "i").test(String(it.title ?? ""))))
           .slice(0, Math.min(input.count ?? 3, 10)).map((it: any) => it.product_url);
       }
       const results = [];
@@ -372,7 +378,7 @@ Deno.serve(async (req) => {
         if (!/^https:\/\/(www\.)?alibaba\.com\/product-detail\//.test(url)) { results.push({ url, error: "Not an Alibaba.com product link" }); continue; }
         const det = await tmapi(db, "/alibaba/item_detail_by_url", {}, { url, currency: "USD" });
         if (!det.ok) { results.push({ url, error: det.msg }); continue; }
-        try { results.push(await importAlibaba(db, det.data as Detail, input.category, input.max_moq ?? 1, input.max_usd, input.allow_custom === true)); }
+        try { results.push(await importAlibaba(db, det.data as Detail, input.category, input.max_moq ?? 1, input.max_usd, input.allow_custom === true, num(input.default_kg) ?? undefined, input.exclude ? String(input.exclude).slice(0, 200) : undefined)); }
         catch (e) { results.push({ url, error: (e as Error).message }); }
       }
       return json({ ok: true, imported: results.filter((r: any) => r.slug).length, results });
