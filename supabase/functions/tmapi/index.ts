@@ -234,7 +234,12 @@ async function importAlibaba(db: SupabaseClient, d: Detail, category: string, ma
     tint: TINTS[cat.slug] ?? "#ECECEC", icon: ICONS[cat.slug] ?? "gift",
     options, specs: [...props.slice(0, 8).map((p: any) => [String(p.key), String(p.value)]), ...(w ? [["Shipping weight", `${w} kg`]] : [])],
   };
-  const { data: saved, error } = await db.from("products").upsert(product, { onConflict: "source,source_item_id" }).select("id, slug").single();
+  // Re-importing refreshes prices, photos and variants, but keeps what staff changed: title, address and visibility.
+  const { data: had } = await db.from("products").select("id").eq("source", "alibaba").eq("source_item_id", itemId).maybeSingle();
+  const { title: _t, slug: _s, status: _st, ...refresh } = product;
+  const { data: saved, error } = had
+    ? await db.from("products").update(refresh).eq("id", had.id).select("id, slug, title").single()
+    : await db.from("products").insert(product).select("id, slug, title").single();
   if (error) throw new Error(`products: ${error.message}`);
 
   const raw = (d.skus?.length ? d.skus : [{ skuid: "default", sale_price: lowest ?? single, stock: -1 }]) as any[];
@@ -260,7 +265,7 @@ async function importAlibaba(db: SupabaseClient, d: Detail, category: string, ma
   const { error: skuErr } = await db.from("product_skus").upsert(keep, { onConflict: "product_id,source_sku_id" });
   if (skuErr) throw new Error(`product_skus: ${skuErr.message}`);
   const { data: priced } = await db.from("product_skus").select("props, cny_price, price_list, price_wholesale").eq("product_id", saved.id).order("price_list").limit(3);
-  return { slug: saved.slug, title, moq, usd_single: single, variants: keep.length, images: imgs.length, mirrored: imgs.filter((u) => u.includes("supabase")).length, ...(imageErrors.length ? { image_errors: imageErrors.slice(0, 2) } : {}), prices: priced };
+  return { slug: saved.slug, title: saved.title, updated: !!had, moq, usd_single: single, variants: keep.length, images: imgs.length, mirrored: imgs.filter((u) => u.includes("supabase")).length, ...(imageErrors.length ? { image_errors: imageErrors.slice(0, 2) } : {}), prices: priced };
 }
 
 // ---- Image checks ---------------------------------------------------------------
@@ -352,7 +357,7 @@ Deno.serve(async (req) => {
       if (!input.category) return json({ error: "category is required" }, 400);
       let urls: string[] = input.url ? [input.url] : [];
       if (!urls.length) {
-        const r = await tmapi(db, "/alibaba/search/items", { keywords: input.keyword ?? "", page: 1, sort: input.sort ?? "relevance" });
+        const r = await tmapi(db, "/alibaba/search/items", { keywords: input.keyword ?? "", page: input.page ?? 1, sort: input.sort ?? "relevance" });
         if (!r.ok) return json({ ok: false, code: r.code, msg: r.msg }, 502);
         urls = ((r.data as any)?.items ?? [])
           .filter((it: any) => (num(it.min_order_quantity) ?? 1) <= (input.max_moq ?? 1) && (!input.max_usd || (num(it.price_info?.price_min) ?? 0) <= input.max_usd))
