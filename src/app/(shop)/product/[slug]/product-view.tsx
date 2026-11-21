@@ -251,7 +251,7 @@ export function ProductView({ product }: { product: Product }) {
           </div>
         </section>
 
-        <ProductTrust sea={product.shipMode === "sea"} customisable={product.customisable} />
+        <ProductTrust sea={product.shipMode === "sea"} customisable={product.customisable} facts={product} />
 
         {product.wholesale && <WholesaleBar slug={product.slug} from={Number.isFinite(product.wholesaleFrom) ? product.wholesaleFrom : undefined} />}
 

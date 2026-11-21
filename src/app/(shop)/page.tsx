@@ -11,9 +11,18 @@ import { InfoButton } from "@/components/ui/info-button";
 import { ProductIcon } from "@/components/ui/product-icon";
 import { JsonLd } from "@/components/seo/json-ld";
 import { getProducts } from "@/lib/data/catalog";
+import { imageMap, imagesFor } from "@/lib/catalog/thumbs";
+import { RotatingPhoto } from "@/components/shop/rotating-photo";
 import { CATEGORY_PAGES } from "@/lib/content/category-pages";
 import { GUIDES } from "@/lib/content/guides";
 import { graph, organization, website } from "@/lib/seo";
+
+/** Which products give each bubble its photos. */
+const BUBBLE_PHOTOS: Record<string, Parameters<typeof imagesFor>[1]> = {
+  gadgets: { category: "gadgets", name: "phone" }, hair: { category: "hair" }, fashion: { category: "fashion", name: "dress" },
+  jewellery: { category: "jewellery", name: "watch" }, audio: { category: "audio", name: "earbud" }, shoes: { category: "shoes" },
+  bags: { category: "bags" }, beauty: { category: "beauty" }, furniture: { category: "furniture" }, wholesale: { wholesale: true },
+};
 
 const BUBBLES = [
   ["gadgets", "Phones", "phone", "#E8E8F0"], ["hair", "Wigs", "wig", "#F3E9DC"], ["fashion", "Dresses", "dress", "#F6E3E6"],
@@ -25,6 +34,11 @@ const BUBBLES = [
 export default async function HomePage() {
   const products = await getProducts();
   const flash = products.filter((p) => p.flash);
+  const photos = imageMap(products, BUBBLE_PHOTOS);
+  const heroPhotos = imageMap(products, {
+    gadgets: { category: ["gadgets", "audio"] }, women: { category: ["fashion", "bags", "beauty"], name: "women" },
+    hair: { category: "hair" }, sea: { category: ["furniture", "machines", "home"] },
+  }, 6);
   return (
     <div className="flex flex-col gap-3 pb-6 md:gap-6 md:pt-4">
       <JsonLd data={graph(organization(), website())} />
@@ -42,7 +56,7 @@ export default async function HomePage() {
 
       <section aria-label="Featured" className="grid gap-2.5 px-3 md:grid-cols-3 md:px-0">
         <div className="min-w-0 md:col-span-2">
-          <HeroCarousel />
+          <HeroCarousel photos={heroPhotos} />
         </div>
         <div className="hidden grid-rows-2 gap-2.5 md:grid">
           <div className="flex flex-col justify-between gap-2 rounded-md bg-night p-5 text-white">
@@ -75,10 +89,10 @@ export default async function HomePage() {
       </section>
 
       <section aria-label="Shop by category" className="grid grid-cols-5 gap-x-1 gap-y-2.5 px-2 md:grid-cols-10 md:px-0">
-        {BUBBLES.map(([slug, label, icon, tint]) => (
+        {BUBBLES.map(([slug, label, icon, tint], i) => (
           <Link key={label} href={slug === "wholesale" ? "/wholesale" : `/category/${slug}`} className="flex flex-col items-center gap-1 text-center">
-            <span className="flex size-14 items-center justify-center rounded-full md:size-20" style={{ background: tint }}>
-              <ProductIcon icon={icon} size={28} className="text-ink/70" />
+            <span className="flex size-14 items-center justify-center overflow-hidden rounded-full md:size-20" style={{ background: tint }}>
+              <RotatingPhoto images={photos[slug] ?? []} offset={i} every={6000} sizes="80px" className="size-full" fallback={<ProductIcon icon={icon} size={28} className="text-ink/70" />} />
             </span>
             <span className="text-[11px] leading-tight md:text-xs">{label}</span>
           </Link>

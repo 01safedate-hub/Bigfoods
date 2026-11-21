@@ -6,19 +6,32 @@ import { useEffect, useRef, useState } from "react";
 import { ProductIcon } from "@/components/ui/product-icon";
 import { cn } from "@/lib/format";
 import { EventBanner } from "./event-banner";
+import { RotatingPhoto } from "./rotating-photo";
+
+type Photos = Record<"gadgets" | "women" | "hair" | "sea", string[]>;
 
 const SLIDE_MS = 15_000;
 
 /** Sky blue: gadgets. Big airy gradient, floating devices. */
-function GadgetsSlide() {
+function GadgetsSlide({ photos }: { photos: string[] }) {
   return (
     <Link href="/categories?c=gadgets" className="relative flex h-full flex-col justify-between overflow-hidden rounded-md bg-[linear-gradient(135deg,#BFE6FF_0%,#7CC8F5_55%,#3A9BE0_100%)] p-[18px] text-[#06264A] md:p-8">
       <span aria-hidden className="absolute -right-10 -top-10 size-56 rounded-full bg-white/25 md:size-96" />
       <span aria-hidden className="absolute -bottom-6 right-20 size-28 rounded-full bg-white/20 md:right-56 md:size-44" />
       <span aria-hidden className="absolute right-3 top-[58%] flex -translate-y-1/2 items-end gap-1.5 md:right-14 md:top-1/2 md:gap-5">
-        <span className="rounded-2xl bg-white/70 p-2 shadow-lg md:p-5"><ProductIcon icon="laptop" size={36} className="text-[#06264A] md:size-24" /></span>
-        <span className="-mb-3 rounded-2xl bg-white p-1.5 shadow-xl md:-mb-4 md:p-4"><ProductIcon icon="phone" size={32} className="text-[#06264A] md:size-20" /></span>
-        <span className="hidden rounded-2xl bg-white/60 p-4 shadow-lg md:block"><ProductIcon icon="drone" size={64} className="text-[#06264A]" /></span>
+        {photos.length ? (
+          <>
+            <RotatingPhoto images={photos} sizes="(min-width: 768px) 176px, 88px" className="size-[78px] rounded-2xl bg-white shadow-lg ring-4 ring-white/70 md:size-44" />
+            <RotatingPhoto images={photos} offset={1} sizes="(min-width: 768px) 144px, 72px" className="-mb-3 size-[66px] rounded-2xl bg-white shadow-xl ring-4 ring-white md:-mb-4 md:size-36" />
+            <RotatingPhoto images={photos} offset={2} sizes="128px" className="hidden size-32 rounded-2xl bg-white shadow-lg ring-4 ring-white/60 md:block" />
+          </>
+        ) : (
+          <>
+            <span className="rounded-2xl bg-white/70 p-2 shadow-lg md:p-5"><ProductIcon icon="laptop" size={36} className="text-[#06264A] md:size-24" /></span>
+            <span className="-mb-3 rounded-2xl bg-white p-1.5 shadow-xl md:-mb-4 md:p-4"><ProductIcon icon="phone" size={32} className="text-[#06264A] md:size-20" /></span>
+            <span className="hidden rounded-2xl bg-white/60 p-4 shadow-lg md:block"><ProductIcon icon="drone" size={64} className="text-[#06264A]" /></span>
+          </>
+        )}
       </span>
       <span className="relative text-[10px] font-extrabold tracking-[0.18em] md:text-xs">PHONES · LAPTOPS · DRONES</span>
       <span className="relative text-[34px] font-black leading-[0.92] tracking-tight md:text-7xl">Shop<br />gadgets</span>
@@ -31,13 +44,13 @@ function GadgetsSlide() {
 }
 
 /** Golden: the women's place. Serif italic, warm gold, thin rules. */
-function WomenSlide() {
+function WomenSlide({ photos }: { photos: string[] }) {
   return (
     <Link href="/categories?c=women" className="relative flex h-full flex-col justify-between overflow-hidden rounded-md bg-[#E9C46A] p-[18px] text-[#2B1E05] md:p-8">
       <span aria-hidden className="absolute inset-y-0 right-0 w-1/2 bg-[repeating-linear-gradient(90deg,transparent_0_22px,rgb(43_30_5/0.08)_22px_23px)]" />
       <span aria-hidden className="absolute -bottom-16 -right-6 flex size-48 items-center justify-center rounded-full border border-[#2B1E05]/25 md:-bottom-24 md:right-16 md:size-96">
-        <span className="flex size-36 items-center justify-center rounded-full bg-[#F6E3B4] md:size-72">
-          <ProductIcon icon="dress" size={56} className="text-[#2B1E05]/70 md:size-28" />
+        <span className="flex size-36 items-center justify-center overflow-hidden rounded-full bg-[#F6E3B4] md:size-72">
+          <RotatingPhoto images={photos} sizes="(min-width: 768px) 288px, 144px" className="size-full" fallback={<ProductIcon icon="dress" size={56} className="text-[#2B1E05]/70 md:size-28" />} />
         </span>
       </span>
       <span className="relative text-[10px] font-bold tracking-[0.3em] md:text-xs">NEW SEASON</span>
@@ -50,13 +63,13 @@ function WomenSlide() {
 }
 
 /** Blush: hair. Soft rounded shapes, bold rounded type. */
-function HairSlide() {
+function HairSlide({ photos }: { photos: string[] }) {
   return (
     <Link href="/categories?c=hair" className="relative flex h-full flex-col justify-between overflow-hidden rounded-md bg-[#F7D9DE] p-[18px] text-[#5B0F25] md:p-8">
       <span aria-hidden className="absolute -right-8 top-4 size-36 rounded-[45%] bg-[#EFB7C2] md:right-10 md:top-8 md:size-72" />
       <span aria-hidden className="absolute right-20 -bottom-10 size-24 rounded-[40%] bg-[#E89BAA] md:right-72 md:size-40" />
-      <span aria-hidden className="absolute right-8 top-1/2 -translate-y-1/2 md:right-28">
-        <ProductIcon icon="wig" size={64} className="text-[#5B0F25] md:size-32" />
+      <span aria-hidden className="absolute right-4 top-1/2 -translate-y-1/2 md:right-24">
+        <RotatingPhoto images={photos} sizes="(min-width: 768px) 224px, 112px" className="size-28 rounded-[42%] shadow-lg ring-4 ring-[#EFB7C2] md:size-56" fallback={<ProductIcon icon="wig" size={64} className="text-[#5B0F25] md:size-32" />} />
       </span>
       <span className="relative w-fit rounded-full bg-[#5B0F25] px-2.5 py-1 text-[10px] font-extrabold tracking-wider text-[#F7D9DE] md:text-xs">HUMAN HAIR · HD LACE</span>
       <span className="relative text-[34px] font-extrabold leading-[0.95] md:text-7xl">Wigs that<br />slay</span>
@@ -66,7 +79,7 @@ function HairSlide() {
 }
 
 /** Deep sea: furniture and machines by sea. Wave lines, navy and gold. */
-function SeaSlide() {
+function SeaSlide({ photos }: { photos: string[] }) {
   return (
     <Link href="/categories?c=furniture" className="relative flex h-full flex-col justify-between overflow-hidden rounded-md bg-sea p-[18px] text-white md:p-8">
       <svg aria-hidden viewBox="0 0 400 120" preserveAspectRatio="none" className="absolute inset-x-0 bottom-0 h-1/2 w-full opacity-40">
@@ -74,8 +87,8 @@ function SeaSlide() {
           <path key={y} d={`M0 ${40 + y} Q50 ${20 + y} 100 ${40 + y} T200 ${40 + y} T300 ${40 + y} T400 ${40 + y}`} fill="none" stroke="#7DD3FC" strokeWidth="1.2" />
         ))}
       </svg>
-      <span aria-hidden className="absolute right-5 top-[42%] md:right-14 md:top-[38%]">
-        <ProductIcon icon="sofa" size={60} className="text-gold md:size-28" />
+      <span aria-hidden className="absolute right-5 top-[42%] md:right-14 md:top-[30%]">
+        <RotatingPhoto images={photos} sizes="(min-width: 768px) 192px, 96px" className="size-24 -translate-y-1/3 rounded-lg ring-2 ring-gold md:size-48" fallback={<ProductIcon icon="sofa" size={60} className="text-gold md:size-28" />} />
       </span>
       <span className="relative text-[10px] font-extrabold tracking-[0.18em] text-gold md:text-xs">BY SEA · 90+ DAYS</span>
       <span className="relative text-[32px] font-extrabold leading-[0.95] md:text-6xl">Furnish the<br />whole house</span>
@@ -87,19 +100,21 @@ function SeaSlide() {
   );
 }
 
-const SLIDES = [
+const slides = (p: Photos) => [
   { label: "This week’s event", node: <EventBanner /> },
-  { label: "Shop gadgets", node: <GadgetsSlide /> },
-  { label: "The women’s place", node: <WomenSlide /> },
-  { label: "Wigs", node: <HairSlide /> },
-  { label: "Furniture by sea", node: <SeaSlide /> },
+  { label: "Shop gadgets", node: <GadgetsSlide photos={p.gadgets} /> },
+  { label: "The women’s place", node: <WomenSlide photos={p.women} /> },
+  { label: "Wigs", node: <HairSlide photos={p.hair} /> },
+  { label: "Furniture by sea", node: <SeaSlide photos={p.sea} /> },
 ];
+const NO_PHOTOS: Photos = { gadgets: [], women: [], hair: [], sea: [] };
 
 /**
  * Hero slides. Swipe or use the dots; it moves on every 15 seconds, pauses while
  * hovered, focused or off-screen, and has a pause button (WCAG 2.2.2).
  */
-export function HeroCarousel() {
+export function HeroCarousel({ photos = NO_PHOTOS }: { photos?: Photos }) {
+  const SLIDES = slides(photos);
   const track = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);

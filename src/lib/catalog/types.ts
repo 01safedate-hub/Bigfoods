@@ -65,6 +65,20 @@ export interface Product {
   flash?: { claimedPct: number };
   /** The factory can add the customer's logo or artwork (priced after we see it). */
   customisable?: boolean;
+  /** Least the factory will customise, in pieces, and what it can customise ("Logo, Packaging"). */
+  customMoq?: number;
+  customTypes?: string;
+  /** Days the supplier takes to send the goods to our China warehouse (not counted in our delivery time). */
+  dispatchDays?: number;
+  /** How reliable the supplier is. Never names them. */
+  supplier?: SupplierFacts;
+}
+
+export interface SupplierFacts {
+  verified: boolean;
+  /** On-time delivery rate, 0–100. */
+  onTime?: number;
+  years?: number;
 }
 
 /** Sample source data with factory costs (server-side only in production). */

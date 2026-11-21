@@ -5,12 +5,14 @@ import { SAMPLE_PRODUCTS, sampleBySlug } from "@/lib/catalog/sample";
 import type { IconKey, PriceSet, Product, QA, Variant } from "@/lib/catalog/types";
 import type { CategoryKey, QuoteLine } from "@/lib/pricing/engine";
 import { pausedPrices } from "@/lib/pricing/audit";
+import { customTypesLabel } from "@/lib/catalog/supplier";
 import { hasSupabase } from "@/lib/supabase/env";
 import { publicDb, secretDb } from "@/lib/supabase/server";
 
 /** Only columns customers are allowed to read (see the column grants in the migrations). */
 const PRODUCT_COLUMNS =
   "slug, title, description, main_images, sale_count, rating, reviews, badge, is_new, tint, icon, flash_claimed_pct, specs, options, wholesale, customisable, " +
+  "dispatch_days, custom_moq, custom_types, supplier_verified, supplier_ontime, supplier_years, " +
   "categories(slug, is_gadget, ship_mode, wholesale_enabled), " +
   "product_skus(id, props, image_url, stock, price_list, price_midnight, price_event, price_flash, price_retailer, price_wholesale, active, sort, promo_paused)";
 
@@ -31,6 +33,12 @@ interface Row {
   options: Product["options"];
   wholesale: boolean;
   customisable: boolean | null;
+  dispatch_days: number | null;
+  custom_moq: number | null;
+  custom_types: string | null;
+  supplier_verified: boolean | null;
+  supplier_ontime: number | string | null;
+  supplier_years: number | null;
   categories: { slug: string; is_gadget: boolean; ship_mode: "air" | "sea"; wholesale_enabled: boolean } | null;
   product_skus: {
     id: string; props: Record<string, string>; image_url: string | null; stock: number; active: boolean; sort: number; promo_paused: boolean;
@@ -76,6 +84,14 @@ function rowToProduct(r: Row): Product | null {
     wholesale: r.wholesale !== false && r.categories?.wholesale_enabled !== false && variants.some((v) => v.wholesale > 0),
     flash: r.flash_claimed_pct === null ? undefined : { claimedPct: r.flash_claimed_pct },
     customisable: r.customisable === true,
+    customMoq: r.custom_moq ?? undefined,
+    customTypes: r.custom_types ? customTypesLabel(r.custom_types) : undefined,
+    dispatchDays: r.dispatch_days ?? undefined,
+    supplier: r.supplier_verified === null ? undefined : {
+      verified: r.supplier_verified,
+      onTime: r.supplier_ontime === null ? undefined : Number(r.supplier_ontime),
+      years: r.supplier_years ?? undefined,
+    },
   };
 }
 

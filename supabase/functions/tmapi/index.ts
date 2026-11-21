@@ -8,6 +8,7 @@
 //   { "action": "alibaba_import", "keyword": "lace front wig", "category": "hair", "count": 3 }
 //   { "action": "alibaba_import", "url": "https://www.alibaba.com/product-detail/…html", "category": "hair" }
 //   add "allow_custom": true to take "custom logo" listings too (they come in marked Customisable)
+//   add "verified_only": true and/or "min_ontime": 95 to take reliable suppliers only
 //   add "default_kg": 0.5 to price listings with no weight at that weight; "exclude": "lcd|battery" to skip titles
 //
 // Auth: a staff JWT (super_admin, purchasing, marketing) or the x-task-token header
@@ -188,13 +189,19 @@ function cleanTitle(t: string) {
   return short ? short[0].toUpperCase() + short.slice(1) : t.slice(0, 90);
 }
 
-async function importAlibaba(db: SupabaseClient, d: Detail, category: string, maxMoq = 1, maxUsd?: number, allowCustom = false, defaultKg?: number, exclude?: string) {
+async function importAlibaba(db: SupabaseClient, d: Detail, category: string, maxMoq = 1, maxUsd?: number, allowCustom = false, defaultKg?: number, exclude?: string, minOnTime?: number, verifiedOnly = false) {
   const moq = Math.max(1, num(d.min_order_quantity) ?? 1);
   if (moq > maxMoq) return { skipped: true, reason: `Minimum order is ${moq} ${d.unit ?? "pieces"}` };
   // Listings we can't price safely: made-to-order logo items, or no shipping weight given.
   // "Custom logo" listings usually also sell plain; with allow_custom they come in marked Customisable.
   const madeToOrder = /\bcustom(ized)?\s+(logo|design|made)\b/i.test(String(d.title ?? ""));
   if (madeToOrder && !allowCustom) return { skipped: true, reason: "Made-to-order item" };
+  // Supplier reliability: skip unverified suppliers or poor on-time delivery when asked.
+  const shop = d.shop_info ?? {};
+  const verified = shop.is_verified_supplier === true || shop.is_company_auth === true;
+  const onTime = num(shop.ontime_delivery_rate);
+  if (verifiedOnly && !verified) return { skipped: true, reason: "Supplier not verified" };
+  if (minOnTime && onTime !== null && onTime < minOnTime) return { skipped: true, reason: `Supplier on time ${onTime}%` };
   // Titles staff don't want (spare parts, look-alike brands): a case-insensitive pattern.
   if (exclude && new RegExp(exclude, "i").test(String(d.title ?? ""))) return { skipped: true, reason: "Excluded by title" };
   // No weight given: staff can pass a safe typical weight for the kind of item (a phone ships at about 0.5 kg).
@@ -234,6 +241,11 @@ async function importAlibaba(db: SupabaseClient, d: Detail, category: string, ma
     source: "alibaba", source_item_id: itemId, source_url: d.product_url ?? null,
     slug: `${slugify(title) || "item"}-${itemId}`, title, category_id: cat.id, status: "active", is_demo: false,
     ...(madeToOrder ? { customisable: true } : {}),
+    // Facts customers see without the supplier's name: send time, customising minimum, reliability.
+    dispatch_days: num(d.delivery_info?.delivery_days),
+    custom_moq: (() => { const m = ((d.customization_options ?? []) as any[]).map((o) => num(o.min_order_quantity)).filter((n): n is number => !!n); return m.length ? Math.min(...m) : null; })(),
+    custom_types: [...new Set(((d.customization_options ?? []) as any[]).map((o) => String(o.custom_type ?? "").trim()).filter(Boolean))].join(", ") || null,
+    supplier_verified: verified, supplier_ontime: onTime, supplier_years: num(shop.opening_years),
     main_images: imgs, video_url: https(d.video_url), props: d.product_props ?? [],
     sale_count: Math.round(num(d.sales_count) ?? 0), rating: num(d.review_info?.rating_star), reviews: 0,
     supplier: d.shop_info ?? {}, location: d.delivery_info?.area_from || null,
@@ -370,7 +382,8 @@ Deno.serve(async (req) => {
         if (!r.ok) return json({ ok: false, code: r.code, msg: r.msg }, 502);
         urls = ((r.data as any)?.items ?? [])
           .filter((it: any) => (num(it.min_order_quantity) ?? 1) <= (input.max_moq ?? 1) && (!input.max_usd || (num(it.price_info?.price_min) ?? 0) <= input.max_usd)
-            && (!input.exclude || !new RegExp(String(input.exclude).slice(0, 200), "i").test(String(it.title ?? ""))))
+            && (!input.exclude || !new RegExp(String(input.exclude).slice(0, 200), "i").test(String(it.title ?? "")))
+            && (!input.verified_only || it.shop_info?.is_verified_supplier !== false))
           .slice(0, Math.min(input.count ?? 3, 10)).map((it: any) => it.product_url);
       }
       const results = [];
@@ -378,7 +391,7 @@ Deno.serve(async (req) => {
         if (!/^https:\/\/(www\.)?alibaba\.com\/product-detail\//.test(url)) { results.push({ url, error: "Not an Alibaba.com product link" }); continue; }
         const det = await tmapi(db, "/alibaba/item_detail_by_url", {}, { url, currency: "USD" });
         if (!det.ok) { results.push({ url, error: det.msg }); continue; }
-        try { results.push(await importAlibaba(db, det.data as Detail, input.category, input.max_moq ?? 1, input.max_usd, input.allow_custom === true, num(input.default_kg) ?? undefined, input.exclude ? String(input.exclude).slice(0, 200) : undefined)); }
+        try { results.push(await importAlibaba(db, det.data as Detail, input.category, input.max_moq ?? 1, input.max_usd, input.allow_custom === true, num(input.default_kg) ?? undefined, input.exclude ? String(input.exclude).slice(0, 200) : undefined, num(input.min_ontime) ?? undefined, input.verified_only === true)); }
         catch (e) { results.push({ url, error: (e as Error).message }); }
       }
       return json({ ok: true, imported: results.filter((r: any) => r.slug).length, results });

@@ -46,7 +46,7 @@ export interface AdminCustomisation { id: number; files: string[]; note: string 
 export interface AdminOrderItem {
   id?: string; title: string; variant_label: string | null; qty: number; unit_ngn: number; photos?: string[];
   /** The supplier's page, to place the order. */
-  source_url?: string | null; supplier_variant?: string | null; customisable?: boolean; custom?: AdminCustomisation | null;
+  source_url?: string | null; supplier_variant?: string | null; customisable?: boolean; custom_moq?: number | null; custom?: AdminCustomisation | null;
 }
 
 /** Newest first; search by code or phone, filter by status and state. */
@@ -54,7 +54,7 @@ export async function listOrders(f: { q?: string; status?: string; state?: strin
   if (!hasSupabase) return null;
   let query = secretDb()
     .from("orders")
-    .select("id, code, status, pay_mode, total_ngn, paid_ngn, state, phone, created_at, channel, ship_mode, order_items(id, title, variant_label, qty, unit_ngn, order_item_photos(url), order_customisations(id, files, note, status, quote_ngn, staff_note), product_skus(props_text, products(source_url, customisable)))")
+    .select("id, code, status, pay_mode, total_ngn, paid_ngn, state, phone, created_at, channel, ship_mode, order_items(id, title, variant_label, qty, unit_ngn, order_item_photos(url), order_customisations(id, files, note, status, quote_ngn, staff_note), product_skus(props_text, products(source_url, customisable, custom_moq)))")
     .order("created_at", { ascending: false })
     .limit(100);
   const q = f.q?.trim().replace(/[^A-Za-z0-9+]/g, "");
@@ -68,7 +68,7 @@ export async function listOrders(f: { q?: string; status?: string; state?: strin
     ...o,
     items: (o.order_items as unknown as (Omit<AdminOrderItem, "photos" | "custom"> & {
       order_item_photos: { url: string }[]; order_customisations: AdminCustomisation[] | AdminCustomisation | null;
-      product_skus: { props_text: string | null; products: { source_url: string | null; customisable: boolean } | null } | null;
+      product_skus: { props_text: string | null; products: { source_url: string | null; customisable: boolean; custom_moq: number | null } | null } | null;
     })[])
       .map(({ order_item_photos, order_customisations, product_skus, ...i }) => ({
         ...i,
@@ -76,6 +76,7 @@ export async function listOrders(f: { q?: string; status?: string; state?: strin
         source_url: product_skus?.products?.source_url ?? null,
         supplier_variant: product_skus?.props_text ?? null,
         customisable: product_skus?.products?.customisable ?? false,
+        custom_moq: product_skus?.products?.custom_moq ?? null,
         custom: Array.isArray(order_customisations) ? (order_customisations[0] ?? null) : order_customisations,
       })),
   })) as AdminOrder[];
@@ -158,6 +159,7 @@ export async function listStores(q?: string): Promise<AdminStore[] | null> {
 export interface AdminProduct {
   slug: string; title: string; status: string; source: string; price_list_min: number | null; main_images: string[]; created_at: string;
   category: string | null; customisable?: boolean; source_url?: string | null;
+  supplier_verified?: boolean | null; supplier_ontime?: number | null; supplier_years?: number | null; dispatch_days?: number | null; custom_moq?: number | null;
 }
 
 /** Catalogue for staff: newest first, any status, searchable by name. */
@@ -165,7 +167,7 @@ export async function listAdminProducts(f: { q?: string; status?: string; source
   if (!hasSupabase) return null;
   let query = secretDb()
     .from("products")
-    .select("slug, title, status, source, source_url, customisable, price_list_min, main_images, created_at, categories(name)")
+    .select("slug, title, status, source, source_url, customisable, supplier_verified, supplier_ontime, supplier_years, dispatch_days, custom_moq, price_list_min, main_images, created_at, categories(name)")
     .eq("is_demo", false)
     .order("created_at", { ascending: false })
     .limit(100);

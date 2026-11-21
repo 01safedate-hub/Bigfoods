@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ProductCard } from "@/components/shop/product-card";
 import { ProductIcon } from "@/components/ui/product-icon";
+import { RotatingPhoto } from "@/components/shop/rotating-photo";
+import { imagesFor } from "@/lib/catalog/thumbs";
 import type { IconKey, Product } from "@/lib/catalog/types";
 import { cn } from "@/lib/format";
 import { searchCatalog } from "../actions";
@@ -135,10 +137,10 @@ export function SearchView({ products }: { products: Product[] }) {
               FastChina Hot List
             </h2>
             <div className="grid grid-cols-3 gap-2">
-              {HOT.map(([rank, cat, icon, tint]) => (
+              {HOT.map(([rank, cat, icon, tint], i) => (
                 <button key={cat} type="button" onClick={() => go(cat)} className="flex flex-col overflow-hidden rounded-md bg-[#fafafa]">
                   <span className="relative flex h-[104px] w-full items-center justify-center md:h-36" style={{ background: tint }}>
-                    <ProductIcon icon={icon} size={44} className="text-ink/55" />
+                    <RotatingPhoto images={imagesFor(products, { name: cat }, 4)} offset={i} sizes="(min-width: 768px) 200px, 33vw" className="absolute inset-0" fallback={<ProductIcon icon={icon} size={44} className="text-ink/55" />} />
                     <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-sm bg-[#FFF6DA] px-2 py-0.5 text-[11px] font-extrabold text-gold-ink">{rank}</span>
                   </span>
                   <span className="p-1.5 text-center text-[11px] leading-tight text-gold-ink">in {cat}</span>

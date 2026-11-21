@@ -66,7 +66,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
                         </a>
                       ) : i.title}{" "}
                       <span className="text-xs text-[#5B6170]">{i.variant_label} ×{i.qty}</span>
-                      {i.customisable && <span className="ml-1 rounded-sm bg-[#FFF1D6] px-1.5 py-0.5 text-[10px] font-bold text-[#8A5A00]">CUSTOMISABLE</span>}
+                      {i.customisable && <span className="ml-1 rounded-sm bg-[#FFF1D6] px-1.5 py-0.5 text-[10px] font-bold text-[#8A5A00]">CUSTOMISABLE{i.custom_moq && i.custom_moq > 1 ? ` · MIN ${i.custom_moq}` : ""}</span>}
                       {i.supplier_variant && <span className="block text-[11px] text-[#5B6170]">Supplier option: {i.supplier_variant}</span>}
                     </span>
                     <span className="tabular-nums">{naira(i.unit_ngn * i.qty)}</span>

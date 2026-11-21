@@ -63,7 +63,7 @@ async function Body({ searchParams }: { searchParams: PageProps<"/account/orders
                       {o.status === "delivered" && <ReviewButton itemId={i.id} title={i.title} author={me.name.split(" ")[0]} />}
                     </span>
                     {i.customisable && !["cancelled", "refunded", "delivered", "shipped"].includes(o.status) && (
-                      <CustomArtwork itemId={i.id} custom={i.custom} canSend={o.paid_ngn > 0} />
+                      <CustomArtwork itemId={i.id} custom={i.custom} canSend={o.paid_ngn > 0} minimum={i.customMoq} pieces={o.items.filter((x) => x.productSlug && x.productSlug === i.productSlug).reduce((n, x) => n + x.qty, 0) || i.qty} />
                     )}
                   </li>
                 ))}

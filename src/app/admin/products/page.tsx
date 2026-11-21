@@ -50,6 +50,15 @@ export default async function ProductsPage({ searchParams }: PageProps<"/admin/p
             <span className="flex min-w-0 flex-1 flex-col">
               <Link href={`/product/${p.slug}`} className="truncate font-bold hover:underline">{p.title}</Link>
               <span className="text-xs text-[#5B6170]">{p.category ?? "No category"} · {p.source === "custom" ? "Custom" : "Imported"} · from {p.price_list_min ? naira(p.price_list_min) : "—"}</span>
+              {p.source_url && (
+                <span className="text-xs text-[#5B6170]">
+                  Supplier: {p.supplier_verified ? <strong className="text-[#15803D]">verified</strong> : "not verified"}
+                  {p.supplier_ontime != null && <> · <strong className={Number(p.supplier_ontime) < 90 ? "text-[#B91C1C]" : ""}>{Number(p.supplier_ontime)}% on time</strong></>}
+                  {p.supplier_years != null && <> · {p.supplier_years} yrs</>}
+                  {p.dispatch_days != null && <> · sends in {p.dispatch_days} days</>}
+                  {p.custom_moq != null && <> · customises from {p.custom_moq}</>}
+                </span>
+              )}
             </span>
             {p.source_url && <a href={p.source_url} target="_blank" rel="noreferrer" className="text-xs font-bold text-[#2563EB] underline">Supplier ↗</a>}
             <CustomisableToggle slug={p.slug} on={p.customisable === true} />

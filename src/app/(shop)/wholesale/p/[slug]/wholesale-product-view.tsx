@@ -87,7 +87,7 @@ export function WholesaleProductView({ product }: { product: Product }) {
         </section>
 
         <div className="mx-3 md:mx-0">
-          <ProductTrustNote customisable={product.customisable} />
+          <ProductTrustNote customisable={product.customisable} facts={product} />
         </div>
 
         <p className="mx-3 rounded-xl bg-white p-3 text-[13px] text-muted md:mx-0 md:border md:border-line">

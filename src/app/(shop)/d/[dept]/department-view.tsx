@@ -1,11 +1,11 @@
 "use client";
 
 import { Check } from "lucide-react";
-import Image from "next/image";
 import { Fragment, useState } from "react";
 import { PromoTile } from "@/components/shop/feed-promos";
 import { ProductCard } from "@/components/shop/product-card";
 import { ProductIcon } from "@/components/ui/product-icon";
+import { RotatingPhoto } from "@/components/shop/rotating-photo";
 import { departmentBySlug, inSub } from "@/lib/catalog/departments";
 import type { IconKey, Product } from "@/lib/catalog/types";
 import { cn } from "@/lib/format";
@@ -40,7 +40,14 @@ export function DepartmentView({ dept, circles, products }: { dept: { slug: stri
             return (
               <button key={c.slug} type="button" aria-pressed={on} onClick={() => setSub(on ? null : c.slug)} className="flex w-[76px] shrink-0 flex-col items-center gap-1.5 md:w-[96px]">
                 <span className={cn("relative flex size-[68px] items-center justify-center overflow-hidden rounded-full bg-surface ring-2 transition md:size-[88px]", on ? "ring-ink" : "ring-transparent")}>
-                  {c.image ? <Image src={c.image} alt="" fill sizes="88px" className="object-cover" /> : <ProductIcon icon={c.icon} size={30} />}
+                  <RotatingPhoto
+                    images={(() => { const g = d.subs.find((x) => x.slug === c.slug); const own = g ? products.filter((p) => inSub(g, p)).flatMap((p) => p.images.slice(0, 1)).slice(0, 4) : []; return own.length ? own : c.image ? [c.image] : []; })()}
+                    offset={circles.indexOf(c)}
+                    every={6000}
+                    sizes="88px"
+                    className="absolute inset-0"
+                    fallback={<ProductIcon icon={c.icon} size={30} />}
+                  />
                 </span>
                 <span className={cn("line-clamp-2 text-center text-[12px] leading-tight md:text-[13px]", on ? "font-extrabold" : "text-[#444]")}>{c.label}</span>
               </button>
